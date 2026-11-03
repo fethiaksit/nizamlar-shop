@@ -1,8 +1,10 @@
 import { Metadata } from "next"
 
 import FeaturedProducts from "@modules/home/components/featured-products"
-import Hero from "@modules/home/components/hero"
+import CinematicHero from "@modules/cinematic-hero"
+import NizamlarClothesRackSection from "@modules/clothes-rack"
 import { listCollections } from "@lib/data/collections"
+import { listProducts } from "@lib/data/products"
 import { getRegion, listRegions } from "@lib/data/regions"
 import { toJsonLd } from "@lib/util/product-structured-data"
 import { getSiteOrigin, listCountryCodes, STORE_NAME } from "@lib/util/site"
@@ -18,9 +20,9 @@ export async function generateMetadata(props: {
   const [origin, regions] = await Promise.all([getSiteOrigin(), listRegions()])
 
   return {
-    title: "Medusa Next.js Starter Template",
+    title: "Nizamlar Baskı — Premium Tekstil ve Kişiye Özel Baskı Çözümleri",
     description:
-      "A performant frontend ecommerce starter template with Next.js 16 and Medusa.",
+      "DTF ve serigrafi baskı teknolojisiyle yüksek kaliteli oversize tişört, sweatshirt ve kurumsal tekstil ürünleri. Kendi tasarımınızı 3D stüdyoda anında oluşturun.",
     alternates: {
       canonical: `${origin}/${countryCode}`,
       languages: {
@@ -45,13 +47,21 @@ export default async function Home(props: {
 
   const region = await getRegion(countryCode)
 
-  const { collections } = await listCollections({
-    fields: "id, handle, title",
-  })
+  const [{ collections }, productResult] = await Promise.all([
+    listCollections({
+      fields: "id, handle, title",
+    }),
+    listProducts({
+      countryCode,
+      queryParams: { limit: 12 },
+    }).catch(() => ({ response: { products: [], count: 0 } })),
+  ])
 
   if (!collections || !region) {
     return null
   }
+
+  const products = productResult?.response?.products || []
 
   const [origin, regions] = await Promise.all([getSiteOrigin(), listRegions()])
   const homeUrl = `${origin}/${countryCode}`
@@ -88,11 +98,19 @@ export default async function Home(props: {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: toJsonLd(structuredData) }}
       />
-      <Hero />
-      <div className="py-12">
-        <ul className="flex flex-col gap-x-6">
-          <FeaturedProducts collections={collections} region={region} />
-        </ul>
+      {/* 1. VeloriQ Sinematik 3D Scroll Hero */}
+      <CinematicHero />
+
+      {/* 2. Dimaac 3D İnteraktif Kıyafet Askılığı Vitrini */}
+      <NizamlarClothesRackSection products={products} />
+
+      {/* 3. Öne Çıkan Koleksiyonlar & Ürün Listesi */}
+      <div className="py-16 bg-[#0E0F11]">
+        <div className="content-container">
+          <ul className="flex flex-col gap-x-6">
+            <FeaturedProducts collections={collections} region={region} />
+          </ul>
+        </div>
       </div>
     </>
   )

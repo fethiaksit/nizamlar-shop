@@ -16,7 +16,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       currencyCode: "TRY",
       technique: "dtf",
       sizeCode: "a4",
-      surfaceCount: 0, technique: "dtf", sizeCode: "a4",
+      surfaceCount: 0,
       quantity: 1,
     })
     results.push({

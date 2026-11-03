@@ -10,6 +10,7 @@ import {
 import { generateProductSvgString } from "./mockup-engine"
 import { addToCart } from "@lib/data/cart"
 import { HttpTypes } from "@medusajs/types"
+import Studio3DViewer from "./studio-3d-viewer"
 
 interface CustomPrintStudioProps {
   product: HttpTypes.StoreProduct
@@ -40,6 +41,7 @@ export default function CustomPrintStudio({
   const [selectedSize, setSelectedSize] = useState<string>("M")
   const [quantity, setQuantity] = useState<number>(1)
   const [activeTechnique, setActiveTechnique] = useState<"dtf" | "serigrafi">("dtf")
+  const [previewMode, setPreviewMode] = useState<"2d" | "3d">("3d")
 
   // Tasarım ve Dosya State'leri
   const [artworkSrc, setArtworkSrc] = useState<string | null>(null)
@@ -419,93 +421,134 @@ export default function CustomPrintStudio({
 
         {/* ORTA PANEL: Canlı Ürün ve Baskı Önizleme Sahnesi (6 Kolon) */}
         <div className="lg:col-span-6 flex flex-col items-center justify-center bg-[#141517] p-4 rounded-xl border border-[#242629]">
-          {/* Ön / Arka Yüz Seçici */}
-          <div className="flex items-center gap-2 mb-4 bg-[#1E2023] p-1 rounded-lg border border-[#2D3035]">
-            <button
-              onClick={() => {
-                setActiveView("front")
-                setSelectedPresetId("buyuk_on")
-              }}
-              className={`px-4 py-1.5 rounded text-xs font-semibold transition-all ${
-                activeView === "front"
-                  ? "bg-[#D4AF37] text-[#141517]"
-                  : "text-[#A0A2A6] hover:text-[#F8F8F5]"
-              }`}
-            >
-              Ön Yüzey
-            </button>
-            {studioConfig.supportedViews.includes("back") && (
+          {/* Görünüm & Yüz Seçici Kontrolleri */}
+          <div className="flex flex-wrap items-center justify-between w-full max-w-[500px] gap-2 mb-4">
+            {/* Ön / Arka Yüz Seçici */}
+            <div className="flex items-center gap-1 bg-[#1E2023] p-1 rounded-lg border border-[#2D3035]">
               <button
                 onClick={() => {
-                  setActiveView("back")
-                  setSelectedPresetId("buyuk_sirt")
+                  setActiveView("front")
+                  setSelectedPresetId("buyuk_on")
                 }}
-                className={`px-4 py-1.5 rounded text-xs font-semibold transition-all ${
-                  activeView === "back"
+                className={`px-3 py-1.5 rounded text-xs font-semibold transition-all ${
+                  activeView === "front"
                     ? "bg-[#D4AF37] text-[#141517]"
                     : "text-[#A0A2A6] hover:text-[#F8F8F5]"
                 }`}
               >
-                Sırt / Arka
+                Ön Yüzey
               </button>
-            )}
-          </div>
-
-          {/* Vektör Mockup Sahnesi (600 x 680 Stage) */}
-          <div
-            ref={stageRef}
-            className="relative w-full max-w-[500px] aspect-[600/680] rounded-xl overflow-hidden select-none shadow-2xl border border-[#26282B] touch-none"
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-          >
-            {/* Dinamik Kumaş SVG Arka Planı */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              dangerouslySetInnerHTML={{ __html: svgBg }}
-            />
-
-            {/* Baskı Alanı Sınır Çerçevesi (Kılavuz) */}
-            <div
-              style={{
-                left: `${(printableArea.x / 600) * 100}%`,
-                top: `${(printableArea.y / 680) * 100}%`,
-                width: `${(printableArea.width / 600) * 100}%`,
-                height: `${(printableArea.height / 680) * 100}%`,
-              }}
-              className="absolute border border-dashed border-[#D4AF37]/40 pointer-events-none z-10 flex items-start justify-center p-1"
-            >
-              <span className="text-[9px] text-[#D4AF37]/80 tracking-wider font-mono">
-                {printableArea.label}
-              </span>
+              {studioConfig.supportedViews.includes("back") && (
+                <button
+                  onClick={() => {
+                    setActiveView("back")
+                    setSelectedPresetId("buyuk_sirt")
+                  }}
+                  className={`px-3 py-1.5 rounded text-xs font-semibold transition-all ${
+                    activeView === "back"
+                      ? "bg-[#D4AF37] text-[#141517]"
+                      : "text-[#A0A2A6] hover:text-[#F8F8F5]"
+                  }`}
+                >
+                  Sırt / Arka
+                </button>
+              )}
             </div>
 
-            {/* Kullanıcı Tasarım Katmanı */}
-            {artworkSrc ? (
+            {/* 2D / 3D Görünüm Modu Değiştirici (T-Designer Entegrasyonu) */}
+            <div className="flex items-center gap-1 bg-[#1E2023] p-1 rounded-lg border border-[#2D3035]">
+              <button
+                onClick={() => setPreviewMode("3d")}
+                className={`px-3 py-1.5 rounded text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  previewMode === "3d"
+                    ? "bg-[#D4AF37] text-[#141517]"
+                    : "text-[#A0A2A6] hover:text-[#F8F8F5]"
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                3D Gerçekçi (T-Designer)
+              </button>
+              <button
+                onClick={() => setPreviewMode("2d")}
+                className={`px-3 py-1.5 rounded text-xs font-semibold transition-all ${
+                  previewMode === "2d"
+                    ? "bg-[#D4AF37] text-[#141517]"
+                    : "text-[#A0A2A6] hover:text-[#F8F8F5]"
+                }`}
+              >
+                2D Vektör & Konumlandırma
+              </button>
+            </div>
+          </div>
+
+          {previewMode === "3d" ? (
+            <div className="w-full max-w-[500px] aspect-[600/680] rounded-xl overflow-hidden shadow-2xl border border-[#26282B]">
+              <Studio3DViewer
+                colorHex={selectedColor.hex}
+                logoSrc={artworkSrc}
+                activeView={activeView}
+                scale={scale}
+                positionX={positionX}
+                positionY={positionY}
+              />
+            </div>
+          ) : (
+            /* Vektör Mockup Sahnesi (600 x 680 Stage) */
+            <div
+              ref={stageRef}
+              className="relative w-full max-w-[500px] aspect-[600/680] rounded-xl overflow-hidden select-none shadow-2xl border border-[#26282B] touch-none"
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+            >
+              {/* Dinamik Kumaş SVG Arka Planı */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                dangerouslySetInnerHTML={{ __html: svgBg }}
+              />
+
+              {/* Baskı Alanı Sınır Çerçevesi (Kılavuz) */}
               <div
                 style={{
-                  left: `${(positionX / 600) * 100}%`,
-                  top: `${(positionY / 680) * 100}%`,
-                  transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
-                  width: `${(220 * scale) / 6}%`,
-                  mixBlendMode: blendMode,
+                  left: `${(printableArea.x / 600) * 100}%`,
+                  top: `${(printableArea.y / 680) * 100}%`,
+                  width: `${(printableArea.width / 600) * 100}%`,
+                  height: `${(printableArea.height / 680) * 100}%`,
                 }}
-                onPointerDown={handlePointerDown}
-                className="absolute cursor-move z-20 group"
+                className="absolute border border-dashed border-[#D4AF37]/40 pointer-events-none z-10 flex items-start justify-center p-1"
               >
-                <img
-                  src={artworkSrc}
-                  alt="Kullanıcı Tasarımı"
-                  className="w-full h-auto object-contain pointer-events-none drop-shadow-md"
-                />
-                <div className="absolute inset-0 border border-transparent group-hover:border-[#D4AF37] pointer-events-none rounded" />
+                <span className="text-[9px] text-[#D4AF37]/80 tracking-wider font-mono">
+                  {printableArea.label}
+                </span>
               </div>
-            ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 text-center p-6 text-[#A0A2A6]/60">
-                <span className="text-3xl mb-2">🎨</span>
-                <p className="text-xs">Sol panelden tasarım dosyanızı yükleyin.</p>
-              </div>
-            )}
-          </div>
+
+              {/* Kullanıcı Tasarım Katmanı */}
+              {artworkSrc ? (
+                <div
+                  style={{
+                    left: `${(positionX / 600) * 100}%`,
+                    top: `${(positionY / 680) * 100}%`,
+                    transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+                    width: `${(220 * scale) / 6}%`,
+                    mixBlendMode: blendMode,
+                  }}
+                  onPointerDown={handlePointerDown}
+                  className="absolute cursor-move z-20 group"
+                >
+                  <img
+                    src={artworkSrc}
+                    alt="Kullanıcı Tasarımı"
+                    className="w-full h-auto object-contain pointer-events-none drop-shadow-md"
+                  />
+                  <div className="absolute inset-0 border border-transparent group-hover:border-[#D4AF37] pointer-events-none rounded" />
+                </div>
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 text-center p-6 text-[#A0A2A6]/60">
+                  <span className="text-3xl mb-2">🎨</span>
+                  <p className="text-xs">Sol panelden tasarım dosyanızı yükleyin veya 3D moduna geçin.</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* SAĞ PANEL: Fiyat ve Sipariş Özeti (3 Kolon) */}
