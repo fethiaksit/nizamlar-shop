@@ -15,13 +15,27 @@ type HitPriceProps = {
 const amount = (value: unknown) => (typeof value === "number" ? value : null)
 
 const HitPrice = ({ hit, currencyCode }: HitPriceProps) => {
-  const currency_code = indexedCurrency(currencyCode)
-  const min_price = amount(hit[priceAttribute("min_price", currencyCode)])
-  const max_price = amount(hit[priceAttribute("max_price", currencyCode)])
-  const original_price = amount(
+  let currency_code = indexedCurrency(currencyCode)
+  let min_price = amount(hit[priceAttribute("min_price", currencyCode)])
+  let max_price = amount(hit[priceAttribute("max_price", currencyCode)])
+  let original_price = amount(
     hit[priceAttribute("original_price", currencyCode)]
   )
-  const on_sale = hit[priceAttribute("on_sale", currencyCode)] === true
+  let on_sale = hit[priceAttribute("on_sale", currencyCode)] === true
+
+  if (min_price === null) {
+    for (const altCurrency of ["try", "eur", "usd"]) {
+      const altMin = amount(hit[`min_price_${altCurrency}`])
+      if (altMin !== null) {
+        currency_code = altCurrency
+        min_price = altMin
+        max_price = amount(hit[`max_price_${altCurrency}`])
+        original_price = amount(hit[`original_price_${altCurrency}`])
+        on_sale = hit[`on_sale_${altCurrency}`] === true
+        break
+      }
+    }
+  }
 
   if (min_price === null) {
     return null

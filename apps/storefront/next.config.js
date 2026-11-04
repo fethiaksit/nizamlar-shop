@@ -13,6 +13,7 @@ const S3_PATHNAME = process.env.MEDUSA_CLOUD_S3_PATHNAME
  */
 const nextConfig = {
   reactStrictMode: true,
+  distDir: process.env.NEXT_BUILD_DIR || ".next",
   async headers() {
     return [
       {
@@ -46,7 +47,14 @@ const nextConfig = {
     },
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
+  },
+  webpack: (config) => {
+    config.watchOptions = {
+      ...(config.watchOptions || {}),
+      ignored: ["**/node_modules/**", "**/._*", "**/artifacts/**"],
+    }
+    return config
   },
   images: {
     unoptimized: true,

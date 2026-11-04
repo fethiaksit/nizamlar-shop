@@ -5,6 +5,11 @@ import { configureStoreSearch, defineMiddlewares } from '@medusajs/framework/htt
 export default defineMiddlewares({
   routes: [
     {
+      methods: ["POST"],
+      matcher: "/store/custom-designs",
+      bodyParser: { sizeLimit: "40mb" },
+    },
+    {
       method: ['POST'],
       matcher: '/store/search',
       middlewares: [

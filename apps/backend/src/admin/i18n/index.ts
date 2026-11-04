@@ -1,1 +1,10 @@
-export default {}
+import tr from "./json/tr.json"
+
+export default {
+  tr: {
+    translation: tr,
+  },
+  en: {
+    translation: tr,
+  },
+}

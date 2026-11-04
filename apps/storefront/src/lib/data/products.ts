@@ -56,8 +56,19 @@ export const listProducts = async ({
     ...(await getAuthHeaders()),
   }
 
+  const cacheOptions = await getCacheOptions("products")
+  const productSpecificTags: string[] = []
+  if (queryParams?.handle) {
+    productSpecificTags.push(`product-${queryParams.handle}`)
+  }
+  if (queryParams?.id) {
+    const ids = Array.isArray(queryParams.id) ? queryParams.id : [queryParams.id]
+    ids.forEach((id) => productSpecificTags.push(`product-${id}`))
+  }
+
   const next = {
-    ...(await getCacheOptions("products")),
+    tags: Array.from(new Set(["products", ...(cacheOptions.tags || []), ...productSpecificTags])),
+    revalidate: 60,
   }
 
   return sdk.client
@@ -75,7 +86,6 @@ export const listProducts = async ({
         },
         headers,
         next,
-        cache: "force-cache",
       }
     )
     .then(({ products, count }) => {

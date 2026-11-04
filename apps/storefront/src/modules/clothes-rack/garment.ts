@@ -18,10 +18,21 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { HDRLoader } from "three/examples/jsm/loaders/HDRLoader.js";
 import { CLOTH_ROWS } from "./cloth-motion";
 import { DRAPES, DRAPE_HANGER, DRAPE_SCALE, type DrapeData, type DrapePanel, type DrapeSleeve } from "./garment-drapes";
+import {
+  drawNizamlarLogoPrint,
+  drawSweaterKnitOverlay,
+  drawSweatshirtConstruction,
+  drawWovenNeckLabel,
+  ensureBrandLogos,
+  getProceduralFabricPBR,
+  type NizamlarPrintSpec,
+} from "./nizamlar-garment-art";
 
-export type GarmentKind = "tee" | "crewneck" | "shirt";
+export type GarmentKind = "tee" | "crewneck" | "sweater" | "shirt";
 
 export type GarmentPrint =
+  /** Corporate Nizamlar Baskı high-contrast screenprint / puff / embroidery logo application. */
+  | NizamlarPrintSpec
   /** A big flowing script word or two across the chest. */
   | { kind: "script"; text: string; ink: string }
   /** Stacked bold serif lines across the chest, like a college crewneck. */
@@ -230,7 +241,8 @@ function boxFor(p: Pattern): Box {
   const y0 = -p.length - 0.02;
   const w = 2 * x1;
   const h = y1 - y0;
-  const texW = Math.min(1536, Math.round(1180 * w));
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+  const texW = isMobile ? Math.min(1152, Math.round(980 * w)) : Math.min(1792, Math.round(1480 * w));
   return { x0: -x1, y0, y1, w, h, texW, texH: Math.round((texW * h) / w) };
 }
 
@@ -410,7 +422,7 @@ function collarGeometry(front: Panel, back: Panel, neck: number[], kind: Garment
   }
   const curve = new THREE.CatmullRomCurve3(pts, true, "centripetal");
   // only the rolled edge of the rib: thin, so seen side-on it never stands up off the shoulders like a hood
-  return new THREE.TubeGeometry(curve, 160, kind === "crewneck" ? 0.0058 : kind === "shirt" ? 0.0062 : 0.0046, 10, true);
+  return new THREE.TubeGeometry(curve, 160, kind === "sweater" ? 0.0072 : kind === "crewneck" ? 0.0058 : kind === "shirt" ? 0.0062 : 0.0046, 10, true);
 }
 
 // The right armhole, from the shoulder point down to the armpit, cut as drape.ts cuts it
@@ -698,6 +710,8 @@ function drawPrint(ctx: CanvasRenderingContext2D, print: GarmentPrint, kind: Gar
     g.beginPath();
     g.roundRect(x, y, w, h, [2, 2, 8, 8]);
     g.stroke();
+  } else if (print.kind === "nizamlar") {
+    drawNizamlarLogoPrint(g, print, p, box);
   }
   if (print.kind !== "pattern") ctx.drawImage(layer, 0, 0);
 }
@@ -807,6 +821,9 @@ function fabricTexture(spec: GarmentSpec, p: Pattern, box: Box, front: boolean, 
     ctx.fillRect(0, 0, box.texW, box.texH);
   }
   const dark = lum(colour) < 0.25;
+  if (kind === "sweater") {
+    drawSweaterKnitOverlay(ctx, box.texW, box.texH, front ? p : undefined, front ? toPx : undefined, dark);
+  }
   const line = (pts: Pt[]) => {
     ctx.beginPath();
     pts.forEach(([x, y], i) => {
@@ -817,15 +834,16 @@ function fabricTexture(spec: GarmentSpec, p: Pattern, box: Box, front: boolean, 
     ctx.stroke();
   };
   const hemY = -p.length;
-  if (kind === "crewneck") {
+  if (kind === "crewneck" || kind === "sweater") {
     // the rib waistband: a shade darker with fine ribs running down it, and a seam where it joins the body
-    const rib = 0.065;
+    const rib = kind === "sweater" ? 0.074 : 0.065;
     const [x0, y0] = toPx(-p.half - 0.02, hemY + rib);
     const [x1, y1] = toPx(p.half + 0.02, hemY - 0.02);
-    ctx.fillStyle = shade(colour, -0.09);
+    ctx.fillStyle = shade(colour, kind === "sweater" ? -0.07 : -0.09);
     ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
     ctx.fillStyle = "rgba(0,0,0,0.16)";
-    for (let x = x0; x < x1; x += 3) ctx.fillRect(x, y0, 1.2, y1 - y0);
+    const ribStep = kind === "sweater" ? 4.2 : 3;
+    for (let x = x0; x < x1; x += ribStep) ctx.fillRect(x, y0, kind === "sweater" ? 1.8 : 1.2, y1 - y0);
     ctx.strokeStyle = shade(colour, -0.22);
     ctx.lineWidth = 1.4;
     line([[-p.half - 0.02, hemY + rib], [p.half + 0.02, hemY + rib]]);
@@ -856,7 +874,7 @@ function fabricTexture(spec: GarmentSpec, p: Pattern, box: Box, front: boolean, 
   for (const s of [1, -1]) line([[s * p.neckHalf, -0.004], [s * p.shoulderX, -p.shoulderDrop - 0.004]]);
   // the neck rib: a band round the neckline a shade darker than the body, ribbed across, with its seam under it
   if (kind !== "shirt") {
-    const ribW = kind === "crewneck" ? 0.024 : 0.017;
+    const ribW = kind === "sweater" ? 0.028 : kind === "crewneck" ? 0.024 : 0.017;
     // the neckline grown outward by inset: the same quarter ellipses the pattern is cut with
     const neck = (inset: number): Pt[] => {
       const pts: Pt[] = [];
@@ -873,6 +891,12 @@ function fabricTexture(spec: GarmentSpec, p: Pattern, box: Box, front: boolean, 
     ctx.strokeStyle = dark ? "rgba(255,255,255,0.035)" : "rgba(0,0,0,0.12)";
     ctx.lineWidth = 1.2;
     line(neck(ribW));
+    if (front && kind === "crewneck") {
+      drawSweatshirtConstruction(ctx, p, toPx, painter(box).unit, colour, dark);
+    }
+    if (!front) {
+      drawWovenNeckLabel(ctx, p, toPx, painter(box).unit);
+    }
   }
   // the shirt's placket: a slightly darker band down the button column, stitched on both edges; and the soft
   // shadow the open collar casts on the chest round its edges
@@ -943,13 +967,17 @@ function sleeveTexture(spec: GarmentSpec, size: { around: number; along: number 
     ctx.fillRect(0, 0, W, H);
   }
   const dark = lum(colour) < 0.25;
+  if (spec.kind === "sweater") {
+    drawSweaterKnitOverlay(ctx, W, H);
+  }
   const unit = H / size.along;
-  if (spec.kind === "crewneck") {
-    const rib = 0.065 * unit;
-    ctx.fillStyle = shade(colour, -0.09);
+  if (spec.kind === "crewneck" || spec.kind === "sweater") {
+    const rib = (spec.kind === "sweater" ? 0.074 : 0.065) * unit;
+    ctx.fillStyle = shade(colour, spec.kind === "sweater" ? -0.07 : -0.09);
     ctx.fillRect(0, 0, W, rib);
     ctx.fillStyle = "rgba(0,0,0,0.16)";
-    for (let x = 0; x < W; x += 3) ctx.fillRect(x, 0, 1.2, rib);
+    const step = spec.kind === "sweater" ? 4.2 : 3;
+    for (let x = 0; x < W; x += step) ctx.fillRect(x, 0, spec.kind === "sweater" ? 1.8 : 1.2, rib);
     ctx.fillStyle = shade(colour, -0.22);
     ctx.fillRect(0, rib, W, 1.4);
   } else {
@@ -1283,13 +1311,33 @@ function measure(front: Panel, back: Panel, sleeves: Float32Array[], p: Pattern)
 function acquireKind(kind: GarmentKind): KindParts {
   let entry = SHARED.get(kind);
   if (!entry) {
-    const data = DRAPES[kind];
+    const drapeKey: Exclude<GarmentKind, "sweater"> = kind === "sweater" ? "crewneck" : kind;
+    const data = DRAPES[drapeKey];
     const pattern = data.pattern;
     const box = boxFor(pattern);
     const front = decodePanel(data.front, 1);
     const back = decodePanel(data.back, -1);
-    const frontGeo = panelGeometry(front, box);
     const sleeves = data.sleeves.map(decodeSleeve);
+    if (kind === "sweater") {
+      // Tailor the knit sweater silhouette: slightly slimmer body width, slightly shorter hem, and loftier knit depth
+      for (const panel of [front, back]) {
+        for (let i = 0; i < panel.pos.length; i += 3) {
+          panel.pos[i] = panel.pos[i]! * 0.962;
+          panel.pos[i + 1] = panel.pos[i + 1]! * 0.975;
+          panel.pos[i + 2] = panel.pos[i + 2]! * 1.08;
+        }
+      }
+      for (const sl of sleeves) {
+        for (const arr of [sl.pos, sl.hang]) {
+          for (let i = 0; i < arr.length; i += 3) {
+            arr[i] = arr[i]! * 0.962;
+            arr[i + 1] = arr[i + 1]! * 0.975;
+            arr[i + 2] = arr[i + 2]! * 1.08;
+          }
+        }
+      }
+    }
+    const frontGeo = panelGeometry(front, box);
     const parts: KindParts = {
       pattern,
       box,
@@ -1390,7 +1438,7 @@ export function createWardrobe(renderer: THREE.WebGLRenderer, textures: GarmentT
     if (key === "studio") studioLight = pmrem.fromEquirectangular(t).texture;
     else scans[key] = t;
   };
-  const waiting: Promise<void>[] = [];
+  const waiting: Promise<void>[] = [ensureBrandLogos().then(() => undefined)];
   for (const key of Object.keys(textures) as (keyof GarmentTextures)[]) {
     const url = textures[key];
     if (!url) continue;
@@ -1424,11 +1472,19 @@ export function createWardrobe(renderer: THREE.WebGLRenderer, textures: GarmentT
     return c;
   };
   function fabricFor(kind: GarmentKind, w: number, h: number): Fabric {
-    const fleece = kind === "crewneck";
+    const fleece = kind === "crewneck" || kind === "sweater";
     const scan = fleece ? scans.fleeceNormal : scans.jerseyNormal;
     const rough = fleece ? scans.fleeceRoughness : scans.jerseyRoughness;
-    if (scan) return { normal: tile(scan, w / SCAN_TILE, h / SCAN_TILE), normalScale: fleece ? 0.8 : 0.6, roughness: rough ? tile(rough, w / SCAN_TILE, h / SCAN_TILE) : null, scanned: true };
-    return { normal: tile(knit, 88 * w, 87 * h), normalScale: 0.3, roughness: null, scanned: false };
+    if (scan) return { normal: tile(scan, w / SCAN_TILE, h / SCAN_TILE), normalScale: kind === "sweater" ? 1.05 : fleece ? 0.8 : 0.6, roughness: rough ? tile(rough, w / SCAN_TILE, h / SCAN_TILE) : null, scanned: true };
+    const pbrKind = kind === "sweater" ? "sweater" : kind === "crewneck" ? "crewneck" : "tee";
+    const pbr = getProceduralFabricPBR(pbrKind);
+    const repeatScale = kind === "sweater" ? 42 : kind === "crewneck" ? 64 : 78;
+    return {
+      normal: tile(pbr.normal, repeatScale * w, repeatScale * h),
+      normalScale: pbr.normalScale,
+      roughness: tile(pbr.roughness, repeatScale * w, repeatScale * h),
+      scanned: true,
+    };
   }
   const [barGeo, blockGeo] = hangerGeometry();
   const hookGeo = hookGeometry();
@@ -1508,7 +1564,7 @@ export function createWardrobe(renderer: THREE.WebGLRenderer, textures: GarmentT
         () => {},
       );
     }
-    const fleece = spec.kind === "crewneck";
+    const fleece = spec.kind === "crewneck" || spec.kind === "sweater";
     const light = lum(spec.colour);
     // the inside of the cloth is in the garment's own shadow: on white it has to read clearly darker, or a sleeve
     // opening or the open hem looks like more of the outside
@@ -1522,8 +1578,8 @@ export function createWardrobe(renderer: THREE.WebGLRenderer, textures: GarmentT
       uTime: { value: 0 },
       // garments are made side-on on the rail, sleeves down
       uHang: { value: HANG_AT_REST },
-      uAO: { value: light > 0.6 ? 2.1 : light > 0.25 ? 1.3 : 1 },
-      uInside: { value: light > 0.6 ? 0.74 : light > 0.25 ? 0.6 : 0.62 },
+      uAO: { value: light > 0.6 ? 2.25 : light > 0.25 ? 1.45 : 1.12 },
+      uInside: { value: light > 0.6 ? 0.72 : light > 0.25 ? 0.58 : 0.6 },
       // heather: strong on a grey marl, the faintest unevenness on any other colour, as dyed cotton has
       uGrain: { value: scans.heatherGrain ?? flatGrain },
       uGrainAmt: { value: scans.heatherGrain ? (isMarl(spec.colour) ? 0.42 : 0.06) : 0 },
@@ -1531,7 +1587,7 @@ export function createWardrobe(renderer: THREE.WebGLRenderer, textures: GarmentT
     const frontMat = cloth(frontMap, fabric.body, spec.colour, fleece);
     const backMat = cloth(backMap, fabric.body, spec.colour, fleece);
     own.push(frontMat, backMat);
-    const folds: Folds = { box: k.box, pattern: k.pattern, strength: fleece ? 0.005 : 0.004 };
+    const folds: Folds = { box: k.box, pattern: k.pattern, strength: spec.kind === "sweater" ? 0.0082 : fleece ? 0.0074 : 0.0062 };
     addFlow(frontMat, flow, false, folds);
     addFlow(backMat, flow, false, folds);
     turn.add(new THREE.Mesh(k.front, frontMat), new THREE.Mesh(k.back, backMat));
@@ -1688,15 +1744,16 @@ export function createWardrobe(renderer: THREE.WebGLRenderer, textures: GarmentT
   }
 
   function addLights(scene: THREE.Scene) {
-    // Most of the light is the studio around the cloth. On top of it, a key high on the left, so the cloth turns from
-    // light to shade across its folds, and a low side light on the right as strong as the key: the rail shows each
-    // garment side-on, and that light is what keeps a white tee white there, as a strip box beside a rail does.
-    scene.add(new THREE.HemisphereLight(0xffffff, 0xcfd0d3, 0.05));
-    const key = new THREE.DirectionalLight(0xffffff, 1.1);
-    key.position.set(-3.3, 2.5, 1.6);
-    const side = new THREE.DirectionalLight(0xf4f6ff, 1);
-    side.position.set(2.6, 0.6, 2.2);
-    scene.add(key, side);
+    // Warm studio key light high on the left, cool-neutral fill strip on the right, and a subtle warm rim light
+    // from behind/above to sculpt the collar roll, shoulder drape, and chrome hook.
+    scene.add(new THREE.HemisphereLight(0xfffaf2, 0xc9c1b5, 0.12));
+    const key = new THREE.DirectionalLight(0xfffcf7, 1.18);
+    key.position.set(-3.2, 2.6, 1.8);
+    const side = new THREE.DirectionalLight(0xf3f5fc, 0.96);
+    side.position.set(2.7, 0.65, 2.2);
+    const rim = new THREE.DirectionalLight(0xffe8c2, 0.36);
+    rim.position.set(0.3, 2.2, -2.4);
+    scene.add(key, side, rim);
   }
 
   return {

@@ -14,6 +14,23 @@ type ThumbnailProps = {
   "data-testid"?: string
 }
 
+function normalizeProductImageUrl(url?: string | null): string | undefined {
+  if (!url) return undefined
+  if (url.includes("photo-1521572267360-ee0c2909d518")) {
+    return "/products/nizamlar-tshirt-anthracite.webp"
+  }
+  if (url.includes("photo-1503342217505-b0a15ec3261c")) {
+    return "/products/nizamlar-tshirt-cream.webp"
+  }
+  if (
+    url.includes("photo-1556905055-8f358a7a47b2") ||
+    url.includes("photo-1578632767115-351597cf2477")
+  ) {
+    return "/products/nizamlar-tshirt-collection.webp"
+  }
+  return url
+}
+
 const Thumbnail: React.FC<ThumbnailProps> = ({
   thumbnail,
   images,
@@ -23,12 +40,12 @@ const Thumbnail: React.FC<ThumbnailProps> = ({
   alt = "",
   "data-testid": dataTestid,
 }) => {
-  const initialImage = thumbnail || images?.[0]?.url
+  const initialImage = normalizeProductImageUrl(thumbnail || images?.[0]?.url)
 
   return (
     <Container
       className={clx(
-        "relative w-full overflow-hidden p-4 bg-ui-bg-subtle shadow-elevation-card-rest rounded-large group-hover:shadow-elevation-card-hover transition-shadow ease-in-out duration-150",
+        "relative w-full overflow-hidden p-4 bg-brand-white border border-brand-stone/80 group-hover:border-brand-brown shadow-elevation-card-rest rounded-large group-hover:shadow-elevation-card-hover transition-all ease-in-out duration-150",
         className,
         {
           "aspect-[11/14]": isFeatured,

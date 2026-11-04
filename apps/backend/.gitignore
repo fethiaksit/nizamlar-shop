@@ -2,6 +2,9 @@
 .env
 .DS_Store
 /uploads
+/private
+private/
+uploads/
 /node_modules
 yarn-error.log
 
@@ -24,3 +27,5 @@ build
 !.yarn/versions
 
 .medusa
+# AppleDouble resource forks are not source files
+**/._*

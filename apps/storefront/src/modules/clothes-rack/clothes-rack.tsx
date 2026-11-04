@@ -55,7 +55,11 @@ export type ClothesRackProps = {
   detail?: boolean;
   /** How much of the box height a garment takes, from 0.25 to 0.42. Default 0.4. */
   size?: number;
-  /** Called when "See availability" is pressed, with the garment it was pressed for. */
+  /** Controlled active garment index on the rail (-1 for none). */
+  activeIndex?: number;
+  /** Called when the active/facing garment on the rail changes. */
+  onActiveChange?: (index: number) => void;
+  /** Called when "Ürünü İncele" is pressed, with the garment it was pressed for. */
   onSelect?: (item: ClothesRackItem, index: number) => void;
   /**
    * Photographic cloth and light: addresses of tiling fabric scans (normal and roughness maps of jersey for the tees
@@ -64,6 +68,7 @@ export type ClothesRackProps = {
    * scans, served from ui.dimaac.com/media/textures.
    */
   textures?: GarmentTextures;
+  theme?: "dark" | "light";
   /** Extra classes for the outer box. Give it a size: the rack fills it. */
   className?: string;
 };
@@ -192,8 +197,11 @@ export function ClothesRack({
   showCaption = true,
   detail = true,
   size = 0.4,
+  activeIndex: controlledActiveIndex,
+  onActiveChange,
   onSelect,
   textures,
+  theme,
   className = "",
 }: ClothesRackProps) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -203,7 +211,8 @@ export function ClothesRack({
   const stageRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<Engine | null>(null);
   const reducedMotion = useSyncExternalStore(watchMotion, prefersReducedMotion, () => false);
-  const dark = useSyncExternalStore(watchPageTheme, pageIsDark, () => false);
+  const systemDark = useSyncExternalStore(watchPageTheme, pageIsDark, () => false);
+  const dark = theme ? theme === "dark" : systemDark;
 
   const [failed, setFailed] = useState(false);
   // True while the GPU has taken the WebGL context away; a restore rebuilds the scene (generation bumps the effect)
@@ -227,12 +236,18 @@ export function ClothesRack({
   const pressedAt = useRef(0);
 
   // The loop reads these every frame, so a slider never rebuilds the scene
-  const settings = useRef({ restAngle, gap, activeScale, swing, breeze, duration, flow, rail, hanger, showCaption, detail, size, reducedMotion, onSelect });
+  const settings = useRef({ restAngle, gap, activeScale, swing, breeze, duration, flow, rail, hanger, showCaption, detail, size, reducedMotion, onActiveChange, onSelect });
   const refreshRef = useRef<(() => void) | null>(null);
   useEffect(() => {
-    settings.current = { restAngle, gap, activeScale, swing, breeze, duration, flow, rail, hanger, showCaption, detail, size, reducedMotion, onSelect };
+    settings.current = { restAngle, gap, activeScale, swing, breeze, duration, flow, rail, hanger, showCaption, detail, size, reducedMotion, onActiveChange, onSelect };
     refreshRef.current?.();
-  }, [restAngle, gap, activeScale, swing, breeze, duration, flow, rail, hanger, showCaption, detail, size, reducedMotion, onSelect]);
+  }, [restAngle, gap, activeScale, swing, breeze, duration, flow, rail, hanger, showCaption, detail, size, reducedMotion, onActiveChange, onSelect]);
+
+  useEffect(() => {
+    if (controlledActiveIndex !== undefined && engineRef.current) {
+      engineRef.current.setActive(controlledActiveIndex);
+    }
+  }, [controlledActiveIndex]);
 
   // A new array every render must not rebuild the scene: only its content does (the same for the textures)
   const itemsKey = useMemo(() => JSON.stringify(items), [items]);
@@ -258,7 +273,7 @@ export function ClothesRack({
 
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true, powerPreference: "high-performance" });
     } catch {
       canvas.remove();
       setFailed(true);
@@ -414,7 +429,7 @@ export function ClothesRack({
       view.width = Math.max(1, rect.width);
       view.height = Math.max(1, rect.height);
       view.aspect = view.width / view.height;
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, view.width < 768 ? 1.5 : 2));
       renderer.setSize(view.width, view.height, false);
       if (!built) return;
       frameView();
@@ -470,6 +485,7 @@ export function ClothesRack({
       // a hand over a garment says it can be opened
       canvas.style.cursor = index >= 0 && settings.current.detail ? "pointer" : "";
       setActiveIdx(index);
+      settings.current.onActiveChange?.(index);
       if (index >= 0) lastActive = index;
       if (index >= 0) bringIntoView(index);
       for (let i = 0; i < entries.length; i++) entries[i]!.tGoal = i === index ? 1 : 0;
@@ -819,7 +835,7 @@ export function ClothesRack({
       stageBox!.prepend(c);
       let r: THREE.WebGLRenderer;
       try {
-        r = new THREE.WebGLRenderer({ canvas: c, antialias: true, alpha: true, powerPreference: "high-performance" });
+        r = new THREE.WebGLRenderer({ canvas: c, antialias: true, alpha: true, preserveDrawingBuffer: true, powerPreference: "high-performance" });
       } catch {
         c.remove();
         return null;
@@ -1396,20 +1412,20 @@ export function ClothesRack({
     select(engine.activeIndex() >= 0 ? engine.activeIndex() : Math.max(0, engine.lastIndex()));
   };
 
-  // The DiMaac look: near-monochrome, hairlines, Inter Tight, sentence case
+  // The Nizamlar corporate palette for the rack UI controls
   const vars = dark
-    ? { ink: "#F5F5F5", paper: "#0B0B0C", line: "#27272A", grey: "#8B8F98" }
-    : { ink: "#0A0A0A", paper: "#FAFAFA", line: "#E5E7EB", grey: "#6B7280" };
+    ? { ink: "#F8F6F0", paper: "#161718", line: "rgba(196, 167, 116, 0.55)", grey: "#DED9CF" }
+    : { ink: "#222325", paper: "#F8F6F0", line: "#49372E", grey: "#49372E" };
   const names = itemsRef.current;
   const shown = names[Math.min(detailIndex, names.length - 1)];
   const status = open && shown ? `${shown.name}, ${detailIndex + 1} of ${names.length}` : focusIdx >= 0 && names[focusIdx] ? `${names[focusIdx]!.name}, ${focusIdx + 1} of ${names.length}` : "";
   const unavailable = failed || lost || !ready;
 
-  const ring = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solid focus-visible:outline-(--cr-ink)";
-  const pill = `inline-flex h-9 cursor-pointer items-center rounded-full border border-(--cr-line) bg-transparent px-4 text-[13px] font-medium text-(--cr-ink) transition-[background-color,color,border-color] duration-150 hover:border-(--cr-ink) hover:bg-(--cr-ink) hover:text-(--cr-paper) ${ring}`;
+  const ring = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solid focus-visible:outline-[var(--cr-ink)]";
+  const pill = `inline-flex h-9 cursor-pointer items-center rounded-full border border-[var(--cr-line)] bg-transparent px-4 text-[13px] font-medium text-[var(--cr-ink)] transition-[background-color,color,border-color] duration-150 hover:border-[var(--cr-ink)] hover:bg-[var(--cr-ink)] hover:text-[var(--cr-paper)] ${ring}`;
   // DiMaac keycap: no outline, a soft ink-tinted face with a shadow lip under it; it presses down 1 px and loses the lip
   const keycap = (isPressed: boolean) =>
-    `absolute top-[42%] z-[2] flex h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-xl border-0 bg-[color-mix(in_srgb,var(--cr-ink)_7%,transparent)] p-0 text-(--cr-ink) transition-[background-color,box-shadow,transform] duration-100 hover:bg-[color-mix(in_srgb,var(--cr-ink)_13%,transparent)] ${ring} ${
+    `absolute top-[42%] z-[2] flex h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-xl border-0 bg-[color-mix(in_srgb,var(--cr-ink)_7%,transparent)] p-0 text-[var(--cr-ink)] transition-[background-color,box-shadow,transform] duration-100 hover:bg-[color-mix(in_srgb,var(--cr-ink)_13%,transparent)] ${ring} ${
       isPressed ? "translate-y-[calc(-50%+1px)] shadow-none" : "shadow-[0_1px_0_rgba(0,0,0,0.3)]"
     }`;
   const arrowProps = { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
@@ -1423,7 +1439,7 @@ export function ClothesRack({
       tabIndex={-1}
       onKeyDown={onKeyDown}
       onBlur={onBlur}
-      className={`relative h-full w-full overflow-hidden outline-none focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-solid focus-visible:outline-(--cr-ink) ${className}`}
+      className={`relative h-full w-full overflow-hidden outline-none focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-solid focus-visible:outline-[var(--cr-ink)] ${className}`}
       style={{
         color: vars.ink,
         fontFamily: "var(--font-sans, 'Inter Tight', ui-sans-serif, system-ui, sans-serif)",
@@ -1444,7 +1460,7 @@ export function ClothesRack({
 
       {failed || lost ? (
         <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center gap-3 text-[13px]" role="alert">
-          <span className="text-(--cr-grey)">{lost ? "The graphics context was lost." : "This needs WebGL, which is not available here."}</span>
+          <span className="text-[var(--cr-grey)]">{lost ? "The graphics context was lost." : "This needs WebGL, which is not available here."}</span>
           <button
             type="button"
             onClick={() => {
@@ -1495,7 +1511,7 @@ export function ClothesRack({
         }}
       >
         <button type="button" onClick={onPill} className={`${pill} pointer-events-auto`}>
-          See availability
+          Ürünü İncele
         </button>
       </div>
 
@@ -1526,9 +1542,9 @@ export function ClothesRack({
           <button
             type="button"
             onClick={() => engineRef.current?.closeDetail()}
-            className={`absolute top-4 right-5 flex cursor-pointer items-center gap-2 rounded-full border-0 bg-transparent px-2 py-1 text-[13px] text-(--cr-ink) transition-opacity duration-150 hover:opacity-60 ${ring}`}
+            className={`absolute top-4 right-5 flex cursor-pointer items-center gap-2 rounded-full border-0 bg-transparent px-2 py-1 text-[13px] text-[var(--cr-ink)] transition-opacity duration-150 hover:opacity-60 ${ring}`}
           >
-            Close
+            Kapat
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
               <path d="M2 2L10 10M10 2L2 10" />
             </svg>
@@ -1568,12 +1584,12 @@ export function ClothesRack({
             </>
           ) : null}
           <div className="absolute inset-x-0 bottom-[5%] z-[2] flex flex-col items-center gap-2 px-4 text-center">
-            <span className="text-[13px] text-(--cr-grey)" style={{ fontVariantNumeric: "tabular-nums" }}>
+            <span className="text-[13px] text-[var(--cr-grey)]" style={{ fontVariantNumeric: "tabular-nums" }}>
               {String(detailIndex + 1).padStart(2, "0")} / {String(names.length).padStart(2, "0")}
             </span>
-            <h3 className="m-0 mb-1 text-[32px] leading-[1.1] font-normal tracking-[-0.02em] text-(--cr-ink)">{shown?.name}</h3>
+            <h3 className="m-0 mb-1 text-[32px] leading-[1.1] font-normal tracking-[-0.02em] text-[var(--cr-ink)]">{shown?.name}</h3>
             <button type="button" onClick={() => select(detailIndex)} className={pill}>
-              See availability
+              Ürünü İncele
             </button>
           </div>
         </div>

@@ -64,10 +64,10 @@ const DiscountCode: React.FC<DiscountCodeProps> = ({ cart }) => {
               className="txt-medium text-ui-fg-interactive hover:text-ui-fg-interactive-hover"
               data-testid="add-discount-button"
             >
-              Add Promotion Code(s)
+              İndirim / Promosyon Kodu Ekle
             </button>
 
-            {/* <Tooltip content="You can add multiple promotion codes">
+            {/* <Tooltip content="Birden fazla indirim kodu ekleyebilirsiniz">
               <InformationCircleSolid color="var(--fg-muted)" />
             </Tooltip> */}
           </Label>
@@ -80,6 +80,7 @@ const DiscountCode: React.FC<DiscountCodeProps> = ({ cart }) => {
                   id="promotion-input"
                   name="code"
                   type="text"
+                  placeholder="Kupon kodunuz"
                   autoFocus={false}
                   data-testid="discount-input"
                 />
@@ -87,7 +88,7 @@ const DiscountCode: React.FC<DiscountCodeProps> = ({ cart }) => {
                   variant="secondary"
                   data-testid="discount-apply-button"
                 >
-                  Apply
+                  Uygula
                 </SubmitButton>
               </div>
 

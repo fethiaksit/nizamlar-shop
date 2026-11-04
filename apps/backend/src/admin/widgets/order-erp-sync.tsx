@@ -72,6 +72,24 @@ const OrderErpSyncWidget = ({ data }: { data: any }) => {
         <p className="text-xs text-gray-500">ERP ve tasarım verileri yükleniyor...</p>
       ) : (
         <div className="flex flex-col gap-4 text-xs">
+          {/* Müşteri ve Üretim İş Emri Referansı */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-gray-50 rounded border border-gray-200">
+            <div>
+              <span className="text-gray-500 block text-[11px]">Müşteri Bilgisi:</span>
+              <span className="font-semibold text-gray-800">
+                {data?.customer?.first_name || data?.shipping_address?.first_name || "Müşteri"}{" "}
+                {data?.customer?.last_name || data?.shipping_address?.last_name || ""} (
+                {data?.email || "E-posta belirtilmemiş"})
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-500 block text-[11px]">Üretim İş Emri Referansı:</span>
+              <span className="font-mono font-bold text-amber-700">
+                NZM-WO-{(orderId || "000000").slice(-6).toUpperCase()}
+              </span>
+            </div>
+          </div>
+
           {/* ERP Senkronizasyon Durumu */}
           <div className="bg-gray-50 p-3 rounded border border-gray-200">
             <h4 className="font-semibold text-gray-700 mb-1">ERP Aktarım Kaydı:</h4>
@@ -113,14 +131,28 @@ const OrderErpSyncWidget = ({ data }: { data: any }) => {
                     key={des.id}
                     className="p-3 border rounded bg-gray-50 flex flex-col gap-2"
                   >
-                    <div className="flex justify-between font-semibold">
-                      <span>{des.position_name}</span>
-                      <span className="text-[#D4AF37] font-mono">{des.id}</span>
+                    <div className="flex justify-between font-semibold items-center">
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className="w-3.5 h-3.5 rounded-full border"
+                          style={{ backgroundColor: des.color_hex || "#202020" }}
+                        />
+                        <span>{des.position_name}</span>
+                      </div>
+                      <span className="text-[#D4AF37] font-mono text-[11px]">{des.id}</span>
                     </div>
                     <div className="text-gray-600 space-y-0.5">
                       <div>Renk / Beden: {des.color_name} / {des.size}</div>
                       <div>Baskı Yüzeyi: {des.view === "front" ? "Ön Yüz" : "Sırt"}</div>
-                      <div>Dosya: {des.original_file_name}</div>
+                      <div>
+                        Baskı Tekniği & Ölçü:{" "}
+                        <strong>
+                          {des.physical_dimensions?.widthMm
+                            ? `${des.physical_dimensions.widthMm} × ${des.physical_dimensions.heightMm} mm (DTF)`
+                            : "Standart A4 (DTF)"}
+                        </strong>
+                      </div>
+                      <div className="truncate">Dosya: {des.original_file_name}</div>
                     </div>
                     <div className="pt-2 border-t flex justify-end">
                       <a

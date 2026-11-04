@@ -157,6 +157,52 @@ export async function addToCart({
     .catch(medusaError)
 }
 
+export async function addCustomDesignToCart({
+  designIds,
+  quantity,
+  technique,
+  countryCode,
+}: {
+  designIds: string[]
+  quantity: number
+  technique?: string
+  countryCode: string
+}) {
+  if (!designIds?.length) {
+    throw new Error("Baskılı sepete ekleme için tasarım kimliği gereklidir.")
+  }
+
+  const cart = await getOrSetCart(countryCode)
+
+  if (!cart) {
+    throw new Error("Sepet oluşturulamadı veya alınamadı.")
+  }
+
+  const headers = {
+    ...(await getAuthHeaders()),
+  }
+
+  await sdk.client
+    .fetch("/store/custom-designs/cart", {
+      method: "POST",
+      body: {
+        cartId: cart.id,
+        designIds,
+        quantity,
+        technique,
+      },
+      headers,
+    })
+    .then(async () => {
+      const cartCacheTag = await getCacheTag("carts")
+      revalidateTag(cartCacheTag, { expire: 0 })
+
+      const fulfillmentCacheTag = await getCacheTag("fulfillment")
+      revalidateTag(fulfillmentCacheTag, { expire: 0 })
+    })
+    .catch(medusaError)
+}
+
 export async function updateLineItem({
   lineId,
   quantity,
@@ -278,7 +324,7 @@ export async function applyPromotions(codes: string[]) {
     .catch(medusaError)
 }
 
-export async function applyGiftCard(code: string) {
+export async function applyGiftCard(_code: string) {
   //   const cartId = getCartId()
   //   if (!cartId) return "No cartId cookie found"
   //   try {
@@ -290,7 +336,7 @@ export async function applyGiftCard(code: string) {
   //   }
 }
 
-export async function removeDiscount(code: string) {
+export async function removeDiscount(_code: string) {
   // const cartId = getCartId()
   // if (!cartId) return "No cartId cookie found"
   // try {
@@ -302,8 +348,8 @@ export async function removeDiscount(code: string) {
 }
 
 export async function removeGiftCard(
-  codeToRemove: string,
-  giftCards: any[]
+  _codeToRemove: string,
+  _giftCards: { code: string }[]
   // giftCards: GiftCard[]
 ) {
   //   const cartId = getCartId()
@@ -328,8 +374,8 @@ export async function submitPromotionForm(
   const code = formData.get("code") as string
   try {
     await applyPromotions([code])
-  } catch (e: any) {
-    return e.message
+  } catch (e: unknown) {
+    return e instanceof Error ? e.message : "İşlem tamamlanamadı."
   }
 }
 
@@ -339,50 +385,50 @@ export async function setAddresses(currentState: unknown, formData: FormData) {
     if (!formData) {
       throw new Error("No form data found when setting addresses")
     }
-    const cartId = getCartId()
+    const cartId = await getCartId()
     if (!cartId) {
       throw new Error("No existing cart found when setting addresses")
     }
 
-    const data = {
+    const data: HttpTypes.StoreUpdateCart = {
       shipping_address: {
-        first_name: formData.get("shipping_address.first_name"),
-        last_name: formData.get("shipping_address.last_name"),
-        address_1: formData.get("shipping_address.address_1"),
+        first_name: String(formData.get("shipping_address.first_name") || ""),
+        last_name: String(formData.get("shipping_address.last_name") || ""),
+        address_1: String(formData.get("shipping_address.address_1") || ""),
         address_2: "",
-        company: formData.get("shipping_address.company"),
-        postal_code: formData.get("shipping_address.postal_code"),
-        city: formData.get("shipping_address.city"),
-        country_code: formData.get("shipping_address.country_code"),
-        province: formData.get("shipping_address.province"),
-        phone: formData.get("shipping_address.phone"),
+        company: String(formData.get("shipping_address.company") || ""),
+        postal_code: String(formData.get("shipping_address.postal_code") || ""),
+        city: String(formData.get("shipping_address.city") || ""),
+        country_code: String(formData.get("shipping_address.country_code") || ""),
+        province: String(formData.get("shipping_address.province") || ""),
+        phone: String(formData.get("shipping_address.phone") || ""),
       },
-      email: formData.get("email"),
-    } as any
+      email: String(formData.get("email") || ""),
+    }
 
-    const sameAsBilling = formData.get("same_as_billing")
+    const sameAsBilling = String(formData.get("same_as_billing") || "")
     if (sameAsBilling === "on") data.billing_address = data.shipping_address
 
     if (sameAsBilling !== "on")
       data.billing_address = {
-        first_name: formData.get("billing_address.first_name"),
-        last_name: formData.get("billing_address.last_name"),
-        address_1: formData.get("billing_address.address_1"),
+        first_name: String(formData.get("billing_address.first_name") || ""),
+        last_name: String(formData.get("billing_address.last_name") || ""),
+        address_1: String(formData.get("billing_address.address_1") || ""),
         address_2: "",
-        company: formData.get("billing_address.company"),
-        postal_code: formData.get("billing_address.postal_code"),
-        city: formData.get("billing_address.city"),
-        country_code: formData.get("billing_address.country_code"),
-        province: formData.get("billing_address.province"),
-        phone: formData.get("billing_address.phone"),
+        company: String(formData.get("billing_address.company") || ""),
+        postal_code: String(formData.get("billing_address.postal_code") || ""),
+        city: String(formData.get("billing_address.city") || ""),
+        country_code: String(formData.get("billing_address.country_code") || ""),
+        province: String(formData.get("billing_address.province") || ""),
+        phone: String(formData.get("billing_address.phone") || ""),
       }
     await updateCart(data)
-  } catch (e: any) {
-    return e.message
+  } catch (e: unknown) {
+    return e instanceof Error ? e.message : "İşlem tamamlanamadı."
   }
 
   redirect(
-    `/${formData.get("shipping_address.country_code")}/checkout?step=delivery`
+    `/${String(formData.get("shipping_address.country_code") || "")}/checkout?step=delivery`
   )
 }
 

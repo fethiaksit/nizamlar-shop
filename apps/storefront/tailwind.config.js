@@ -20,6 +20,19 @@ module.exports = {
         padding: "padding-top padding-right padding-bottom padding-left",
       },
       colors: {
+        brand: {
+          anthracite: "#222325",
+          dark: "#161718",
+          surface: "#2B2C2F",
+          brown: "#49372E",
+          "brown-dark": "#32251E",
+          gold: "#B29460",
+          "gold-hover": "#C4A774",
+          cream: "#F3EFE7",
+          "cream-light": "#F8F6F0",
+          stone: "#C9C1B5",
+          white: "#FFFFFF",
+        },
         grey: {
           0: "#FFFFFF",
           5: "#F9FAFB",

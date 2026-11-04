@@ -17,9 +17,9 @@ export default async function Nav() {
   ])
 
   return (
-    <div className="sticky top-0 inset-x-0 z-50 group">
-      <header className="relative h-16 mx-auto border-b duration-200 bg-white border-ui-border-base">
-        <nav className="content-container txt-xsmall-plus text-ui-fg-subtle flex items-center justify-between w-full h-full text-small-regular">
+    <div className="sticky top-0 inset-x-0 z-[40] group">
+      <header className="relative h-16 mx-auto border-b duration-200 bg-brand-anthracite border-brand-gold/30 text-brand-cream-light">
+        <nav className="content-container txt-xsmall-plus text-[#DED9CF] flex items-center justify-between w-full h-full text-small-regular">
           <div className="flex-1 basis-0 h-full flex items-center">
             <div className="h-full">
               <SideMenu regions={regions} locales={locales} currentLocale={currentLocale} />
@@ -29,11 +29,11 @@ export default async function Nav() {
           <div className="flex items-center h-full">
             <LocalizedClientLink
               href="/"
-              className="text-base font-bold tracking-tight text-[#141517] hover:text-[#D4AF37] transition-colors uppercase flex items-center gap-2"
+              className="text-base font-extrabold tracking-tight text-brand-cream-light hover:text-brand-gold-hover transition-colors uppercase flex items-center gap-2.5"
               data-testid="nav-store-link"
             >
-              <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] inline-block" />
-              NİZAMLAR BASKI
+              <span className="w-2.5 h-2.5 rounded-full bg-brand-gold inline-block" />
+              <span>NİZAMLAR BASKI</span>
             </LocalizedClientLink>
           </div>
 
@@ -44,12 +44,12 @@ export default async function Nav() {
                 href="https://nizamlarbaski.com"
                 target="_blank"
                 rel="noreferrer"
-                className="hover:text-ui-fg-base text-xs font-medium text-ui-fg-muted"
+                className="text-[#DED9CF] hover:text-brand-gold-hover text-xs font-semibold transition-colors"
               >
                 Kurumsal Web
               </a>
               <LocalizedClientLink
-                className="hover:text-ui-fg-base"
+                className="text-[#DED9CF] hover:text-brand-gold-hover font-semibold transition-colors"
                 href="/account"
                 data-testid="nav-account-link"
               >
@@ -59,7 +59,7 @@ export default async function Nav() {
             <Suspense
               fallback={
                 <LocalizedClientLink
-                  className="hover:text-ui-fg-base flex gap-2"
+                  className="text-brand-cream-light hover:text-brand-gold-hover font-semibold flex gap-2"
                   href="/cart"
                   data-testid="nav-cart-link"
                 >

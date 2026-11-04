@@ -22,7 +22,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   }
 
   return (
-    <div className="bg-[#141517] min-h-screen text-[#F8F8F5]">
+    <div className="bg-[#faf9f6] min-h-screen text-[#242426]">
       {/* AURA 3D ÜRÜN VİTRİNİ VE DETAY SİSTEMİ */}
       <AuraProductShowcase
         product={product}
@@ -32,7 +32,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
 
       {/* İLGİLİ ÜRÜNLER */}
       <div
-        className="content-container my-16 small:my-24 border-t border-[#26282B] pt-12"
+        className="content-container my-16 small:my-24 border-t border-[#dedbd4] pt-12"
         data-testid="related-products-container"
       >
         <Suspense fallback={<SkeletonRelatedProducts />}>

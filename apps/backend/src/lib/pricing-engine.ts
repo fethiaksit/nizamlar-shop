@@ -62,10 +62,11 @@ function getPgClient() {
 export class CustomPrintPricingEngine {
   private configCache: ConfigRow | null = null
   private cacheExpiry: number = 0
+  private configVerified: boolean = false
 
-  public async getActiveConfig(): Promise<ConfigRow> {
+  public async getActiveConfig(): Promise<{ config: ConfigRow; verified: boolean }> {
     if (this.configCache && Date.now() < this.cacheExpiry) {
-      return this.configCache
+      return { config: this.configCache, verified: this.configVerified }
     }
 
     try {
@@ -78,8 +79,9 @@ export class CustomPrintPricingEngine {
 
       if (res.rows.length > 0) {
         this.configCache = res.rows[0]
+        this.configVerified = true
         this.cacheExpiry = Date.now() + 60 * 1000 // 60 saniye cache
-        return this.configCache!
+        return { config: this.configCache!, verified: true }
       }
     } catch (e) {
       console.warn("[PricingEngine] DB config fetch failed, using fallback:", e)
@@ -87,28 +89,31 @@ export class CustomPrintPricingEngine {
 
     // Fallback varsayılanları
     return {
-      technique_dtf_cost: 85,
-      technique_serigrafi_cost: 60,
-      technique_nakkas_cost: 110,
-      size_pocket_mult: 0.6,
-      size_a5_mult: 0.8,
-      size_a4_mult: 1.0,
-      size_a3_mult: 1.4,
-      size_a3_plus_mult: 1.8,
-      vat_rate: 20.0,
-      discount_tiers: [
-        { min_qty: 5, discount: 5 },
-        { min_qty: 10, discount: 10 },
-        { min_qty: 20, discount: 15 },
-        { min_qty: 50, discount: 20 },
-        { min_qty: 100, discount: 25 },
-        { min_qty: 250, discount: 30 },
-      ],
+      verified: false,
+      config: {
+        technique_dtf_cost: 85,
+        technique_serigrafi_cost: 60,
+        technique_nakkas_cost: 110,
+        size_pocket_mult: 0.6,
+        size_a5_mult: 0.8,
+        size_a4_mult: 1.0,
+        size_a3_mult: 1.4,
+        size_a3_plus_mult: 1.8,
+        vat_rate: 20.0,
+        discount_tiers: [
+          { min_qty: 5, discount: 5 },
+          { min_qty: 10, discount: 10 },
+          { min_qty: 20, discount: 15 },
+          { min_qty: 50, discount: 20 },
+          { min_qty: 100, discount: 25 },
+          { min_qty: 250, discount: 30 },
+        ],
+      },
     }
   }
 
   public async calculatePriceAsync(input: PricingInput): Promise<PricingBreakdown> {
-    const config = await this.getActiveConfig()
+    const { config, verified } = await this.getActiveConfig()
 
     const techniqueCosts: Record<PrintTechnique, number> = {
       dtf: Number(config.technique_dtf_cost),
@@ -126,7 +131,8 @@ export class CustomPrintPricingEngine {
 
     const techCost = techniqueCosts[input.technique] || techniqueCosts.dtf
     const sizeMultiplier = sizeMults[input.sizeCode] || 1.0
-    const surfaceMultiplier = Math.max(1, input.surfaceCount || 1)
+    const surfaceMultiplier =
+      input.surfaceCount === 0 ? 0 : Math.max(1, input.surfaceCount || 1)
     const quantity = Math.max(1, input.quantity || 1)
 
     // Ham baskı maliyeti (adet başına)
@@ -169,8 +175,10 @@ export class CustomPrintPricingEngine {
       quantityDiscountPercent: discountPercent,
       vatRatePercent: vatRate,
       currencyCode: (input.currencyCode || "TRY").toUpperCase(),
-      isPriceVerified: true,
-      verificationNote: `Nizamlar Fiyat Motoru v2: Teknoloji=${input.technique}, Boyut=${input.sizeCode}, Yüzey=${surfaceMultiplier}, İskonto=%${discountPercent}, KDV=%${vatRate}`,
+      isPriceVerified: verified && baseProductUnitPrice > 0,
+      verificationNote: verified
+        ? `Nizamlar Fiyat Motoru v2 (Doğrulandı): Teknoloji=${input.technique}, Boyut=${input.sizeCode}, Yüzey=${surfaceMultiplier}, İskonto=%${discountPercent}, KDV=%${vatRate}`
+        : `Tahmini fiyat; veritabanı konfigürasyonu doğrulanamadı.`,
     }
   }
 
@@ -207,8 +215,8 @@ export class CustomPrintPricingEngine {
       quantityDiscountPercent: disc,
       vatRatePercent: 20,
       currencyCode: (input.currencyCode || "TRY").toUpperCase(),
-      isPriceVerified: true,
-      verificationNote: "Sunucu tarafı Nizamlar Fiyat Motoru (Sync fallback)",
+      isPriceVerified: false,
+      verificationNote: "Tahmini fiyat: senkron fallback ödeme için doğrulanmış değildir.",
     }
   }
 
@@ -216,9 +224,12 @@ export class CustomPrintPricingEngine {
     dimensions?: PhysicalPrintDimensions,
     maxAllowedAreaCm2: number = 2000
   ): boolean {
-    if (!dimensions) return true // Özel boyut verilmemişse preset geçerli sayılır
-    if (dimensions.widthMm <= 0 || dimensions.heightMm <= 0) return false
-    if (dimensions.areaCm2 > maxAllowedAreaCm2) return false
+    if (!dimensions) return false
+    const { widthMm, heightMm, areaCm2 } = dimensions
+    if (![widthMm, heightMm, areaCm2].every(Number.isFinite)) return false
+    if (widthMm <= 0 || heightMm <= 0) return false
+    const actualArea = widthMm * heightMm / 100
+    if (actualArea > maxAllowedAreaCm2 || Math.abs(actualArea - areaCm2) > 1) return false
     return true
   }
 }

@@ -11,12 +11,11 @@ import CountrySelect from "../country-select"
 import LanguageSelect from "../language-select"
 import { Locale } from "@lib/data/locales"
 
-
 const SideMenuItems = {
-  Home: "/",
-  Store: "/store",
-  Account: "/account",
-  Cart: "/cart",
+  "Ana Sayfa": "/",
+  "Koleksiyon / Mağaza": "/store",
+  "Hesabım": "/account",
+  "Sepetim": "/cart",
 }
 
 type SideMenuProps = {
@@ -38,15 +37,15 @@ const SideMenu = ({ regions, locales, currentLocale }: SideMenuProps) => {
               <div className="relative flex h-full">
                 <Popover.Button
                   data-testid="nav-menu-button"
-                  className="relative h-full flex items-center transition-all ease-out duration-200 focus:outline-none hover:text-ui-fg-base"
+                  className="relative h-full flex items-center font-semibold text-[#DED9CF] transition-colors duration-200 focus:outline-none hover:text-brand-gold-hover"
                 >
-                  Menu
+                  Menü
                 </Popover.Button>
               </div>
 
               {open && (
                 <div
-                  className="fixed inset-0 z-[50] bg-black/0 pointer-events-auto"
+                  className="fixed inset-0 z-[60] bg-brand-dark/70 backdrop-blur-sm pointer-events-auto"
                   onClick={close}
                   data-testid="side-menu-backdrop"
                 />
@@ -57,21 +56,25 @@ const SideMenu = ({ regions, locales, currentLocale }: SideMenuProps) => {
                 as={Fragment}
                 enter="transition ease-out duration-150"
                 enterFrom="opacity-0"
-                enterTo="opacity-100 backdrop-blur-2xl"
+                enterTo="opacity-100"
                 leave="transition ease-in duration-150"
-                leaveFrom="opacity-100 backdrop-blur-2xl"
+                leaveFrom="opacity-100"
                 leaveTo="opacity-0"
               >
-                <PopoverPanel className="flex flex-col absolute w-full pr-4 sm:pr-0 sm:w-1/3 2xl:w-1/4 sm:min-w-min h-[calc(100vh-1rem)] z-[51] inset-x-0 text-sm text-ui-fg-on-color m-2 backdrop-blur-2xl">
+                <PopoverPanel className="flex flex-col absolute w-full pr-4 sm:pr-0 sm:w-1/3 2xl:w-1/4 sm:min-w-min h-[calc(100vh-1rem)] z-[65] inset-x-0 text-sm text-brand-cream-light m-2">
                   <div
                     data-testid="nav-menu-popup"
-                    className="flex flex-col h-full bg-[rgba(3,7,18,0.5)] rounded-rounded justify-between p-6"
+                    className="flex flex-col h-full bg-brand-anthracite border border-brand-gold/40 shadow-2xl rounded-rounded justify-between p-6"
                   >
-                    <div className="flex justify-end" id="xmark">
+                    <div className="flex justify-between items-center border-b border-brand-stone/20 pb-4" id="xmark">
+                      <span className="text-xs font-bold tracking-widest uppercase text-brand-gold-hover">
+                        NİZAMLAR BASKI
+                      </span>
                       <button
                         data-testid="close-menu-button"
                         onClick={close}
                         aria-label="Close menu"
+                        className="p-1.5 rounded-md bg-brand-surface text-brand-cream-light hover:text-brand-gold-hover border border-brand-stone/30"
                       >
                         <XMark />
                       </button>
@@ -82,7 +85,7 @@ const SideMenu = ({ regions, locales, currentLocale }: SideMenuProps) => {
                           <li key={name}>
                             <LocalizedClientLink
                               href={href}
-                              className="text-3xl leading-10 hover:text-ui-fg-disabled"
+                              className="text-3xl font-bold leading-10 text-brand-cream-light hover:text-brand-gold-hover transition-colors"
                               onClick={close}
                               data-testid={`${name.toLowerCase()}-link`}
                             >
@@ -92,7 +95,7 @@ const SideMenu = ({ regions, locales, currentLocale }: SideMenuProps) => {
                         )
                       })}
                     </ul>
-                    <div className="flex flex-col gap-y-6">
+                    <div className="flex flex-col gap-y-6 border-t border-brand-stone/20 pt-4 text-[#DED9CF]">
                       {!!locales?.length && (
                         <div
                           className="flex justify-between"
@@ -130,9 +133,8 @@ const SideMenu = ({ regions, locales, currentLocale }: SideMenuProps) => {
                           )}
                         />
                       </div>
-                      <Text className="flex justify-between txt-compact-small">
-                        © {new Date().getFullYear()} Medusa Store. All rights
-                        reserved.
+                      <Text className="flex justify-between txt-compact-small text-[#DED9CF]">
+                        © {new Date().getFullYear()} Nizamlar Baskı. Tüm hakları saklıdır.
                       </Text>
                     </div>
                   </div>

@@ -2,6 +2,118 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
+/* ==========================================================================
+   NİZAMLAR BASKI — ORTAK KURUMSAL TASARIM SİSTEMİ & SEMANTIC DESIGN TOKENS
+   Referans: https://nizamlarbaski.com (fethiaksit/nizamlar-web)
+   ========================================================================== */
+:root {
+  /* 1. Kurumsal Ana Renk Paleti */
+  --brand-anthracite: #222325;
+  --brand-dark: #161718;
+  --brand-surface: #2B2C2F;
+  --brand-brown: #49372E;
+  --brand-brown-dark: #32251E;
+  --brand-gold: #B29460;
+  --brand-gold-hover: #C4A774;
+  --brand-cream: #F3EFE7;
+  --brand-cream-light: #F8F6F0;
+  --brand-stone: #C9C1B5;
+  --brand-white: #FFFFFF;
+
+  /* 2. Coolors Tamamlayıcı Tonlar (Kontrast ve Katman Dengesi İçin) */
+  --brand-cream-warm: #E8E2D4;
+  --brand-stone-light: #DED9CF;
+  --brand-stone-muted: #5A524A;
+  --brand-gold-dark: #6E552B;
+  --brand-success: #255832;
+  --brand-warning: #E0A86E;
+
+  /* 3. Kurumsal Gradientler */
+  --gradient-dark-premium: linear-gradient(135deg, #161718 0%, #32251E 100%);
+  --gradient-warm-editorial: linear-gradient(135deg, #F8F6F0 0%, #E8E2D4 100%);
+  --gradient-brown-accent: linear-gradient(120deg, #49372E 0%, #32251E 100%);
+  --gradient-veloriq-signature:
+    radial-gradient(circle at 73% 46%, rgba(248, 246, 240, 0.9) 0%, rgba(196, 167, 116, 0.46) 36%, rgba(73, 55, 46, 0.28) 74%, rgba(34, 35, 37, 0.22) 100%),
+    radial-gradient(circle at 14% 20%, rgba(243, 239, 231, 0.88) 0%, transparent 50%),
+    linear-gradient(125deg, #EDE3D2 0%, #DBC6A8 38%, #C2A375 70%, #6D513D 100%);
+  --gradient-tshirt3d-canvas:
+    radial-gradient(circle at 64% 48%, rgba(248, 246, 240, 0.84) 0%, rgba(196, 167, 116, 0.44) 34%, rgba(73, 55, 46, 0.36) 70%, rgba(34, 35, 37, 0.48) 100%),
+    radial-gradient(circle at 16% 24%, rgba(243, 239, 231, 0.9) 0%, transparent 48%),
+    linear-gradient(132deg, #EFE6D8 0%, #DECAB0 36%, #BEA074 68%, #49372E 100%);
+
+  /* 4. Semantic Design Tokens — Açık Yüzey (Varsayılan) */
+  --background-primary: var(--brand-cream-light);
+  --background-secondary: var(--brand-cream);
+  --surface-elevated: var(--brand-white);
+  --text-primary: var(--brand-anthracite);
+  --text-secondary: var(--brand-brown);
+  --text-muted: var(--brand-stone-muted);
+  --text-inverse: var(--brand-cream-light);
+  --border-default: var(--brand-stone);
+  --border-subtle: rgba(201, 193, 181, 0.55);
+  --accent-primary: var(--brand-gold);
+  --accent-hover: var(--brand-gold-hover);
+  --button-primary-bg: var(--brand-anthracite);
+  --button-primary-text: var(--brand-white);
+  --button-primary-hover-bg: var(--brand-brown);
+  --button-secondary-bg: var(--brand-white);
+  --button-secondary-text: var(--brand-anthracite);
+  --button-secondary-border: var(--brand-brown);
+  --focus-ring: var(--brand-gold);
+
+  /* 5. Z-Index Katman Sistemi */
+  --z-base: 1;
+  --z-elevated: 10;
+  --z-sticky: 30;
+  --z-header: 40;
+  --z-dropdown: 50;
+  --z-drawer-backdrop: 60;
+  --z-drawer: 65;
+  --z-modal-backdrop: 70;
+  --z-modal: 75;
+  --z-toast: 80;
+}
+
+/* Semantic Design Tokens — Koyu Yüzey Eşlemesi */
+.surface-dark,
+[data-surface="dark"] {
+  --background-primary: var(--brand-dark);
+  --background-secondary: var(--brand-anthracite);
+  --surface-elevated: var(--brand-surface);
+  --text-primary: var(--brand-cream-light);
+  --text-secondary: var(--brand-stone-light);
+  --text-muted: var(--brand-stone);
+  --text-inverse: var(--brand-dark);
+  --border-default: rgba(201, 193, 181, 0.26);
+  --border-subtle: rgba(201, 193, 181, 0.16);
+  --accent-primary: var(--brand-gold);
+  --accent-hover: var(--brand-gold-hover);
+  --button-primary-bg: var(--brand-gold);
+  --button-primary-text: var(--brand-dark);
+  --button-primary-hover-bg: var(--brand-gold-hover);
+  --button-secondary-bg: var(--brand-surface);
+  --button-secondary-text: var(--brand-cream-light);
+  --button-secondary-border: var(--brand-gold);
+  --focus-ring: var(--brand-gold-hover);
+}
+
+html,
+body {
+  background-color: var(--background-primary);
+  color: var(--text-primary);
+}
+
+/* Klavye Erişilebilirlik Focus Halkası */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
 @layer utilities {
   /* Chrome, Safari and Opera */
   .no-scrollbar::-webkit-scrollbar {
@@ -35,9 +147,9 @@
   select:-webkit-autofill,
   select:-webkit-autofill:hover,
   select:-webkit-autofill:focus {
-    border: 1px solid #212121;
-    -webkit-text-fill-color: #212121;
-    -webkit-box-shadow: 0 0 0px 1000px #fff inset;
+    border: 1px solid var(--brand-anthracite);
+    -webkit-text-fill-color: var(--brand-anthracite);
+    -webkit-box-shadow: 0 0 0px 1000px var(--brand-white) inset;
     transition: background-color 5000s ease-in-out 0s;
   }
 
@@ -55,7 +167,7 @@
   }
 
   .contrast-btn {
-    @apply px-4 py-2 border border-black rounded-full hover:bg-black hover:text-white transition-colors duration-200 ease-in;
+    @apply px-4 py-2 border border-brand-anthracite rounded-full bg-brand-anthracite text-brand-white hover:bg-brand-brown transition-colors duration-200 ease-in;
   }
 
   .text-xsmall-regular {
@@ -110,3 +222,1601 @@
     @apply text-[32px] leading-[44px] font-semibold;
   }
 }
+
+/* ==========================================================================
+   ORTAK MARKA BİLEŞENLERİ (Eyebrow, Buton, Link)
+   ========================================================================== */
+.studio-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  color: var(--brand-brown);
+  text-transform: uppercase;
+}
+.studio-eyebrow::before {
+  content: "";
+  display: inline-block;
+  width: 18px;
+  height: 2px;
+  background-color: var(--brand-gold);
+}
+.studio-dialog .studio-eyebrow,
+.surface-dark .studio-eyebrow {
+  color: var(--brand-gold-hover);
+}
+
+.brand-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: var(--brand-gold);
+  color: var(--brand-dark);
+  border: 1px solid var(--brand-gold);
+  padding: 15px 22px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 12px;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    transform 0.2s;
+}
+.brand-button:hover {
+  background: var(--brand-gold-hover);
+  border-color: var(--brand-gold-hover);
+  color: var(--brand-dark);
+  transform: translateY(-2px);
+}
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border-default);
+}
+
+/* ==========================================================================
+   HERO SLIDER — KURUMSAL 3 SAHNELİ TASARIM (Warm Editorial / Dark Premium / Brown Accent)
+   ========================================================================== */
+.hero-slider {
+  position: relative;
+  min-height: calc(100svh - 64px);
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+  touch-action: pan-y;
+  border-bottom: 1px solid var(--border-default);
+  transition: background 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Slide 1: Nizamlar Özgün Krem, Gold, Kahverengi & Antrasit Editorial Gradient */
+.hero-slider[data-theme="light"] {
+  background: var(--gradient-veloriq-signature);
+  color: var(--brand-anthracite);
+}
+
+/* Slide 2: Antrasit & Koyu Kahverengi Gradient (Dark Premium) */
+.hero-slider[data-theme="dark"] {
+  background: var(--gradient-dark-premium);
+  color: var(--brand-cream-light);
+}
+
+/* Slide 3: Kahverengi & Krem Tonlarında Üretim Vitrini (Brown Accent) */
+.hero-slider[data-theme="brown"] {
+  background: var(--gradient-brown-accent);
+  color: var(--brand-cream-light);
+}
+
+.hero-slider__ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.hero-slider[data-theme="light"] .hero-slider__ambient {
+  background:
+    radial-gradient(circle at 75% 46%, rgba(178, 148, 96, 0.3), transparent 52%),
+    radial-gradient(circle at 18% 85%, rgba(73, 55, 46, 0.16), transparent 54%),
+    linear-gradient(180deg, rgba(34, 35, 37, 0.05) 0%, transparent 30%, rgba(50, 37, 30, 0.12) 100%);
+}
+.hero-slider[data-theme="dark"] .hero-slider__ambient,
+.hero-slider[data-theme="brown"] .hero-slider__ambient {
+  background:
+    radial-gradient(circle at 75% 46%, rgba(178, 148, 96, 0.22), transparent 50%),
+    radial-gradient(circle at 18% 85%, rgba(0, 0, 0, 0.28), transparent 52%);
+}
+
+.hero-slider__wordmark {
+  position: absolute;
+  top: 4%;
+  left: 4%;
+  font-size: clamp(72px, 14vw, 220px);
+  letter-spacing: -0.05em;
+  font-weight: 900;
+  line-height: 0.9;
+  pointer-events: none;
+  user-select: none;
+}
+.hero-slider[data-theme="light"] .hero-slider__wordmark {
+  color: rgba(73, 55, 46, 0.055);
+}
+.hero-slider[data-theme="dark"] .hero-slider__wordmark,
+.hero-slider[data-theme="brown"] .hero-slider__wordmark {
+  color: rgba(248, 246, 240, 0.045);
+}
+
+.hero-slider__3d-canvas-wrap {
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hero-slider__inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-top: 28px;
+  padding-bottom: 28px;
+  min-height: calc(100svh - 64px);
+}
+.hero-slider__viewport {
+  overflow: hidden;
+  width: 100%;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+.hero-slider__track {
+  display: flex;
+  width: 100%;
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+.hero-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 40px;
+  align-items: center;
+  padding: 16px 0;
+  position: relative;
+}
+.hero-slide__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  z-index: 2;
+}
+
+/* Eyebrow Pill — Her Temada Yüksek Kontrast */
+.hero-slide__eyebrow-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.hero-slide[data-slide-theme="light"] .hero-slide__eyebrow-pill {
+  background: var(--brand-anthracite);
+  color: var(--brand-cream-light);
+  border: 1px solid var(--brand-brown);
+}
+.hero-slide[data-slide-theme="dark"] .hero-slide__eyebrow-pill,
+.hero-slide[data-slide-theme="brown"] .hero-slide__eyebrow-pill {
+  background: var(--brand-surface);
+  color: var(--brand-cream-light);
+  border: 1px solid rgba(178, 148, 96, 0.5);
+}
+
+.hero-slide__eyebrow-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--brand-gold);
+}
+
+/* Başlık ve Alt Başlık */
+.hero-slide__title {
+  margin: 20px 0 16px;
+  font-size: clamp(38px, 5vw, 78px);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.hero-slide__title span {
+  display: block;
+}
+.hero-slide[data-slide-theme="light"] .hero-slide__title {
+  color: var(--brand-anthracite);
+}
+.hero-slide[data-slide-theme="light"] .hero-slide__title-accent {
+  color: var(--brand-brown);
+}
+.hero-slide[data-slide-theme="dark"] .hero-slide__title,
+.hero-slide[data-slide-theme="brown"] .hero-slide__title {
+  color: var(--brand-cream-light);
+}
+.hero-slide[data-slide-theme="dark"] .hero-slide__title-accent,
+.hero-slide[data-slide-theme="brown"] .hero-slide__title-accent {
+  color: var(--brand-gold-hover);
+}
+
+.hero-slide__gold-rule {
+  width: 64px;
+  height: 3px;
+  border-radius: 999px;
+  background-color: var(--brand-gold);
+  margin-bottom: 16px;
+}
+
+.hero-slide__subtitle {
+  max-width: 490px;
+  font-size: clamp(14px, 1.2vw, 18px);
+  line-height: 1.65;
+  font-weight: 500;
+}
+.hero-slide[data-slide-theme="light"] .hero-slide__subtitle {
+  color: var(--brand-brown-dark);
+}
+.hero-slide[data-slide-theme="dark"] .hero-slide__subtitle,
+.hero-slide[data-slide-theme="brown"] .hero-slide__subtitle {
+  color: var(--brand-stone-light);
+}
+
+/* CTA Butonları — Her Durumda (Normal & Hover) Yüksek Kontrast */
+.hero-slide__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 26px;
+}
+.hero-slide__primary-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 26px;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition:
+    transform 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+.hero-slide[data-slide-theme="light"] .hero-slide__primary-btn {
+  background: var(--brand-anthracite);
+  color: var(--brand-white);
+  border: 1px solid var(--brand-anthracite);
+  box-shadow: 0 12px 26px rgba(34, 35, 37, 0.18);
+}
+.hero-slide[data-slide-theme="light"] .hero-slide__primary-btn:hover {
+  background: var(--brand-brown);
+  color: var(--brand-white);
+  border-color: var(--brand-brown);
+  transform: translateY(-2px);
+}
+.hero-slide[data-slide-theme="dark"] .hero-slide__primary-btn,
+.hero-slide[data-slide-theme="brown"] .hero-slide__primary-btn {
+  background: var(--brand-gold);
+  color: var(--brand-dark);
+  border: 1px solid var(--brand-gold);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+.hero-slide[data-slide-theme="dark"] .hero-slide__primary-btn:hover,
+.hero-slide[data-slide-theme="brown"] .hero-slide__primary-btn:hover {
+  background: var(--brand-gold-hover);
+  color: var(--brand-dark);
+  border-color: var(--brand-gold-hover);
+  transform: translateY(-2px);
+}
+
+.hero-slide__secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 20px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+.hero-slide[data-slide-theme="light"] .hero-slide__secondary-btn {
+  background: var(--brand-white);
+  border: 1px solid var(--brand-brown);
+  color: var(--brand-anthracite);
+}
+.hero-slide[data-slide-theme="light"] .hero-slide__secondary-btn:hover {
+  background: var(--brand-cream);
+  color: var(--brand-anthracite);
+}
+.hero-slide[data-slide-theme="dark"] .hero-slide__secondary-btn,
+.hero-slide[data-slide-theme="brown"] .hero-slide__secondary-btn {
+  background: var(--brand-surface);
+  border: 1px solid var(--brand-gold);
+  color: var(--brand-cream-light);
+}
+.hero-slide[data-slide-theme="dark"] .hero-slide__secondary-btn:hover,
+.hero-slide[data-slide-theme="brown"] .hero-slide__secondary-btn:hover {
+  background: var(--brand-anthracite);
+  border-color: var(--brand-gold-hover);
+  color: var(--brand-white);
+}
+
+/* Özellik Rozetleri */
+.hero-slide__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+.hero-slide__badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+.hero-slide[data-slide-theme="light"] .hero-slide__badge {
+  background: var(--brand-white);
+  color: var(--brand-brown-dark);
+  border: 1px solid var(--brand-stone);
+}
+.hero-slide[data-slide-theme="dark"] .hero-slide__badge,
+.hero-slide[data-slide-theme="brown"] .hero-slide__badge {
+  background: rgba(22, 23, 24, 0.72);
+  color: var(--brand-cream-light);
+  border: 1px solid rgba(201, 193, 181, 0.3);
+}
+
+/* Ürün Görsel Alanı & Arkadaki Dairesel Pedestal */
+.hero-slide__visual {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.hero-slide__pedestal {
+  position: absolute;
+  width: min(82%, 460px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.hero-slide[data-slide-theme="light"] .hero-slide__pedestal {
+  background: radial-gradient(
+    circle,
+    rgba(248, 246, 240, 0.92) 0%,
+    rgba(196, 167, 116, 0.42) 52%,
+    rgba(73, 55, 46, 0.14) 72%,
+    transparent 78%
+  );
+  border: 1px solid rgba(178, 148, 96, 0.46);
+  box-shadow: 0 20px 56px rgba(50, 37, 30, 0.16);
+}
+.hero-slide[data-slide-theme="dark"] .hero-slide__pedestal,
+.hero-slide[data-slide-theme="brown"] .hero-slide__pedestal {
+  background: radial-gradient(
+    circle,
+    rgba(178, 148, 96, 0.26) 0%,
+    rgba(43, 44, 47, 0.35) 55%,
+    transparent 74%
+  );
+  border: 1px solid rgba(178, 148, 96, 0.22);
+}
+
+.hero-slide__image-wrap {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 500px);
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hero-slide__image-wrap--float {
+  animation: hero-garment-float 5.5s ease-in-out infinite;
+}
+.hero-slide__image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 24px 32px rgba(22, 23, 24, 0.28));
+  user-select: none;
+}
+.hero-slide__visual-tag {
+  position: relative;
+  z-index: 2;
+  margin-top: -10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--brand-dark);
+  border: 1px solid rgba(178, 148, 96, 0.45);
+  color: var(--brand-cream-light);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.hero-slide__visual-tag-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--brand-gold);
+}
+
+/* Alt Kontrol Barı — Açık ve Koyu Slide Temalarına Göre Yüksek Kontrast */
+.hero-slider__controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 18px;
+}
+.hero-slider[data-theme="light"] .hero-slider__controls {
+  border-top: 1px solid rgba(73, 55, 46, 0.22);
+}
+.hero-slider[data-theme="dark"] .hero-slider__controls,
+.hero-slider[data-theme="brown"] .hero-slider__controls {
+  border-top: 1px solid rgba(201, 193, 181, 0.24);
+}
+
+.hero-slider__dots {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.hero-slider__dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+.hero-slider[data-theme="light"] .hero-slider__dot {
+  color: var(--brand-brown);
+}
+.hero-slider[data-theme="light"] .hero-slider__dot[data-active="true"] {
+  color: var(--brand-anthracite);
+}
+.hero-slider[data-theme="dark"] .hero-slider__dot,
+.hero-slider[data-theme="brown"] .hero-slider__dot {
+  color: var(--brand-stone-light);
+}
+.hero-slider[data-theme="dark"] .hero-slider__dot[data-active="true"],
+.hero-slider[data-theme="brown"] .hero-slider__dot[data-active="true"] {
+  color: var(--brand-white);
+}
+
+.hero-slider__dot-bar {
+  display: block;
+  width: 24px;
+  height: 3px;
+  border-radius: 999px;
+  transition:
+    width 260ms ease,
+    background-color 260ms ease;
+}
+.hero-slider[data-theme="light"] .hero-slider__dot-bar {
+  background: rgba(73, 55, 46, 0.32);
+}
+.hero-slider[data-theme="light"] .hero-slider__dot[data-active="true"] .hero-slider__dot-bar {
+  width: 56px;
+  background: var(--brand-anthracite);
+}
+.hero-slider[data-theme="dark"] .hero-slider__dot-bar,
+.hero-slider[data-theme="brown"] .hero-slider__dot-bar {
+  background: rgba(222, 217, 207, 0.35);
+}
+.hero-slider[data-theme="dark"] .hero-slider__dot[data-active="true"] .hero-slider__dot-bar,
+.hero-slider[data-theme="brown"] .hero-slider__dot[data-active="true"] .hero-slider__dot-bar {
+  width: 56px;
+  background: var(--brand-gold);
+}
+
+.hero-slider__nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.hero-slider__play-btn {
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  transition: background-color 160ms ease;
+}
+.hero-slider[data-theme="light"] .hero-slider__play-btn {
+  background: var(--brand-white);
+  border: 1px solid var(--brand-brown);
+  color: var(--brand-anthracite);
+}
+.hero-slider[data-theme="light"] .hero-slider__play-btn:hover {
+  background: var(--brand-cream);
+}
+.hero-slider[data-theme="dark"] .hero-slider__play-btn,
+.hero-slider[data-theme="brown"] .hero-slider__play-btn {
+  background: var(--brand-surface);
+  border: 1px solid var(--brand-gold);
+  color: var(--brand-cream-light);
+}
+.hero-slider[data-theme="dark"] .hero-slider__play-btn:hover,
+.hero-slider[data-theme="brown"] .hero-slider__play-btn:hover {
+  background: var(--brand-anthracite);
+}
+
+.hero-slider__arrows {
+  display: flex;
+  gap: 8px;
+}
+.hero-slider__arrow {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease;
+}
+.hero-slider[data-theme="light"] .hero-slider__arrow {
+  background: var(--brand-anthracite);
+  color: var(--brand-white);
+  border: 1px solid var(--brand-anthracite);
+}
+.hero-slider[data-theme="light"] .hero-slider__arrow:hover {
+  background: var(--brand-brown);
+  color: var(--brand-white);
+  transform: scale(1.05);
+}
+.hero-slider[data-theme="dark"] .hero-slider__arrow,
+.hero-slider[data-theme="brown"] .hero-slider__arrow {
+  background: var(--brand-gold);
+  color: var(--brand-dark);
+  border: 1px solid var(--brand-gold);
+}
+.hero-slider[data-theme="dark"] .hero-slider__arrow:hover,
+.hero-slider[data-theme="brown"] .hero-slider__arrow:hover {
+  background: var(--brand-gold-hover);
+  color: var(--brand-dark);
+  transform: scale(1.05);
+}
+
+@keyframes hero-garment-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -8px, 0);
+  }
+}
+
+@media (max-width: 900px) {
+  .hero-slide {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    text-align: left;
+  }
+  .hero-slide__title {
+    font-size: clamp(32px, 9vw, 52px);
+    margin: 14px 0 10px;
+  }
+  .hero-slide__subtitle {
+    font-size: 13px;
+  }
+  .hero-slide__actions {
+    margin-top: 16px;
+    gap: 10px;
+  }
+  .hero-slide__primary-btn {
+    padding: 13px 18px;
+    font-size: 11px;
+  }
+  .hero-slide__secondary-btn {
+    padding: 12px 14px;
+    font-size: 11px;
+  }
+  .hero-slide__badges {
+    display: none;
+  }
+  .hero-slide__pedestal {
+    width: min(68vw, 270px);
+  }
+  .hero-slide__image-wrap {
+    width: min(74vw, 300px);
+  }
+  .hero-slider__controls {
+    padding-top: 12px;
+    gap: 8px;
+  }
+  .hero-slider__dots {
+    gap: 8px;
+  }
+  .hero-slider__dot {
+    gap: 5px;
+    padding: 4px 2px;
+    font-size: 10px;
+  }
+  .hero-slider__dot-bar {
+    width: 12px;
+  }
+  .hero-slider[data-theme="light"] .hero-slider__dot[data-active="true"] .hero-slider__dot-bar,
+  .hero-slider[data-theme="dark"] .hero-slider__dot[data-active="true"] .hero-slider__dot-bar,
+  .hero-slider[data-theme="brown"] .hero-slider__dot[data-active="true"] .hero-slider__dot-bar {
+    width: 24px;
+  }
+  .hero-slider__nav {
+    gap: 8px;
+  }
+  .hero-slider__play-btn {
+    padding: 6px 10px;
+    font-size: 10px;
+  }
+  .hero-slider__arrows {
+    gap: 6px;
+  }
+  .hero-slider__arrow {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-slider,
+  .hero-slider__track,
+  .brand-button {
+    transition: none !important;
+  }
+  .hero-slide__image-wrap--float {
+    animation: none !important;
+  }
+}
+
+/* ==========================================================================
+   AURA ÜRÜN DETAY SAYFASI — AÇIK KREM YÜZEY & YÜKSEK KONTRAST KURUMSAL STİL
+   ========================================================================== */
+.aura-product {
+  max-width: 1440px;
+  margin: auto;
+  padding: 36px 6% 88px;
+  color: var(--brand-anthracite);
+  background: var(--brand-cream-light);
+}
+.aura-breadcrumb {
+  display: flex;
+  gap: 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--brand-brown);
+  margin-bottom: 32px;
+}
+.aura-breadcrumb a:hover {
+  color: var(--brand-anthracite);
+  text-decoration: underline;
+}
+.aura-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 7%;
+  align-items: start;
+}
+.aura-visuals {
+  min-width: 0;
+}
+.aura-tabs {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand-stone-muted);
+}
+.aura-tabs button {
+  padding: 8px 2px;
+  border-bottom: 2px solid transparent;
+  color: var(--brand-stone-muted);
+}
+.aura-tabs button[aria-selected="true"] {
+  color: var(--brand-anthracite);
+  border-color: var(--brand-gold);
+  font-weight: 700;
+}
+.aura-viewer {
+  position: relative;
+  height: 560px;
+  background: radial-gradient(ellipse, var(--brand-cream-warm), var(--brand-cream) 68%);
+  border: 1px solid var(--brand-stone);
+  overflow: hidden;
+  border-radius: 12px;
+}
+.aura-viewer-note {
+  position: absolute;
+  z-index: 2;
+  top: 20px;
+  left: 20px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--brand-brown);
+  background: rgba(248, 246, 240, 0.88);
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--brand-stone);
+  pointer-events: none;
+}
+.aura-viewer-bottom {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--brand-brown-dark);
+  background: rgba(248, 246, 240, 0.88);
+  padding: 4px 10px;
+  border-radius: 6px;
+  pointer-events: none;
+}
+.aura-photo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+}
+.aura-photo img {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+}
+.aura-thumbnails {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  overflow-x: auto;
+}
+.aura-thumbnails button {
+  width: 68px;
+  height: 78px;
+  flex-shrink: 0;
+  border: 1px solid var(--brand-stone);
+  background: var(--brand-white);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.aura-thumbnails button[aria-pressed="true"] {
+  border: 2px solid var(--brand-brown);
+  box-shadow: 0 0 0 2px var(--brand-gold);
+}
+.aura-thumbnails img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+.aura-footnote {
+  color: var(--brand-stone-muted);
+  font-size: 11px;
+  line-height: 1.7;
+  margin: 14px 0;
+}
+.aura-details {
+  padding-top: 28px;
+}
+.aura-details h1 {
+  font-weight: 800;
+  font-size: clamp(28px, 2.7vw, 42px);
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+  color: var(--brand-anthracite);
+  margin: 14px 0;
+}
+.aura-description {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--brand-brown-dark);
+}
+.aura-price {
+  margin: 22px 0 26px;
+}
+.aura-price [data-testid="product-price"] {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--brand-anthracite);
+}
+.aura-options {
+  margin: 22px 0;
+}
+.aura-options legend {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--brand-anthracite);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 12px;
+}
+.aura-options legend span {
+  text-transform: none;
+  font-weight: 600;
+  color: var(--brand-brown);
+  margin-left: 10px;
+}
+.aura-options fieldset,
+.aura-options > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.aura-options label {
+  position: relative;
+  cursor: pointer;
+}
+.aura-options input {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.aura-size {
+  display: flex;
+  min-width: 46px;
+  height: 40px;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid var(--brand-stone);
+  background: var(--brand-white);
+  color: var(--brand-anthracite);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+}
+.aura-swatch {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(34, 35, 37, 0.35);
+  border-radius: 50%;
+}
+.aura-options input:checked + .aura-swatch {
+  outline: 2px solid var(--brand-brown);
+  box-shadow: 0 0 0 4px var(--brand-gold);
+  outline-offset: 2px;
+}
+.aura-options input:checked + .aura-size {
+  border-color: var(--brand-anthracite);
+  color: var(--brand-white);
+  background: var(--brand-anthracite);
+}
+.aura-options input:focus-visible + span {
+  outline: 2px solid var(--brand-gold);
+  outline-offset: 4px;
+}
+.aura-stock {
+  color: var(--brand-success);
+  font-size: 11px;
+  font-weight: 700;
+  margin: 22px 0 16px;
+}
+.aura-quantity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand-anthracite);
+  margin-bottom: 20px;
+}
+.aura-quantity input {
+  width: 76px;
+  border: 1px solid var(--brand-brown);
+  background: var(--brand-white);
+  color: var(--brand-anthracite);
+  border-radius: 6px;
+  padding: 9px 12px;
+  font-weight: 600;
+}
+.aura-add,
+.aura-design {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 16px 20px;
+  background: var(--brand-anthracite);
+  color: var(--brand-white);
+  border: 1px solid var(--brand-anthracite);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  margin: 10px 0;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    color 0.2s;
+}
+.aura-add:hover {
+  background: var(--brand-brown);
+  border-color: var(--brand-brown);
+  color: var(--brand-white);
+}
+.aura-design {
+  background: var(--brand-cream);
+  color: var(--brand-brown-dark);
+  border: 1.5px solid var(--brand-brown);
+}
+.aura-design:hover {
+  background: var(--brand-brown);
+  color: var(--brand-white);
+  border-color: var(--brand-brown);
+}
+.aura-add:disabled,
+.aura-design:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.aura-message {
+  min-height: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand-brown-dark);
+}
+.aura-features {
+  margin-top: 22px;
+  border-top: 1px solid var(--brand-stone);
+}
+.aura-features > div {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--brand-stone);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--brand-anthracite);
+}
+.aura-features span {
+  background: var(--brand-anthracite);
+  color: var(--brand-gold-hover);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.aura-care {
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--brand-brown-dark);
+  margin-top: 20px;
+}
+.aura-care summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--brand-anthracite);
+  margin-bottom: 12px;
+}
+.aura-sticky {
+  position: fixed;
+  bottom: 0;
+  inset-inline: 0;
+  background: rgba(22, 23, 24, 0.96);
+  color: var(--brand-cream-light);
+  border-top: 1px solid rgba(178, 148, 96, 0.35);
+  padding: 16px 6%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  z-index: var(--z-sticky);
+  backdrop-filter: blur(12px);
+}
+.aura-sticky strong {
+  font-size: 13px;
+  display: block;
+  font-weight: 700;
+  color: var(--brand-cream-light);
+}
+.aura-sticky span {
+  display: block;
+  font-size: 11px;
+  color: var(--brand-stone-light);
+  margin-top: 4px;
+}
+.aura-sticky button {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 12px 26px;
+  background: var(--brand-gold);
+  color: var(--brand-dark);
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+.aura-sticky button:hover {
+  background: var(--brand-gold-hover);
+  color: var(--brand-dark);
+}
+.aura-sticky button:disabled {
+  opacity: 0.5;
+}
+
+@media (max-width: 767px) {
+  .aura-product {
+    padding: 20px 6% 70px;
+  }
+  .aura-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .aura-breadcrumb {
+    font-size: 10px;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .aura-viewer {
+    height: 370px;
+  }
+  .aura-details {
+    padding-top: 12px;
+  }
+  .aura-details h1 {
+    font-size: 30px;
+  }
+  .aura-sticky {
+    padding: 12px 6%;
+  }
+  .aura-sticky strong {
+    font-size: 11px;
+  }
+}
+
+/* ==========================================================================
+   T-DESIGNER 3D BASKI STÜDYOSU — KURUMSAL KOYU ATÖLYE TEMASI
+   ========================================================================== */
+.studio-dialog {
+  position: relative;
+  z-index: var(--z-modal);
+  color: var(--brand-cream-light);
+}
+.studio-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal-backdrop);
+  background: rgba(22, 23, 24, 0.92);
+  backdrop-filter: blur(12px);
+}
+.studio-scroll {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  overflow-y: auto;
+}
+.studio-panel {
+  min-height: 100svh;
+  background: var(--brand-dark);
+  color: var(--brand-cream-light);
+}
+.studio-header {
+  height: 92px;
+  padding: 18px 4%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--brand-anthracite);
+  border-bottom: 1px solid rgba(201, 193, 181, 0.2);
+}
+.studio-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--brand-cream-light);
+  margin-top: 4px;
+}
+.studio-header > button {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 10px 18px;
+  background: var(--brand-surface);
+  color: var(--brand-cream-light);
+  border: 1px solid rgba(201, 193, 181, 0.35);
+  border-radius: 6px;
+}
+.studio-header > button:hover {
+  border-color: var(--brand-gold);
+  color: var(--brand-gold-hover);
+}
+.studio-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  max-width: 1600px;
+  margin: auto;
+}
+.studio-canvas-area {
+  padding: 28px 5%;
+  position: sticky;
+  top: 0;
+  align-self: start;
+}
+.studio-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+}
+.studio-toolbar > div {
+  display: flex;
+  gap: 6px;
+}
+.studio-toolbar button {
+  padding: 10px 14px;
+  color: var(--brand-stone-light);
+  background: var(--brand-surface);
+  border: 1px solid rgba(201, 193, 181, 0.2);
+  border-radius: 6px;
+  font-weight: 600;
+}
+.studio-toolbar button[aria-pressed="true"] {
+  border-color: var(--brand-gold);
+  color: var(--brand-dark);
+  background: var(--brand-gold);
+  font-weight: 700;
+}
+.studio-canvas {
+  height: min(64svh, 640px);
+  min-height: 360px;
+  margin-top: 12px;
+  background: radial-gradient(ellipse, rgba(73, 55, 46, 0.36), var(--brand-anthracite) 72%);
+  border: 1px solid rgba(201, 193, 181, 0.2);
+  border-radius: 10px;
+}
+.studio-canvas > img {
+  height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  margin: auto;
+}
+.studio-canvas-caption {
+  text-align: center;
+  color: var(--brand-stone-light);
+  font-size: 11px;
+  padding: 14px 0;
+}
+.studio-product-info {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 0;
+  border-top: 1px solid rgba(201, 193, 181, 0.2);
+  font-size: 12px;
+  color: var(--brand-stone-light);
+}
+.studio-controls {
+  padding: 28px;
+  border-left: 1px solid rgba(201, 193, 181, 0.2);
+  background: var(--brand-anthracite);
+}
+.studio-controls section {
+  padding-bottom: 22px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid rgba(201, 193, 181, 0.18);
+}
+.studio-controls h3 {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--brand-gold-hover);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.studio-selectors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.studio-selectors label {
+  flex: 1;
+  min-width: 70px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--brand-stone-light);
+}
+.studio-selectors select,
+.studio-selectors input,
+.studio-technique select {
+  display: block;
+  width: 100%;
+  border: 1px solid rgba(201, 193, 181, 0.35);
+  background: var(--brand-surface);
+  color: var(--brand-cream-light);
+  border-radius: 6px;
+  margin-top: 8px;
+  padding: 10px 8px;
+  font-size: 12px;
+}
+.studio-controls input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.studio-upload {
+  padding: 20px 12px;
+  border: 1.5px dashed var(--brand-gold);
+  background: var(--brand-surface);
+  color: var(--brand-cream-light);
+  border-radius: 8px;
+  width: 100%;
+  font-size: 12px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.studio-upload:hover {
+  border-color: var(--brand-gold-hover);
+  background: rgba(73, 55, 46, 0.35);
+}
+.studio-upload > span {
+  display: block;
+  font-size: 24px;
+  color: var(--brand-gold-hover);
+  margin-bottom: 6px;
+}
+.studio-upload small {
+  display: block;
+  color: var(--brand-stone-light);
+  font-size: 10px;
+  margin-top: 6px;
+}
+.studio-transforms {
+  margin-top: 20px;
+}
+.studio-transforms label {
+  display: block;
+  font-size: 11px;
+  color: var(--brand-stone-light);
+  margin: 16px 0;
+}
+.studio-transforms output {
+  float: right;
+  font-weight: 700;
+  color: var(--brand-gold-hover);
+}
+.studio-transforms input {
+  width: 100%;
+  margin-top: 10px;
+  accent-color: var(--brand-gold);
+}
+.studio-transforms p {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--brand-gold-hover);
+}
+.studio-presets {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+.studio-presets button {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 7px 10px;
+  background: var(--brand-surface);
+  color: var(--brand-cream-light);
+  border: 1px solid rgba(201, 193, 181, 0.3);
+  border-radius: 4px;
+}
+.studio-presets button:hover {
+  border-color: var(--brand-gold);
+}
+.studio-technique {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--brand-stone-light);
+}
+.studio-price-note {
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--brand-stone-light);
+  margin-top: 16px;
+}
+.studio-price-note strong {
+  color: var(--brand-gold-hover);
+}
+.studio-warning {
+  color: var(--brand-warning);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.7;
+  margin-top: 12px;
+}
+.studio-save,
+.studio-checkout {
+  width: 100%;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 14px 10px;
+  border-radius: 6px;
+  background: var(--brand-gold);
+  color: var(--brand-dark);
+  border: 1px solid var(--brand-gold);
+}
+.studio-save:hover:not(:disabled) {
+  background: var(--brand-gold-hover);
+  color: var(--brand-dark);
+}
+.studio-save:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.studio-checkout {
+  background: var(--brand-brown);
+  border: 1px solid var(--brand-gold);
+  color: var(--brand-cream-light);
+  margin-top: 10px;
+}
+.studio-checkout:hover:not(:disabled) {
+  background: var(--brand-gold-hover);
+  color: var(--brand-dark);
+}
+.studio-checkout:disabled {
+  background: var(--brand-surface);
+  border-color: rgba(201, 193, 181, 0.2);
+  color: var(--brand-stone);
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.studio-export {
+  width: 100%;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--brand-gold-hover);
+  margin: 16px 0;
+}
+.studio-export:disabled {
+  opacity: 0.45;
+}
+.studio-status {
+  font-size: 11px;
+  color: var(--brand-cream);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.studio-saved {
+  font-size: 10px;
+  color: var(--brand-cream-light);
+  background: var(--brand-surface);
+  border: 1px solid rgba(178, 148, 96, 0.35);
+  padding: 10px;
+  border-radius: 6px;
+  margin: 12px 0;
+  overflow-wrap: anywhere;
+}
+.studio-saved small {
+  display: block;
+  margin-top: 6px;
+  color: var(--brand-stone-light);
+}
+
+@media (max-width: 767px) {
+  .studio-header {
+    height: 82px;
+    padding: 16px 6%;
+  }
+  .studio-header h2 {
+    font-size: 20px;
+  }
+  .studio-workspace {
+    grid-template-columns: 1fr;
+  }
+  .studio-canvas-area {
+    position: relative;
+    padding: 18px 6%;
+  }
+  .studio-canvas {
+    min-height: 340px;
+    height: 44svh;
+  }
+  .studio-toolbar button {
+    padding: 9px 10px;
+    font-size: 10px;
+  }
+  .studio-controls {
+    padding: 26px 6%;
+    border-left: 0;
+    border-top: 1px solid rgba(201, 193, 181, 0.2);
+  }
+  .studio-product-info {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+/* ==========================================================================
+   KURUMSAL FOOTER — NİZAMLAR BASKI (ANTRASİT ZEMİN, GOLD HAT, KREM METİN)
+   ========================================================================== */
+.brand-footer {
+  position: relative;
+  background: var(--brand-anthracite);
+  color: var(--brand-stone-light);
+  border-top: 1px solid rgba(178, 148, 96, 0.28);
+}
+.brand-footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--brand-gold) 35%,
+    var(--brand-gold-hover) 50%,
+    var(--brand-gold) 65%,
+    transparent
+  );
+}
+.brand-footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 40px;
+  padding-top: 72px;
+  padding-bottom: 64px;
+}
+.brand-footer-logo {
+  font-size: 20px;
+  letter-spacing: -0.04em;
+  font-weight: 800;
+  color: var(--brand-cream-light);
+}
+.brand-footer-logo span {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  margin-top: 6px;
+  font-weight: 600;
+  color: var(--brand-gold-hover);
+}
+.brand-footer p {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--brand-stone-light);
+  margin-top: 16px;
+  max-width: 340px;
+}
+.brand-footer h3 {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand-cream-light);
+  margin-bottom: 20px;
+  position: relative;
+}
+.brand-footer h3::after {
+  content: "";
+  display: block;
+  width: 24px;
+  height: 2px;
+  background-color: var(--brand-gold);
+  margin-top: 8px;
+}
+.brand-footer-grid > div > a:not(.brand-footer-logo) {
+  display: block;
+  font-size: 13px;
+  color: var(--brand-stone-light);
+  margin: 12px 0;
+  transition: color 160ms ease;
+}
+.brand-footer-grid > div > a:not(.brand-footer-logo):hover {
+  color: var(--brand-gold-hover);
+}
+.brand-footer-bottom {
+  border-top: 1px solid rgba(201, 193, 181, 0.16);
+  padding-top: 22px;
+  padding-bottom: 30px;
+  font-size: 12px;
+  color: var(--brand-stone-light);
+  display: flex;
+  justify-content: space-between;
+}
+@media (max-width: 767px) {
+  .brand-footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    padding-top: 45px;
+    padding-bottom: 35px;
+  }
+  .brand-footer-grid > div:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+.cinema-model {
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   TSHIRT3D EXPERIENCE — EDITORIAL SERIF & GLASSMORPHIC CUSTOMIZER STYLES
+   Referans: https://tshirt3d.vercel.app/ (MIT License — Aarya Chopkar)
+   ========================================================================== */
+.tshirt3d-stage-bg {
+  background: var(--gradient-tshirt3d-canvas);
+}
+
+.tshirt3d-head-text {
+  font-family: "Bodoni Moda", "Didot", "Bodoni MT", Georgia, serif;
+  font-weight: 500;
+  color: var(--brand-anthracite);
+  letter-spacing: -0.02em;
+}
+
+.tshirt3d-head-text span {
+  font-family: "Bodoni Moda", "Didot", "Bodoni MT", Georgia, serif;
+  font-style: italic;
+  font-weight: 700;
+  color: var(--brand-brown);
+}
+
+.tshirt3d-glassmorphism {
+  background: rgba(248, 246, 240, 0.72);
+  box-shadow: 0 8px 32px 0 rgba(34, 35, 37, 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(178, 148, 96, 0.38);
+}
+
+.tshirt3d-editortabs {
+  width: 64px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 16px 0;
+  gap: 16px;
+}
+
+.tshirt3d-tab-btn {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.tshirt3d-tab-btn:hover {
+  transform: scale(1.06);
+}
+

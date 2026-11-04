@@ -44,7 +44,7 @@ const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
   const maxQuantity = item.variant?.manage_inventory ? 10 : maxQtyFromInventory
 
   // Özel Baskı Metadata Tespiti
-  const meta = (item.metadata || {}) as any
+  const meta = (item.metadata || {})
   const isCustomPrint = !!meta.design_id || meta.print_mode === "custom"
 
   return (
@@ -76,9 +76,13 @@ const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
 
           {/* Özel Baskı Rozeti ve Tasarım Detayları */}
           {isCustomPrint && (
-            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#D4AF37]/15 border border-[#D4AF37]/30 text-[#D4AF37] text-[11px] font-semibold w-fit">
-              <span>🎨 Özel Baskılı Sipariş</span>
-              <span className="text-[9px] opacity-80 font-mono">({meta.design_id})</span>
+            <div className="inline-flex flex-wrap items-center gap-1.5 px-2.5 py-1 rounded bg-brand-anthracite border border-brand-gold/50 text-brand-cream-light text-[11px] font-semibold w-fit">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-gold" />
+              <span>Özel Baskılı Sipariş</span>
+              {typeof meta.surfaces === "string" && meta.surfaces && (
+                <span className="text-[10px] text-brand-gold-hover">· {meta.surfaces}</span>
+              )}
+              <span className="text-[9px] text-[#DED9CF] font-mono">({typeof meta.design_id === "string" ? meta.design_id : ""})</span>
             </div>
           )}
 
@@ -107,9 +111,6 @@ const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
                 )
               )}
 
-              <option value={1} key={1}>
-                1
-              </option>
             </CartItemSelect>
             {updating && <Spinner />}
           </div>

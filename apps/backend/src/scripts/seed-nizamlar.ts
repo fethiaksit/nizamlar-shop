@@ -148,8 +148,8 @@ export default async function seedNizamlar({ container }: { container: MedusaCon
       sales_model: "ready",
     },
     images: [
-      { url: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=1000&auto=format&fit=crop" },
-      { url: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=1000&auto=format&fit=crop" },
+      { url: "/products/nizamlar-tshirt-anthracite.webp" },
+      { url: "/products/nizamlar-tshirt-cream.webp" },
     ],
     options: [
       { title: "Beden", values: ["S", "M", "L", "XL"] },
@@ -265,8 +265,8 @@ export default async function seedNizamlar({ container }: { container: MedusaCon
       mockup_model_id: "hoodie",
     },
     images: [
-      { url: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=1000&auto=format&fit=crop" },
-      { url: "https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=1000&auto=format&fit=crop" },
+      { url: "/products/nizamlar-tshirt-collection.webp" },
+      { url: "/products/nizamlar-tshirt-cream.webp" },
     ],
     options: [
       { title: "Beden", values: ["S", "M", "L", "XL", "2XL"] },
