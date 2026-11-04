@@ -1,5 +1,6 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { queryDb } from "../../../../lib/db"
+import { notifyStorefrontSync } from "../../../../lib/storefront-sync"
 
 /**
  * GET /admin/site-management/garments
@@ -41,14 +42,14 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
         )
       }
       const garments = await queryDb("SELECT * FROM garment_display_config ORDER BY rank ASC;")
+      await notifyStorefrontSync({ tags: ["site-content"] })
       return res.status(200).json({ message: "Askılık sıralaması güncellendi.", garments })
     }
 
-    const id = body.id || `rack-${Date.now()}`
     const {
       productId,
       productHandle,
-      name = "Yeni Askılık Ürünü",
+      name,
       garmentKind = "tee",
       colour = "#232528",
       showNizamlarLogo = true,
@@ -58,8 +59,26 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       logoStyle = "screenprint",
       model3dFile = "/models/nizamlar-tee.glb",
       isActive = true,
-      isPublished = false,
+      isPublished = true,
     } = body
+
+    if (!productId || typeof productId !== "string" || !productId.trim()) {
+      return res.status(400).json({ message: "Geçerli bir Medusa ürün bağlantısı (productId) zorunludur." })
+    }
+
+    // Katalogda ürün var mı doğrula
+    const productCheck = await queryDb(
+      "SELECT id, handle, title FROM product WHERE id = $1 AND deleted_at IS NULL LIMIT 1;",
+      [productId]
+    )
+    if (productCheck.length === 0) {
+      return res.status(400).json({ message: "Seçilen ürün katalogda bulunamadı veya silinmiş." })
+    }
+
+    const resolvedHandle = productHandle || productCheck[0].handle
+    const resolvedName = name && name.trim() ? name.trim() : productCheck[0].title
+    const resolvedIsPublished = isPublished !== undefined ? Boolean(isPublished) : true
+    const id = body.id || `rack-${Date.now()}`
 
     const maxRankRes = await queryDb(
       "SELECT COALESCE(MAX(rank), -1) as max_rank FROM garment_display_config;"
@@ -82,8 +101,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     const values = [
       id,
       productId,
-      productHandle,
-      name,
+      resolvedHandle,
+      resolvedName,
       garmentKind,
       colour,
       showNizamlarLogo,
@@ -94,10 +113,14 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       model3dFile,
       newRank,
       isActive,
-      isPublished,
+      resolvedIsPublished,
     ]
 
     const result = await queryDb(insertQuery, values)
+
+    // Storefront cache revalidation
+    await notifyStorefrontSync({ tags: ["site-content"] })
+
     return res.status(201).json({ message: "Askılık ürünü başarıyla eklendi.", garment: result[0] })
   } catch (error: any) {
     return res.status(500).json({ message: "Askılık ürünü eklenemedi.", error: error.message })

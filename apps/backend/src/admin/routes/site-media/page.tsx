@@ -114,12 +114,12 @@ const SiteMediaPage = () => {
           <div>
             <div className="flex items-center gap-2">
               <Badge color="orange">MERKEZİ MEDYA</Badge>
-              <span className="text-xs text-gray-500">Görseller, 3D Modeller & Dokular</span>
+              <span className="text-xs text-ui-fg-muted font-medium">Görseller, 3D Modeller & Dokular</span>
             </div>
-            <Heading level="h1" className="text-2xl font-bold text-gray-900 mt-1">
+            <Heading level="h1" className="text-2xl font-bold text-ui-fg-base mt-1">
               Medya Kütüphanesi
             </Heading>
-            <Text className="text-xs text-gray-600 mt-1">
+            <Text className="text-xs text-ui-fg-subtle mt-1 leading-relaxed">
               Tüm ürün görselleri, slider arka planları, kurumsal logolar ve 3D GLB modelleri.
               (Müşterilerin özel sipariş tasarımları bu genel kütüphanede gösterilmez).
             </Text>
@@ -153,8 +153,8 @@ const SiteMediaPage = () => {
               onClick={() => setCategoryFilter(cat)}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 categoryFilter === cat
-                  ? "bg-[#D4AF37] text-gray-950 shadow-xs"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  ? "bg-[#B29460] text-[#222325] shadow-xs"
+                  : "bg-ui-bg-subtle text-ui-fg-subtle hover:bg-ui-bg-component hover:text-ui-fg-base border border-ui-border-base"
               }`}
             >
               {cat === "all"
@@ -176,33 +176,33 @@ const SiteMediaPage = () => {
           placeholder="Dosya adı veya başlıkla ara..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full sm:w-64 text-xs"
+          className="w-full sm:w-64 text-xs border-ui-border-base bg-ui-bg-field text-ui-fg-base placeholder:text-ui-fg-muted focus:border-[#B29460]"
         />
       </Container>
 
       {/* Yükleme Modalı */}
       {showUploadModal && (
-        <Container className="p-6 border-2 border-[#D4AF37] bg-amber-50/20">
-          <Heading level="h2" className="text-base font-bold text-gray-900 border-b pb-2 mb-4">
+        <Container className="p-6 border-2 border-[#B29460] bg-amber-50/20 dark:bg-amber-950/20">
+          <Heading level="h2" className="text-base font-bold text-ui-fg-base border-b border-ui-border-base pb-2 mb-4">
             Yeni Medya Dosyası Kaydet
           </Heading>
           <form onSubmit={handleAddMedia} className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <Label className="text-xs font-semibold text-gray-700">Medya Başlığı</Label>
+              <Label className="text-xs font-semibold text-ui-fg-base">Medya Başlığı</Label>
               <Input
                 placeholder="Örn: 2026 Yeni Sezon Tişört Görseli"
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
-                className="mt-1"
+                className="mt-1 border-ui-border-base bg-ui-bg-field text-ui-fg-base placeholder:text-ui-fg-muted focus:border-[#B29460]"
               />
             </div>
 
             <div>
-              <Label className="text-xs font-semibold text-gray-700">Kategori</Label>
+              <Label className="text-xs font-semibold text-ui-fg-base">Kategori</Label>
               <select
                 value={newCategory}
                 onChange={(e) => setNewCategory(e.target.value)}
-                className="mt-1 w-full px-2.5 py-1.5 rounded-md border border-gray-300 bg-white text-xs font-semibold"
+                className="mt-1 w-full px-2.5 py-1.5 rounded-md border border-ui-border-base bg-ui-bg-field text-ui-fg-base text-xs font-semibold focus:outline-none focus:border-[#B29460] focus:ring-1 focus:ring-[#B29460]"
               >
                 <option value="slider">Slider Arka Planı</option>
                 <option value="product">Ürün Fotoğrafı</option>
@@ -214,11 +214,11 @@ const SiteMediaPage = () => {
             </div>
 
             <div>
-              <Label className="text-xs font-semibold text-gray-700">Dosya Türü</Label>
+              <Label className="text-xs font-semibold text-ui-fg-base">Dosya Türü</Label>
               <select
                 value={newFileType}
                 onChange={(e) => setNewFileType(e.target.value)}
-                className="mt-1 w-full px-2.5 py-1.5 rounded-md border border-gray-300 bg-white text-xs font-semibold"
+                className="mt-1 w-full px-2.5 py-1.5 rounded-md border border-ui-border-base bg-ui-bg-field text-ui-fg-base text-xs font-semibold focus:outline-none focus:border-[#B29460] focus:ring-1 focus:ring-[#B29460]"
               >
                 <option value="image">Görsel (WebP, PNG, JPG)</option>
                 <option value="3d_model">3D Model (.glb, .gltf)</option>
@@ -228,16 +228,16 @@ const SiteMediaPage = () => {
             </div>
 
             <div>
-              <Label className="text-xs font-semibold text-gray-700">Dosya URL / Yolu</Label>
+              <Label className="text-xs font-semibold text-ui-fg-base">Dosya URL / Yolu</Label>
               <Input
                 placeholder="Örn: /hero/slide-1-tee.webp veya /models/nizamlar-tee.glb"
                 value={newFileUrl}
                 onChange={(e) => setNewFileUrl(e.target.value)}
-                className="mt-1 font-mono"
+                className="mt-1 font-mono border-ui-border-base bg-ui-bg-field text-ui-fg-base placeholder:text-ui-fg-muted focus:border-[#B29460]"
               />
             </div>
 
-            <div className="sm:col-span-2 flex justify-end gap-2 pt-2 border-t">
+            <div className="sm:col-span-2 flex justify-end gap-2 pt-2 border-t border-ui-border-base">
               <Button
                 variant="secondary"
                 size="base"
@@ -251,7 +251,7 @@ const SiteMediaPage = () => {
                 size="base"
                 type="submit"
                 disabled={uploading}
-                className="bg-[#D4AF37] hover:bg-[#c19d29] text-gray-950 font-bold"
+                className="bg-[#B29460] hover:bg-[#9E8250] text-[#222325] font-bold"
               >
                 {uploading ? "Kaydediliyor..." : "Dosyayı Kaydet"}
               </Button>
@@ -262,16 +262,16 @@ const SiteMediaPage = () => {
 
       {/* Medya Grid */}
       {loading ? (
-        <Container className="p-12 text-center text-gray-500">Medya dosyaları yükleniyor...</Container>
+        <Container className="p-12 text-center text-ui-fg-muted">Medya dosyaları yükleniyor...</Container>
       ) : mediaList.length === 0 ? (
-        <Container className="p-12 text-center text-gray-500">
+        <Container className="p-12 text-center text-ui-fg-muted">
           Bu kategoride medya dosyası bulunamadı.
         </Container>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {mediaList.map((m) => (
             <Container key={m.id} className="p-4 flex flex-col justify-between overflow-hidden group">
-              <div className="w-full h-40 rounded-lg bg-gray-50 border overflow-hidden flex items-center justify-center relative mb-3">
+              <div className="w-full h-40 rounded-lg bg-ui-bg-subtle border border-ui-border-base overflow-hidden flex items-center justify-center relative mb-3">
                 {m.file_type === "3d_model" ? (
                   <div className="flex flex-col items-center justify-center text-indigo-600 gap-2">
                     <CubeSolid className="w-10 h-10" />
@@ -303,28 +303,28 @@ const SiteMediaPage = () => {
               </div>
 
               <div className="flex flex-col gap-1">
-                <span className="text-xs font-bold text-gray-900 line-clamp-1">{m.title}</span>
-                <span className="text-[11px] font-mono text-gray-500 line-clamp-1">
+                <span className="text-xs font-bold text-ui-fg-base line-clamp-1">{m.title}</span>
+                <span className="text-[11px] font-mono text-ui-fg-subtle line-clamp-1">
                   {m.file_name}
                 </span>
-                <span className="text-[10px] text-gray-400">
+                <span className="text-[11px] text-ui-fg-subtle font-medium">
                   {formatFileSize(m.file_size)} · {new Date(m.created_at).toLocaleDateString("tr-TR")}
                 </span>
               </div>
 
-              <div className="pt-3 mt-3 border-t flex items-center justify-between">
+              <div className="pt-3 mt-3 border-t border-ui-border-base flex items-center justify-between">
                 <a
                   href={m.file_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-[11px] text-amber-700 hover:underline font-semibold"
+                  className="text-[11px] text-[#B29460] hover:underline font-bold"
                 >
                   Görüntüle ↗
                 </a>
                 <button
                   type="button"
                   onClick={() => handleDeleteMedia(m.id)}
-                  className="text-gray-400 hover:text-red-600 transition-colors"
+                  className="text-ui-fg-muted hover:text-rose-600 transition-colors"
                   title="Sil"
                 >
                   <Trash />

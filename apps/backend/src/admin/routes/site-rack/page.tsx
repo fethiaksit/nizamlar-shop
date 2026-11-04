@@ -46,19 +46,32 @@ const SiteRackPage = () => {
   const [isEditing, setIsEditing] = useState<boolean>(false)
   const [isCreating, setIsCreating] = useState<boolean>(false)
   const [saving, setSaving] = useState<boolean>(false)
+  const [publishing, setPublishing] = useState<boolean>(false)
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(
     null
   )
 
-  const loadData = async () => {
+  const loadData = async (preferredId?: string) => {
     setLoading(true)
     const res = await adminFetch("/admin/site-management/garments")
     if (res.data) {
-      setGarments(res.data.garments || [])
-      setProducts(res.data.availableProducts || [])
-      if (res.data.garments?.length > 0 && !selectedGarment) {
-        setSelectedGarment(res.data.garments[0])
+      const freshGarments: RackGarment[] = res.data.garments || []
+      const freshProducts: AvailableProduct[] = res.data.availableProducts || []
+      setGarments(freshGarments)
+      setProducts(freshProducts)
+
+      if (preferredId) {
+        const match = freshGarments.find((g) => g.id === preferredId)
+        setSelectedGarment(match || freshGarments[0] || null)
+      } else {
+        setSelectedGarment((prev) => {
+          if (!prev) return freshGarments[0] || null
+          const match = freshGarments.find((g) => g.id === prev.id)
+          return match || freshGarments[0] || null
+        })
       }
+    } else if (res.error) {
+      setFeedback({ type: "error", text: res.error })
     }
     setLoading(false)
   }
@@ -70,6 +83,15 @@ const SiteRackPage = () => {
   const handleSaveGarment = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedGarment) return
+
+    if (!selectedGarment.product_id || selectedGarment.product_id.trim() === "") {
+      setFeedback({
+        type: "error",
+        text: "Lütfen askılık modeli için geçerli bir Medusa katalog ürünü seçin.",
+      })
+      return
+    }
+
     setSaving(true)
     setFeedback(null)
 
@@ -103,15 +125,23 @@ const SiteRackPage = () => {
     if (res.error) {
       setFeedback({ type: "error", text: res.error })
     } else {
+      const savedGarment = res.data?.garment
+      const isPub = savedGarment?.is_published ?? selectedGarment.is_published
+      const name = savedGarment?.name || selectedGarment.name
+
       setFeedback({
         type: "success",
         text: isCreating
-          ? "Yeni askılık ürünü başarıyla eklendi."
-          : "Askılık ürünü düzenlemesi başarıyla kaydedildi.",
+          ? (isPub
+              ? `"${name}" askılık modeli başarıyla eklendi ve mağazada yayına alındı.`
+              : `"${name}" askılık modeli taslak olarak kaydedildi. Mağazada göstermek için yayına alın.`)
+          : (isPub
+              ? `"${name}" askılık modeli başarıyla güncellendi ve mağazada yayında.`
+              : `"${name}" askılık modeli güncellendi (Taslak modunda).`),
       })
       setIsEditing(false)
       setIsCreating(false)
-      await loadData()
+      await loadData(savedGarment?.id || selectedGarment.id)
     }
     setSaving(false)
   }
@@ -122,7 +152,7 @@ const SiteRackPage = () => {
       method: "DELETE",
     })
     if (res.error) {
-      alert(`Hata: ${res.error}`)
+      setFeedback({ type: "error", text: `Silme hatası: ${res.error}` })
     } else {
       setFeedback({ type: "success", text: "Askılık ürünü silindi." })
       setSelectedGarment(null)
@@ -131,12 +161,20 @@ const SiteRackPage = () => {
   }
 
   const handleCreateNew = () => {
+    if (products.length === 0) {
+      setFeedback({
+        type: "error",
+        text: "Katalogda askılıkla eşleştirilebilecek ürün bulunamadı. Lütfen önce bir ürün ekleyin.",
+      })
+      return
+    }
+
     const firstProd = products[0]
     const newGarment: RackGarment = {
       id: `rack-${Date.now()}`,
-      product_id: firstProd?.id || "",
-      product_handle: firstProd?.handle || "",
-      name: firstProd?.title || "Yeni Tekstil Ürünü",
+      product_id: firstProd.id,
+      product_handle: firstProd.handle,
+      name: firstProd.title,
       garment_kind: "tee",
       colour: "#232528",
       show_nizamlar_logo: true,
@@ -147,11 +185,29 @@ const SiteRackPage = () => {
       model_3d_file: "/models/nizamlar-tee.glb",
       rank: garments.length,
       is_active: true,
-      is_published: false,
+      is_published: true, // Mağazada hemen gösterilsin
     }
+
+    setFeedback(null)
     setSelectedGarment(newGarment)
     setIsCreating(true)
     setIsEditing(true)
+  }
+
+  const handlePublishAll = async () => {
+    setPublishing(true)
+    setFeedback(null)
+    const res = await adminFetch("/admin/site-management/publish", { method: "POST" })
+    if (res.error) {
+      setFeedback({ type: "error", text: `Yayınlama hatası: ${res.error}` })
+    } else {
+      setFeedback({
+        type: "success",
+        text: "Tüm askılık modelleri ve vitrin içerikleri mağazada başarıyla canlıya yayınlandı!",
+      })
+      await loadData(selectedGarment?.id)
+    }
+    setPublishing(false)
   }
 
   const handleProductSelect = (productId: string) => {
@@ -168,42 +224,53 @@ const SiteRackPage = () => {
 
   return (
     <div className="flex flex-col gap-y-6 max-w-7xl">
-      <Container className="p-6 bg-white border border-[#E5E0D8] shadow-xs">
+      <Container className="p-6 bg-ui-bg-base border border-ui-border-base shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <Badge className="bg-[#B29460]/20 text-[#222325] border border-[#B29460]/40 font-bold">
+              <Badge className="bg-[#B29460]/20 text-[#B29460] dark:text-[#F3EFE7] border border-[#B29460]/40 font-bold">
                 DIMAAC CLOTHES RACK
               </Badge>
-              <span className="text-xs font-medium text-[#49372E]/80">
+              <span className="text-xs font-medium text-ui-fg-subtle">
                 3D İnteraktif Kıyafet Askılığı
               </span>
             </div>
-            <Heading level="h1" className="text-2xl font-bold text-[#222325] mt-1.5">
+            <Heading level="h1" className="text-2xl font-bold text-ui-fg-base mt-1.5">
               Dimaac Ürün Vitrini Yönetimi
             </Heading>
-            <Text className="text-xs text-[#49372E] mt-1 leading-relaxed">
+            <Text className="text-xs text-ui-fg-subtle mt-1 leading-relaxed">
               Askılıkta sergilenen ürünleri Medusa kataloğundan seçin, kumaş türünü (Tişört,
               Sweatshirt, Kazak), logo baskı konumu ve ölçeğini ayarlayın.
             </Text>
           </div>
 
-          <Button
-            variant="secondary"
-            size="base"
-            onClick={handleCreateNew}
-            className="bg-[#B29460] hover:bg-[#9d814f] text-[#222325] font-bold border border-[#9d814f] cursor-pointer shadow-xs"
-          >
-            <Plus /> Yeni Model Ekle
-          </Button>
+          <div className="flex items-center gap-2.5">
+            <Button
+              variant="secondary"
+              size="base"
+              disabled={publishing}
+              onClick={handlePublishAll}
+              className="bg-ui-bg-component hover:bg-ui-bg-subtle text-ui-fg-base font-bold border border-ui-border-base cursor-pointer shadow-xs"
+            >
+              {publishing ? "Yayınlanıyor..." : "🚀 Tüm Askılığı Canlıya Yayınla"}
+            </Button>
+            <Button
+              variant="secondary"
+              size="base"
+              onClick={handleCreateNew}
+              className="bg-[#B29460] hover:bg-[#9E8250] text-[#222325] font-bold border border-[#9E8250] cursor-pointer shadow-xs"
+            >
+              <Plus /> Yeni Model Ekle
+            </Button>
+          </div>
         </div>
 
         {feedback && (
           <div
             className={`mt-4 p-3 rounded-lg text-xs font-semibold ${
               feedback.type === "success"
-                ? "bg-emerald-50 text-emerald-900 border border-emerald-300"
-                : "bg-red-50 text-red-900 border border-red-300"
+                ? "bg-emerald-50 text-emerald-900 border border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800"
+                : "bg-red-50 text-red-900 border border-red-300 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800"
             }`}
           >
             {feedback.text}
@@ -215,16 +282,16 @@ const SiteRackPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Sol Kolon: Askılık Ürün Listesi */}
         <div className="lg:col-span-4 flex flex-col gap-3">
-          <Container className="p-4 bg-white border border-[#E5E0D8] shadow-xs">
-            <div className="flex items-center justify-between mb-3 border-b border-[#E5E0D8] pb-2">
-              <Text className="text-xs font-bold text-[#222325] uppercase tracking-wide">
+          <Container className="p-4 bg-ui-bg-base border border-ui-border-base shadow-xs">
+            <div className="flex items-center justify-between mb-3 border-b border-ui-border-base pb-2">
+              <Text className="text-xs font-bold text-ui-fg-base uppercase tracking-wide">
                 Askılıktaki Modeller ({garments.length})
               </Text>
-              <Text className="text-[11px] font-semibold text-[#49372E]">Ray Sırası</Text>
+              <Text className="text-[11px] font-semibold text-ui-fg-muted">Ray Sırası</Text>
             </div>
 
             {loading ? (
-              <p className="text-xs text-[#49372E] py-4 text-center font-medium">Modeller yükleniyor...</p>
+              <p className="text-xs text-ui-fg-muted py-4 text-center font-medium">Modeller yükleniyor...</p>
             ) : (
               <div className="flex flex-col gap-2">
                 {garments.map((g, idx) => (
@@ -237,32 +304,37 @@ const SiteRackPage = () => {
                     }}
                     className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center justify-between ${
                       selectedGarment?.id === g.id
-                        ? "border-2 border-[#B29460] bg-[#FAF8F5] shadow-sm"
-                        : "border-[#E5E0D8] hover:border-[#B29460]/70 bg-white"
+                        ? "border-2 border-[#B29460] bg-[#B29460]/10 shadow-xs"
+                        : "border-ui-border-base hover:border-[#B29460]/70 bg-ui-bg-base"
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <span
-                        className="w-5 h-5 rounded-full border border-[#D8D3CA] shrink-0 shadow-inner"
+                        className="w-5 h-5 rounded-full border border-ui-border-base shrink-0 shadow-inner"
                         style={{ backgroundColor: g.colour }}
                       />
                       <div className="flex flex-col">
-                        <span className="text-xs font-bold text-[#222325] line-clamp-1">
+                        <span className="text-xs font-bold text-ui-fg-base line-clamp-1">
                           {idx + 1}. {g.name}
                         </span>
-                        <span className="text-[11px] font-semibold text-[#49372E] uppercase">
+                        <span className="text-[11px] font-semibold text-ui-fg-subtle uppercase">
                           Tür: {g.garment_kind} · Logo: {g.logo_style}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span
-                        className={`w-2 h-2 rounded-full ${
-                          g.is_active ? "bg-emerald-500" : "bg-gray-400"
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <Badge
+                        size="small"
+                        className={`font-bold ${
+                          g.is_published
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                            : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
                         }`}
-                      />
-                      <Badge size="small" className="bg-[#F3EFE7] text-[#222325] border border-[#D8D3CA] font-bold">
+                      >
+                        {g.is_published ? "Yayında" : "Taslak"}
+                      </Badge>
+                      <Badge size="small" className="bg-ui-bg-subtle text-ui-fg-subtle border border-ui-border-base font-semibold">
                         {g.garment_kind}
                       </Badge>
                     </div>
@@ -276,14 +348,26 @@ const SiteRackPage = () => {
         {/* Sağ Kolon: Model Detay ve Düzenleme Formu */}
         <div className="lg:col-span-8">
           {selectedGarment ? (
-            <Container className="p-6 bg-white border border-[#E5E0D8] shadow-xs">
-              <div className="flex items-center justify-between border-b border-[#E5E0D8] pb-4 mb-5">
+            <Container className="p-6 bg-ui-bg-base border border-ui-border-base shadow-xs">
+              <div className="flex items-center justify-between border-b border-ui-border-base pb-4 mb-5">
                 <div>
-                  <Heading level="h2" className="text-base font-bold text-[#222325]">
-                    {isCreating ? "Yeni Askılık Modeli" : `Model: ${selectedGarment.name}`}
-                  </Heading>
-                  <Text className="text-xs text-[#49372E] mt-0.5">
-                    ID: <code className="font-mono text-[#222325] bg-[#FAF8F5] px-1.5 py-0.5 rounded border border-[#D8D3CA] font-semibold">{selectedGarment.id}</code>
+                  <div className="flex items-center gap-2">
+                    <Heading level="h2" className="text-base font-bold text-ui-fg-base">
+                      {isCreating ? "Yeni Askılık Modeli" : `Model: ${selectedGarment.name}`}
+                    </Heading>
+                    <Badge
+                      size="small"
+                      className={`font-bold ${
+                        selectedGarment.is_published
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                          : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                      }`}
+                    >
+                      {selectedGarment.is_published ? "● Mağazada Yayında" : "○ Taslak (Mağazada Gizli)"}
+                    </Badge>
+                  </div>
+                  <Text className="text-xs text-ui-fg-subtle mt-0.5">
+                    ID: <code className="font-mono text-ui-fg-base bg-ui-bg-subtle px-1.5 py-0.5 rounded border border-ui-border-base font-semibold">{selectedGarment.id}</code>
                   </Text>
                 </div>
 
@@ -293,7 +377,7 @@ const SiteRackPage = () => {
                       variant="secondary"
                       size="small"
                       onClick={() => setIsEditing(true)}
-                      className="border-[#B29460] text-[#222325] hover:bg-[#FAF8F5] font-bold cursor-pointer"
+                      className="border-[#B29460] text-ui-fg-base hover:bg-ui-bg-subtle font-bold cursor-pointer"
                     >
                       <PencilSquareSolid /> Düzenle
                     </Button>
@@ -303,7 +387,7 @@ const SiteRackPage = () => {
                       variant="danger"
                       size="small"
                       onClick={() => handleDeleteGarment(selectedGarment.id)}
-                      className="bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 font-bold cursor-pointer"
+                      className="bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900 hover:bg-rose-100 dark:hover:bg-rose-900/60 font-bold cursor-pointer"
                     >
                       <Trash /> Sil
                     </Button>
@@ -311,44 +395,60 @@ const SiteRackPage = () => {
                 </div>
               </div>
 
+              {!selectedGarment.is_published && !isEditing && (
+                <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2">
+                  <span className="text-base leading-none">⚠️</span>
+                  <div>
+                    <span className="font-bold block">Bu model şu anda Taslak durumundadır ve mağaza vitrininde ziyaretçilere gösterilmez.</span>
+                    <span>Ziyaretçilere göstermek için <strong>Düzenle</strong> butonuna tıklayıp <strong>Mağaza Yayın Durumu</strong> anahtarını açın ve kaydedin; veya üstteki <strong>Tüm Askılığı Canlıya Yayınla</strong> butonuna tıklayın.</span>
+                  </div>
+                </div>
+              )}
+
               <form onSubmit={handleSaveGarment} className="flex flex-col gap-4 text-xs">
                 {/* Medusa Ürün Eşleme */}
-                <div className="p-3.5 bg-[#FAF8F5] rounded-lg border border-[#B29460]/40">
-                  <Label className="text-xs font-bold text-[#222325]">
-                    Medusa Ürün Bağlantısı
+                <div className="p-3.5 bg-ui-bg-subtle/80 rounded-lg border border-[#B29460]/40">
+                  <Label className="text-xs font-bold text-ui-fg-base">
+                    Medusa Ürün Bağlantısı *
                   </Label>
-                  <Text className="text-xs text-[#49372E] mb-2 font-medium">
+                  <Text className="text-xs text-ui-fg-subtle mb-2 font-medium">
                     Bu 3D model tıklandığında açılacak Medusa katalog ürünü:
                   </Text>
-                  <select
-                    disabled={!isEditing}
-                    value={selectedGarment.product_id}
-                    onChange={(e) => handleProductSelect(e.target.value)}
-                    className="w-full px-2.5 py-2 rounded-md border border-[#D8D3CA] bg-white text-[#222325] text-xs font-bold focus:border-[#B29460] focus:outline-none disabled:bg-[#F3EFE7]/60 disabled:text-[#49372E]"
-                  >
-                    {products.map((p) => (
-                      <option key={p.id} value={p.id} className="text-[#222325]">
-                        {p.title} ({p.handle})
-                      </option>
-                    ))}
-                  </select>
+                  {products.length === 0 ? (
+                    <div className="p-2.5 rounded-md border border-red-300 bg-red-50 text-red-800 text-xs font-semibold">
+                      Katalogda kayıtlı ürün bulunamadı. Lütfen önce ürün oluşturun.
+                    </div>
+                  ) : (
+                    <select
+                      disabled={!isEditing}
+                      value={selectedGarment.product_id}
+                      onChange={(e) => handleProductSelect(e.target.value)}
+                      className="w-full px-2.5 py-2 rounded-md border border-ui-border-base bg-ui-bg-field text-ui-fg-base text-xs font-bold focus:border-[#B29460] focus:outline-none disabled:bg-ui-bg-disabled disabled:text-ui-fg-disabled"
+                    >
+                      {products.map((p) => (
+                        <option key={p.id} value={p.id} className="text-ui-fg-base">
+                          {p.title} ({p.handle})
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-xs font-bold text-[#222325]">Görünen Ad</Label>
+                    <Label className="text-xs font-bold text-ui-fg-base">Görünen Ad</Label>
                     <Input
                       disabled={!isEditing}
                       value={selectedGarment.name}
                       onChange={(e) =>
                         setSelectedGarment({ ...selectedGarment, name: e.target.value })
                       }
-                      className="mt-1 font-bold bg-white text-[#222325] border-[#D8D3CA] focus:border-[#B29460] disabled:bg-[#F3EFE7]/60 disabled:text-[#49372E]"
+                      className="mt-1 font-bold border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:border-[#B29460] disabled:bg-ui-bg-disabled disabled:text-ui-fg-disabled"
                     />
                   </div>
 
                   <div>
-                    <Label className="text-xs font-bold text-[#222325]">Kıyafet Tipi</Label>
+                    <Label className="text-xs font-bold text-ui-fg-base">Kıyafet Tipi</Label>
                     <select
                       disabled={!isEditing}
                       value={selectedGarment.garment_kind}
@@ -358,7 +458,7 @@ const SiteRackPage = () => {
                           garment_kind: e.target.value as any,
                         })
                       }
-                      className="mt-1 w-full px-2.5 py-2 rounded-md border border-[#D8D3CA] bg-white text-[#222325] text-xs font-bold focus:border-[#B29460] focus:outline-none disabled:bg-[#F3EFE7]/60 disabled:text-[#49372E]"
+                      className="mt-1 w-full px-2.5 py-2 rounded-md border border-ui-border-base bg-ui-bg-field text-ui-fg-base text-xs font-bold focus:border-[#B29460] focus:outline-none disabled:bg-ui-bg-disabled disabled:text-ui-fg-disabled"
                     >
                       <option value="tee">Tişört (Tee)</option>
                       <option value="crewneck">Sweatshirt (Crewneck / Hoodie)</option>
@@ -369,9 +469,9 @@ const SiteRackPage = () => {
                 </div>
 
                 {/* Kumaş Rengi ve Logo Ayarları */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3.5 bg-[#FAF8F5] rounded-lg border border-[#E5E0D8]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3.5 bg-ui-bg-subtle/80 rounded-lg border border-ui-border-base">
                   <div>
-                    <Label className="text-xs font-bold text-[#222325]">Kumaş Rengi (Hex)</Label>
+                    <Label className="text-xs font-bold text-ui-fg-base">Kumaş Rengi (Hex)</Label>
                     <div className="mt-1 flex items-center gap-2">
                       <input
                         type="color"
@@ -380,7 +480,7 @@ const SiteRackPage = () => {
                         onChange={(e) =>
                           setSelectedGarment({ ...selectedGarment, colour: e.target.value })
                         }
-                        className="w-8 h-8 rounded border border-[#D8D3CA] cursor-pointer"
+                        className="w-8 h-8 rounded border border-ui-border-base cursor-pointer"
                       />
                       <Input
                         disabled={!isEditing}
@@ -388,13 +488,13 @@ const SiteRackPage = () => {
                         onChange={(e) =>
                           setSelectedGarment({ ...selectedGarment, colour: e.target.value })
                         }
-                        className="font-mono uppercase bg-white text-[#222325] border-[#D8D3CA] focus:border-[#B29460] disabled:bg-[#F3EFE7]/60 disabled:text-[#49372E]"
+                        className="font-mono uppercase border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:border-[#B29460] disabled:bg-ui-bg-disabled disabled:text-ui-fg-disabled"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <Label className="text-xs font-bold text-[#222325]">
+                    <Label className="text-xs font-bold text-ui-fg-base">
                       Nizamlar Logosu Gösterilsin
                     </Label>
                     <div className="mt-2 flex items-center gap-2">
@@ -405,7 +505,7 @@ const SiteRackPage = () => {
                           setSelectedGarment({ ...selectedGarment, show_nizamlar_logo: val })
                         }
                       />
-                      <span className="text-xs font-semibold text-[#222325]">
+                      <span className="text-xs font-semibold text-ui-fg-base">
                         {selectedGarment.show_nizamlar_logo
                           ? "Logo Kıyafet Üzerinde Aktif"
                           : "Logosuz Düz Kumaş"}
@@ -415,13 +515,13 @@ const SiteRackPage = () => {
                 </div>
 
                 {/* Logo Yerleşim ve Ölçek Koordinatları */}
-                <div className="p-3.5 bg-[#FAF8F5] rounded-lg border border-[#E5E0D8] flex flex-col gap-3">
-                  <Text className="text-xs font-bold text-[#222325]">
+                <div className="p-3.5 bg-ui-bg-subtle/80 rounded-lg border border-ui-border-base flex flex-col gap-3">
+                  <Text className="text-xs font-bold text-ui-fg-base">
                     Logo Konumu ve Baskı Tekniği
                   </Text>
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                     <div>
-                      <Label className="text-[11px] font-bold text-[#49372E]">Ölçek (Scale)</Label>
+                      <Label className="text-[11px] font-bold text-ui-fg-subtle">Ölçek (Scale)</Label>
                       <Input
                         type="number"
                         step="0.01"
@@ -433,12 +533,12 @@ const SiteRackPage = () => {
                             logo_scale: parseFloat(e.target.value) || 0.22,
                           })
                         }
-                        className="mt-0.5 bg-white text-[#222325] border-[#D8D3CA] focus:border-[#B29460] disabled:bg-[#F3EFE7]/60 disabled:text-[#49372E]"
+                        className="mt-0.5 border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:border-[#B29460] disabled:bg-ui-bg-disabled disabled:text-ui-fg-disabled"
                       />
                     </div>
 
                     <div>
-                      <Label className="text-[11px] font-bold text-[#49372E]">Yatay Konum (X)</Label>
+                      <Label className="text-[11px] font-bold text-ui-fg-subtle">Yatay Konum (X)</Label>
                       <Input
                         type="number"
                         step="0.01"
@@ -450,12 +550,12 @@ const SiteRackPage = () => {
                             logo_pos_x: parseFloat(e.target.value) || 0.35,
                           })
                         }
-                        className="mt-0.5 bg-white text-[#222325] border-[#D8D3CA] focus:border-[#B29460] disabled:bg-[#F3EFE7]/60 disabled:text-[#49372E]"
+                        className="mt-0.5 border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:border-[#B29460] disabled:bg-ui-bg-disabled disabled:text-ui-fg-disabled"
                       />
                     </div>
 
                     <div>
-                      <Label className="text-[11px] font-bold text-[#49372E]">Dikey Konum (Y)</Label>
+                      <Label className="text-[11px] font-bold text-ui-fg-subtle">Dikey Konum (Y)</Label>
                       <Input
                         type="number"
                         step="0.01"
@@ -467,12 +567,12 @@ const SiteRackPage = () => {
                             logo_pos_y: parseFloat(e.target.value) || 0.58,
                           })
                         }
-                        className="mt-0.5 bg-white text-[#222325] border-[#D8D3CA] focus:border-[#B29460] disabled:bg-[#F3EFE7]/60 disabled:text-[#49372E]"
+                        className="mt-0.5 border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:border-[#B29460] disabled:bg-ui-bg-disabled disabled:text-ui-fg-disabled"
                       />
                     </div>
 
                     <div>
-                      <Label className="text-[11px] font-bold text-[#49372E]">Baskı Türü</Label>
+                      <Label className="text-[11px] font-bold text-ui-fg-subtle">Baskı Türü</Label>
                       <select
                         disabled={!isEditing}
                         value={selectedGarment.logo_style}
@@ -482,7 +582,7 @@ const SiteRackPage = () => {
                             logo_style: e.target.value,
                           })
                         }
-                        className="mt-0.5 w-full px-2 py-1.5 rounded border border-[#D8D3CA] bg-white text-[#222325] text-xs font-bold focus:border-[#B29460] focus:outline-none disabled:bg-[#F3EFE7]/60 disabled:text-[#49372E]"
+                        className="mt-0.5 w-full px-2 py-1.5 rounded border border-ui-border-base bg-ui-bg-field text-ui-fg-base text-xs font-bold focus:border-[#B29460] focus:outline-none disabled:bg-ui-bg-disabled disabled:text-ui-fg-disabled"
                       >
                         <option value="screenprint">Serigrafi / DTF</option>
                         <option value="puff">Kabartma (Puff Print)</option>
@@ -493,25 +593,52 @@ const SiteRackPage = () => {
                   </div>
                 </div>
 
-                {/* 3D Model Dosyası ve Aktiflik */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* 3D Model Dosyası */}
+                <div>
+                  <Label className="text-xs font-bold text-ui-fg-base">
+                    3D Mesh Modeli (.glb)
+                  </Label>
+                  <Input
+                    disabled={!isEditing}
+                    value={selectedGarment.model_3d_file}
+                    onChange={(e) =>
+                      setSelectedGarment({ ...selectedGarment, model_3d_file: e.target.value })
+                    }
+                    className="mt-1 font-mono border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:border-[#B29460] disabled:bg-ui-bg-disabled disabled:text-ui-fg-disabled"
+                  />
+                </div>
+
+                {/* Yayın ve Görünürlük Durumu */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3.5 bg-ui-bg-subtle/80 rounded-lg border border-ui-border-base">
                   <div>
-                    <Label className="text-xs font-bold text-[#222325]">
-                      3D Mesh Modeli (.glb)
+                    <Label className="text-xs font-bold text-ui-fg-base">
+                      Mağaza Yayın Durumu
                     </Label>
-                    <Input
-                      disabled={!isEditing}
-                      value={selectedGarment.model_3d_file}
-                      onChange={(e) =>
-                        setSelectedGarment({ ...selectedGarment, model_3d_file: e.target.value })
-                      }
-                      className="mt-1 font-mono bg-white text-[#222325] border-[#D8D3CA] focus:border-[#B29460] disabled:bg-[#F3EFE7]/60 disabled:text-[#49372E]"
-                    />
+                    <Text className="text-[11px] text-ui-fg-subtle mb-1.5 font-medium">
+                      Açık olduğunda Storefront 3D askılığında anında görüntülenir.
+                    </Text>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={selectedGarment.is_published}
+                        disabled={!isEditing}
+                        onCheckedChange={(val) =>
+                          setSelectedGarment({ ...selectedGarment, is_published: val })
+                        }
+                      />
+                      <span className={`text-xs font-bold ${selectedGarment.is_published ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                        {selectedGarment.is_published ? "Yayında (Canlı)" : "Taslak (Gizli)"}
+                      </span>
+                    </div>
                   </div>
 
                   <div>
-                    <Label className="text-xs font-bold text-[#222325]">Durum</Label>
-                    <div className="mt-2 flex items-center gap-2">
+                    <Label className="text-xs font-bold text-ui-fg-base">
+                      Askılık Aktiflik Durumu
+                    </Label>
+                    <Text className="text-[11px] text-ui-fg-subtle mb-1.5 font-medium">
+                      Modelin askılık rayında aktif olarak sıralanmasını belirler.
+                    </Text>
+                    <div className="flex items-center gap-2">
                       <Switch
                         checked={selectedGarment.is_active}
                         disabled={!isEditing}
@@ -519,8 +646,8 @@ const SiteRackPage = () => {
                           setSelectedGarment({ ...selectedGarment, is_active: val })
                         }
                       />
-                      <span className="text-xs font-semibold text-[#222325]">
-                        {selectedGarment.is_active ? "Askılıkta Göster" : "Askılıkta Gizli"}
+                      <span className="text-xs font-semibold text-ui-fg-base">
+                        {selectedGarment.is_active ? "Askılıkta Aktif" : "Pasif"}
                       </span>
                     </div>
                   </div>
@@ -528,7 +655,7 @@ const SiteRackPage = () => {
 
                 {/* Kaydet Butonları */}
                 {isEditing && (
-                  <div className="pt-4 border-t border-[#E5E0D8] flex items-center justify-end gap-2">
+                  <div className="pt-4 border-t border-ui-border-base flex items-center justify-end gap-2">
                     <Button
                       variant="secondary"
                       size="base"
@@ -537,7 +664,7 @@ const SiteRackPage = () => {
                         setIsEditing(false)
                         setIsCreating(false)
                       }}
-                      className="border-[#D8D3CA] text-[#49372E] hover:bg-[#FAF8F5] font-bold cursor-pointer"
+                      className="border border-ui-border-base text-ui-fg-subtle hover:bg-ui-bg-subtle font-bold cursor-pointer"
                     >
                       İptal
                     </Button>
@@ -546,7 +673,7 @@ const SiteRackPage = () => {
                       size="base"
                       type="submit"
                       disabled={saving}
-                      className="bg-[#B29460] hover:bg-[#9d814f] text-[#222325] font-extrabold px-6 border border-[#9d814f] shadow-sm cursor-pointer"
+                      className="bg-[#B29460] hover:bg-[#9E8250] text-[#222325] font-extrabold px-6 border border-[#9E8250] shadow-sm cursor-pointer"
                     >
                       {saving ? "Kaydediliyor..." : "💾 Modeli Kaydet"}
                     </Button>
@@ -555,7 +682,7 @@ const SiteRackPage = () => {
               </form>
             </Container>
           ) : (
-            <Container className="p-8 text-center text-[#49372E] bg-white border border-[#E5E0D8] font-medium">
+            <Container className="p-8 text-center text-ui-fg-muted bg-ui-bg-base border border-ui-border-base font-medium">
               Düzenlemek için soldaki askılık modellerinden birini seçin veya yeni model ekleyin.
             </Container>
           )}

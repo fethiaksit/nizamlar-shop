@@ -178,12 +178,12 @@ const SiteHeroPage = () => {
           <div>
             <div className="flex items-center gap-2">
               <Badge color="orange">HERO SLIDER</Badge>
-              <span className="text-xs text-gray-500">Dinamik Ön Yüz Görsel Vitrini</span>
+              <span className="text-xs text-ui-fg-muted font-medium">Dinamik Ön Yüz Görsel Vitrini</span>
             </div>
-            <Heading level="h1" className="text-2xl font-bold text-gray-900 mt-1">
+            <Heading level="h1" className="text-2xl font-bold text-ui-fg-base mt-1">
               Hero Slider Yönetimi
             </Heading>
-            <Text className="text-xs text-gray-600 mt-1">
+            <Text className="text-xs text-ui-fg-subtle mt-1 leading-relaxed">
               Slayt sıralamasını, başlıkları, buton bağlantılarını, görselleri ve 3D renkleri
               düzenleyin. Kod değişikliği gerekmeksizin veritabanından okunur.
             </Text>
@@ -196,7 +196,7 @@ const SiteHeroPage = () => {
             <Button
               variant="primary"
               size="base"
-              className="bg-[#D4AF37] hover:bg-[#c19d29] text-gray-950 font-bold"
+              className="bg-[#B29460] hover:bg-[#9E8250] text-[#222325] font-bold"
               onClick={handlePublishAll}
             >
               🚀 Değişiklikleri Yayınla
@@ -221,18 +221,18 @@ const SiteHeroPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Sol Kolon: Slayt Listesi */}
         <div className="lg:col-span-4 flex flex-col gap-3">
-          <Container className="p-4">
-            <div className="flex items-center justify-between mb-3 border-b pb-2">
-              <Text className="text-xs font-bold text-gray-700 uppercase">
+          <Container className="p-4 bg-ui-bg-base border border-ui-border-base text-ui-fg-base">
+            <div className="flex items-center justify-between mb-3 border-b border-ui-border-base pb-2">
+              <Text className="text-xs font-bold text-ui-fg-base uppercase">
                 Slaytlar ({slides.length})
               </Text>
-              <Text className="text-[11px] text-gray-500">Sıralı Görünüm</Text>
+              <Text className="text-[11px] text-ui-fg-muted">Sıralı Görünüm</Text>
             </div>
 
             {loading ? (
-              <p className="text-xs text-gray-500 py-4 text-center">Slaytlar yükleniyor...</p>
+              <p className="text-xs text-ui-fg-muted py-4 text-center">Slaytlar yükleniyor...</p>
             ) : slides.length === 0 ? (
-              <p className="text-xs text-gray-500 py-4 text-center">Henüz slayt eklenmemiş.</p>
+              <p className="text-xs text-ui-fg-muted py-4 text-center">Henüz slayt eklenmemiş.</p>
             ) : (
               <div className="flex flex-col gap-2">
                 {slides.map((s, idx) => (
@@ -245,12 +245,12 @@ const SiteHeroPage = () => {
                     }}
                     className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center justify-between ${
                       selectedSlide?.id === s.id
-                        ? "border-[#D4AF37] bg-amber-50/50 shadow-sm"
-                        : "border-gray-200 hover:border-gray-300 bg-white"
+                        ? "border-2 border-[#B29460] bg-[#B29460]/10 shadow-xs"
+                        : "border-ui-border-base hover:border-[#B29460]/60 bg-ui-bg-base text-ui-fg-base"
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-md bg-gray-100 overflow-hidden border shrink-0 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-md bg-ui-bg-subtle overflow-hidden border border-ui-border-base shrink-0 flex items-center justify-center">
                         <img
                           src={s.image_url}
                           alt={s.image_alt}
@@ -261,17 +261,17 @@ const SiteHeroPage = () => {
                         />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-xs font-bold text-gray-900 line-clamp-1">
+                        <span className="text-xs font-bold text-ui-fg-base line-clamp-1">
                           {idx + 1}. {s.title_line1} {s.title_line2}
                         </span>
-                        <span className="text-[11px] text-gray-500 line-clamp-1">{s.eyebrow}</span>
+                        <span className="text-[11px] text-ui-fg-subtle line-clamp-1">{s.eyebrow}</span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
                       <span
                         className={`w-2 h-2 rounded-full ${
-                          s.is_active ? "bg-emerald-500" : "bg-gray-300"
+                          s.is_active ? "bg-emerald-500" : "bg-zinc-400"
                         }`}
                         title={s.is_active ? "Aktif" : "Pasif"}
                       />
@@ -289,14 +289,14 @@ const SiteHeroPage = () => {
         {/* Sağ Kolon: Slayt Detay ve Düzenleme Formu */}
         <div className="lg:col-span-8">
           {selectedSlide ? (
-            <Container className="p-6">
-              <div className="flex items-center justify-between border-b pb-4 mb-5">
+            <Container className="p-6 bg-ui-bg-base border border-ui-border-base text-ui-fg-base">
+              <div className="flex items-center justify-between border-b border-ui-border-base pb-4 mb-5">
                 <div>
-                  <Heading level="h2" className="text-base font-bold text-gray-900">
+                  <Heading level="h2" className="text-base font-bold text-ui-fg-base">
                     {isCreating ? "Yeni Slayt Ekle" : `Slayt Detayı: ${selectedSlide.title_line1}`}
                   </Heading>
-                  <Text className="text-xs text-gray-500">
-                    ID: <code className="font-mono text-gray-700">{selectedSlide.id}</code>
+                  <Text className="text-xs text-ui-fg-subtle">
+                    ID: <code className="font-mono text-ui-fg-base bg-ui-bg-subtle px-1.5 py-0.5 rounded border border-ui-border-base font-semibold">{selectedSlide.id}</code>
                   </Text>
                 </div>
 
@@ -320,9 +320,9 @@ const SiteHeroPage = () => {
 
               <form onSubmit={handleSaveSlide} className="flex flex-col gap-4 text-xs">
                 {/* Durum ve Tema */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-3 bg-gray-50 rounded-lg border">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-3 bg-ui-bg-subtle/80 rounded-lg border border-ui-border-base">
                   <div>
-                    <Label className="text-[11px] font-semibold text-gray-700">Durum (Aktif)</Label>
+                    <Label className="text-[11px] font-semibold text-ui-fg-base">Durum (Aktif)</Label>
                     <div className="mt-1 flex items-center gap-2">
                       <Switch
                         checked={selectedSlide.is_active}
@@ -331,14 +331,14 @@ const SiteHeroPage = () => {
                           setSelectedSlide({ ...selectedSlide, is_active: val })
                         }
                       />
-                      <span className="text-xs text-gray-600">
+                      <span className="text-xs text-ui-fg-subtle font-medium">
                         {selectedSlide.is_active ? "Slayt Gösterimde" : "Gizli"}
                       </span>
                     </div>
                   </div>
 
                   <div>
-                    <Label className="text-[11px] font-semibold text-gray-700">Görsel Tema</Label>
+                    <Label className="text-[11px] font-semibold text-ui-fg-base">Görsel Tema</Label>
                     <select
                       disabled={!isEditing}
                       value={selectedSlide.theme}
@@ -348,7 +348,7 @@ const SiteHeroPage = () => {
                           theme: e.target.value as "light" | "dark" | "brown",
                         })
                       }
-                      className="mt-1 w-full px-2.5 py-1.5 rounded-md border border-gray-300 bg-white text-xs"
+                      className="mt-1 w-full px-2.5 py-1.5 rounded-md border border-ui-border-base bg-ui-bg-field text-ui-fg-base text-xs focus:outline-none focus:border-[#B29460] focus:ring-1 focus:ring-[#B29460]"
                     >
                       <option value="light">Açık (Light Penye)</option>
                       <option value="dark">Koyu Antrasit (Dark Lab)</option>
@@ -357,7 +357,7 @@ const SiteHeroPage = () => {
                   </div>
 
                   <div>
-                    <Label className="text-[11px] font-semibold text-gray-700">
+                    <Label className="text-[11px] font-semibold text-ui-fg-base">
                       Geçiş Süresi (ms)
                     </Label>
                     <Input
@@ -370,7 +370,7 @@ const SiteHeroPage = () => {
                           autoplay_duration_ms: parseInt(e.target.value) || 4400,
                         })
                       }
-                      className="mt-1"
+                      className="mt-1 border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:border-[#B29460]"
                     />
                   </div>
                 </div>
@@ -378,56 +378,56 @@ const SiteHeroPage = () => {
                 {/* Başlık ve Metinler */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-[11px] font-semibold text-gray-700">Üst Başlık (Eyebrow)</Label>
+                    <Label className="text-[11px] font-semibold text-ui-fg-base">Üst Başlık (Eyebrow)</Label>
                     <Input
                       disabled={!isEditing}
                       value={selectedSlide.eyebrow}
                       onChange={(e) =>
                         setSelectedSlide({ ...selectedSlide, eyebrow: e.target.value })
                       }
-                      className="mt-1"
+                      className="mt-1 border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:border-[#B29460]"
                     />
                   </div>
 
                   <div>
-                    <Label className="text-[11px] font-semibold text-gray-700">Kıyafet Etiketi</Label>
+                    <Label className="text-[11px] font-semibold text-ui-fg-base">Kıyafet Etiketi</Label>
                     <Input
                       disabled={!isEditing}
                       value={selectedSlide.garment_tag}
                       onChange={(e) =>
                         setSelectedSlide({ ...selectedSlide, garment_tag: e.target.value })
                       }
-                      className="mt-1"
+                      className="mt-1 border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:border-[#B29460]"
                     />
                   </div>
 
                   <div>
-                    <Label className="text-[11px] font-semibold text-gray-700">1. Satır Başlık</Label>
+                    <Label className="text-[11px] font-semibold text-ui-fg-base">1. Satır Başlık</Label>
                     <Input
                       disabled={!isEditing}
                       value={selectedSlide.title_line1}
                       onChange={(e) =>
                         setSelectedSlide({ ...selectedSlide, title_line1: e.target.value })
                       }
-                      className="mt-1 font-bold"
+                      className="mt-1 font-bold border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:border-[#B29460]"
                     />
                   </div>
 
                   <div>
-                    <Label className="text-[11px] font-semibold text-gray-700">2. Satır Başlık</Label>
+                    <Label className="text-[11px] font-semibold text-ui-fg-base">2. Satır Başlık</Label>
                     <Input
                       disabled={!isEditing}
                       value={selectedSlide.title_line2}
                       onChange={(e) =>
                         setSelectedSlide({ ...selectedSlide, title_line2: e.target.value })
                       }
-                      className="mt-1 font-bold"
+                      className="mt-1 font-bold border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:border-[#B29460]"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label className="text-[11px] font-semibold text-gray-700">Açıklama Metni</Label>
+                  <Label className="text-[11px] font-semibold text-ui-fg-base">Açıklama Metni</Label>
                   <textarea
                     disabled={!isEditing}
                     rows={2}
@@ -435,60 +435,60 @@ const SiteHeroPage = () => {
                     onChange={(e) =>
                       setSelectedSlide({ ...selectedSlide, subtitle: e.target.value })
                     }
-                    className="mt-1 w-full p-2.5 rounded-md border border-gray-300 bg-white text-xs"
+                    className="mt-1 w-full p-2.5 rounded-md border border-ui-border-base bg-ui-bg-field text-ui-fg-base placeholder:text-ui-fg-muted text-xs focus:outline-none focus:border-[#B29460] focus:ring-1 focus:ring-[#B29460]"
                   />
                 </div>
 
                 {/* Butonlar */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-3 bg-gray-50 rounded-lg border flex flex-col gap-2">
-                    <Text className="text-[11px] font-bold text-gray-800">Ana Buton (Birincil)</Text>
+                  <div className="p-3 bg-ui-bg-subtle/80 rounded-lg border border-ui-border-base flex flex-col gap-2">
+                    <Text className="text-[11px] font-bold text-ui-fg-base">Ana Buton (Birincil)</Text>
                     <div>
-                      <Label className="text-[10px] text-gray-600">Buton Metni</Label>
+                      <Label className="text-[10px] text-ui-fg-subtle">Buton Metni</Label>
                       <Input
                         disabled={!isEditing}
                         value={selectedSlide.cta_label}
                         onChange={(e) =>
                           setSelectedSlide({ ...selectedSlide, cta_label: e.target.value })
                         }
-                        className="mt-0.5"
+                        className="mt-0.5 border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:border-[#B29460]"
                       />
                     </div>
                     <div>
-                      <Label className="text-[10px] text-gray-600">Bağlantı URL</Label>
+                      <Label className="text-[10px] text-ui-fg-subtle">Bağlantı URL</Label>
                       <Input
                         disabled={!isEditing}
                         value={selectedSlide.cta_href}
                         onChange={(e) =>
                           setSelectedSlide({ ...selectedSlide, cta_href: e.target.value })
                         }
-                        className="mt-0.5 font-mono"
+                        className="mt-0.5 font-mono border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:border-[#B29460]"
                       />
                     </div>
                   </div>
 
-                  <div className="p-3 bg-gray-50 rounded-lg border flex flex-col gap-2">
-                    <Text className="text-[11px] font-bold text-gray-800">İkincil Buton</Text>
+                  <div className="p-3 bg-ui-bg-subtle/80 rounded-lg border border-ui-border-base flex flex-col gap-2">
+                    <Text className="text-[11px] font-bold text-ui-fg-base">İkincil Buton</Text>
                     <div>
-                      <Label className="text-[10px] text-gray-600">Buton Metni</Label>
+                      <Label className="text-[10px] text-ui-fg-subtle">Buton Metni</Label>
                       <Input
                         disabled={!isEditing}
                         value={selectedSlide.secondary_label || ""}
                         onChange={(e) =>
                           setSelectedSlide({ ...selectedSlide, secondary_label: e.target.value })
                         }
-                        className="mt-0.5"
+                        className="mt-0.5 border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:border-[#B29460]"
                       />
                     </div>
                     <div>
-                      <Label className="text-[10px] text-gray-600">Bağlantı URL</Label>
+                      <Label className="text-[10px] text-ui-fg-subtle">Bağlantı URL</Label>
                       <Input
                         disabled={!isEditing}
                         value={selectedSlide.secondary_href || ""}
                         onChange={(e) =>
                           setSelectedSlide({ ...selectedSlide, secondary_href: e.target.value })
                         }
-                        className="mt-0.5 font-mono"
+                        className="mt-0.5 font-mono border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:border-[#B29460]"
                       />
                     </div>
                   </div>
@@ -497,7 +497,7 @@ const SiteHeroPage = () => {
                 {/* Görsel ve 3D Özellikleri */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-[11px] font-semibold text-gray-700">
+                    <Label className="text-[11px] font-semibold text-ui-fg-base">
                       Görsel Dosya Yolu (WebP / PNG)
                     </Label>
                     <Input
@@ -506,12 +506,12 @@ const SiteHeroPage = () => {
                       onChange={(e) =>
                         setSelectedSlide({ ...selectedSlide, image_url: e.target.value })
                       }
-                      className="mt-1 font-mono"
+                      className="mt-1 font-mono border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:border-[#B29460]"
                     />
                   </div>
 
                   <div>
-                    <Label className="text-[11px] font-semibold text-gray-700">
+                    <Label className="text-[11px] font-semibold text-ui-fg-base">
                       3D Tişört Kumaş Rengi (Hex)
                     </Label>
                     <div className="mt-1 flex items-center gap-2">
@@ -522,7 +522,7 @@ const SiteHeroPage = () => {
                         onChange={(e) =>
                           setSelectedSlide({ ...selectedSlide, shirt_color: e.target.value })
                         }
-                        className="w-8 h-8 rounded border cursor-pointer"
+                        className="w-8 h-8 rounded border border-ui-border-base cursor-pointer"
                       />
                       <Input
                         disabled={!isEditing}
@@ -530,7 +530,7 @@ const SiteHeroPage = () => {
                         onChange={(e) =>
                           setSelectedSlide({ ...selectedSlide, shirt_color: e.target.value })
                         }
-                        className="font-mono uppercase"
+                        className="font-mono uppercase border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:border-[#B29460]"
                       />
                     </div>
                   </div>
@@ -538,7 +538,7 @@ const SiteHeroPage = () => {
 
                 {/* Aksiyon Butonları */}
                 {isEditing && (
-                  <div className="pt-4 border-t flex items-center justify-end gap-2">
+                  <div className="pt-4 border-t border-ui-border-base flex items-center justify-end gap-2">
                     <Button
                       variant="secondary"
                       size="base"
@@ -555,7 +555,7 @@ const SiteHeroPage = () => {
                       size="base"
                       type="submit"
                       disabled={saving}
-                      className="bg-[#D4AF37] hover:bg-[#c19d29] text-gray-950 font-bold"
+                      className="bg-[#B29460] hover:bg-[#9E8250] text-[#222325] font-bold"
                     >
                       {saving ? "Kaydediliyor..." : "💾 Değişiklikleri Kaydet"}
                     </Button>
@@ -564,7 +564,7 @@ const SiteHeroPage = () => {
               </form>
             </Container>
           ) : (
-            <Container className="p-8 text-center text-gray-500">
+            <Container className="p-8 text-center text-ui-fg-muted bg-ui-bg-base border border-ui-border-base">
               Düzenlemek için soldaki slaytlardan birini seçin veya yeni slayt ekleyin.
             </Container>
           )}

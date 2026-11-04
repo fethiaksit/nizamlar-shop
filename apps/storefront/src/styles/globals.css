@@ -1355,15 +1355,39 @@ summary:focus-visible {
 }
 .studio-workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  max-width: 1600px;
+  grid-template-columns: 310px minmax(0, 1fr) 350px;
+  max-width: 1760px;
+  width: 100%;
   margin: auto;
+  flex: 1;
+  min-height: 0;
+}
+.studio-col-left {
+  padding: 24px 20px;
+  background: var(--brand-anthracite);
+  border-right: 1px solid rgba(201, 193, 181, 0.16);
+  overflow-y: auto;
+  max-height: calc(100svh - 175px);
+}
+.studio-col-center {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-height: 0;
+}
+.studio-col-right {
+  padding: 24px 20px;
+  background: var(--brand-anthracite);
+  border-left: 1px solid rgba(201, 193, 181, 0.16);
+  overflow-y: auto;
+  max-height: calc(100svh - 175px);
 }
 .studio-canvas-area {
-  padding: 28px 5%;
-  position: sticky;
-  top: 0;
-  align-self: start;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 .studio-toolbar {
   display: flex;
@@ -1371,18 +1395,29 @@ summary:focus-visible {
   justify-content: space-between;
   gap: 8px;
   font-size: 11px;
+  margin-bottom: 12px;
 }
 .studio-toolbar > div {
   display: flex;
   gap: 6px;
 }
 .studio-toolbar button {
-  padding: 10px 14px;
+  padding: 9px 13px;
   color: var(--brand-stone-light);
   background: var(--brand-surface);
   border: 1px solid rgba(201, 193, 181, 0.2);
   border-radius: 6px;
   font-weight: 600;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.studio-toolbar button:hover {
+  border-color: var(--brand-gold);
+  color: var(--brand-gold-hover);
 }
 .studio-toolbar button[aria-pressed="true"] {
   border-color: var(--brand-gold);
@@ -1391,12 +1426,13 @@ summary:focus-visible {
   font-weight: 700;
 }
 .studio-canvas {
-  height: min(64svh, 640px);
-  min-height: 360px;
-  margin-top: 12px;
-  background: radial-gradient(ellipse, rgba(73, 55, 46, 0.36), var(--brand-anthracite) 72%);
+  height: min(64svh, 620px);
+  min-height: 400px;
+  background: radial-gradient(ellipse at center, rgba(73, 55, 46, 0.42), var(--brand-anthracite) 75%);
   border: 1px solid rgba(201, 193, 181, 0.2);
   border-radius: 10px;
+  position: relative;
+  overflow: hidden;
 }
 .studio-canvas > img {
   height: 100%;
@@ -1408,68 +1444,211 @@ summary:focus-visible {
   text-align: center;
   color: var(--brand-stone-light);
   font-size: 11px;
-  padding: 14px 0;
+  padding: 10px 0 4px;
 }
 .studio-product-info {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 12px;
-  padding: 18px 0;
-  border-top: 1px solid rgba(201, 193, 181, 0.2);
-  font-size: 12px;
+  padding: 10px 0;
+  border-top: 1px solid rgba(201, 193, 181, 0.16);
+  font-size: 11px;
   color: var(--brand-stone-light);
 }
-.studio-controls {
-  padding: 28px;
-  border-left: 1px solid rgba(201, 193, 181, 0.2);
-  background: var(--brand-anthracite);
-}
-.studio-controls section {
-  padding-bottom: 22px;
-  margin-bottom: 22px;
-  border-bottom: 1px solid rgba(201, 193, 181, 0.18);
-}
-.studio-controls h3 {
+
+/* Sol & Sağ Kolon Başlıkları */
+.studio-section-title {
   font-size: 11px;
   font-weight: 700;
   color: var(--brand-gold-hover);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
-.studio-selectors {
+.studio-section {
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(201, 193, 181, 0.14);
+}
+.studio-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* Renk Seçici / Swatches */
+.studio-swatches {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
+  margin-top: 6px;
 }
-.studio-selectors label {
-  flex: 1;
-  min-width: 70px;
+.studio-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  padding: 2px;
+  background-clip: content-box;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+.studio-swatch:hover {
+  transform: scale(1.15);
+}
+.studio-swatch[aria-pressed="true"] {
+  border-color: var(--brand-gold);
+  box-shadow: 0 0 0 2px rgba(178, 148, 96, 0.5);
+}
+
+/* Beden Seçici / Pills */
+.studio-sizes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.studio-size-pill {
+  padding: 7px 12px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--brand-stone-light);
-}
-.studio-selectors select,
-.studio-selectors input,
-.studio-technique select {
-  display: block;
-  width: 100%;
-  border: 1px solid rgba(201, 193, 181, 0.35);
   background: var(--brand-surface);
   color: var(--brand-cream-light);
-  border-radius: 6px;
+  border: 1px solid rgba(201, 193, 181, 0.25);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.studio-size-pill:hover:not(:disabled) {
+  border-color: var(--brand-gold);
+  color: var(--brand-gold-hover);
+}
+.studio-size-pill[aria-pressed="true"] {
+  background: var(--brand-gold);
+  color: var(--brand-dark);
+  border-color: var(--brand-gold);
+  font-weight: 700;
+}
+.studio-size-pill:disabled {
+  opacity: 0.35;
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+/* Stok Rozetleri */
+.studio-stock-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 600;
   margin-top: 8px;
-  padding: 10px 8px;
+}
+.studio-stock-badge.in-stock {
+  background: rgba(37, 88, 50, 0.4);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+.studio-stock-badge.out-of-stock {
+  background: rgba(239, 68, 68, 0.25);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+}
+
+/* Adet Stepper */
+.studio-stepper {
+  display: inline-flex;
+  align-items: center;
+  background: var(--brand-surface);
+  border: 1px solid rgba(201, 193, 181, 0.3);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+.studio-stepper button {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: bold;
+  color: var(--brand-cream-light);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.studio-stepper button:hover:not(:disabled) {
+  background: rgba(178, 148, 96, 0.25);
+  color: var(--brand-gold-hover);
+}
+.studio-stepper button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.studio-stepper input {
+  width: 44px;
+  text-align: center;
+  background: transparent;
+  border: none;
+  color: var(--brand-cream-light);
+  font-weight: 700;
   font-size: 12px;
+  -moz-appearance: textfield;
 }
-.studio-controls input[type="file"] {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
+.studio-stepper input::-webkit-outer-spin-button,
+.studio-stepper input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
+
+/* Baskı Tekniği Kartları */
+.studio-tech-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 6px;
+}
+.studio-tech-card {
+  padding: 10px 12px;
+  background: var(--brand-surface);
+  border: 1px solid rgba(201, 193, 181, 0.25);
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+.studio-tech-card:hover {
+  border-color: var(--brand-gold);
+}
+.studio-tech-card[aria-pressed="true"] {
+  border-color: var(--brand-gold);
+  background: rgba(73, 55, 46, 0.45);
+  box-shadow: 0 0 0 1px var(--brand-gold);
+}
+.studio-tech-card strong {
+  font-size: 11px;
+  color: var(--brand-cream-light);
+}
+.studio-tech-card span {
+  font-size: 10px;
+  color: var(--brand-stone-light);
+}
+
+/* Dosya Yükleme Dropzone */
 .studio-upload {
-  padding: 20px 12px;
+  padding: 16px 12px;
   border: 1.5px dashed var(--brand-gold);
   background: var(--brand-surface);
   color: var(--brand-cream-light);
@@ -1478,6 +1657,8 @@ summary:focus-visible {
   font-size: 12px;
   font-weight: 600;
   overflow-wrap: anywhere;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 .studio-upload:hover {
   border-color: var(--brand-gold-hover);
@@ -1485,102 +1666,170 @@ summary:focus-visible {
 }
 .studio-upload > span {
   display: block;
-  font-size: 24px;
+  font-size: 22px;
   color: var(--brand-gold-hover);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 .studio-upload small {
   display: block;
   color: var(--brand-stone-light);
   font-size: 10px;
-  margin-top: 6px;
+  margin-top: 4px;
 }
+
+/* Sürükle / Boyutlandır / Döndür Ayar Kaydırıcıları */
 .studio-transforms {
-  margin-top: 20px;
+  margin-top: 14px;
 }
 .studio-transforms label {
   display: block;
   font-size: 11px;
   color: var(--brand-stone-light);
-  margin: 16px 0;
+  margin: 12px 0;
 }
 .studio-transforms output {
   float: right;
   font-weight: 700;
   color: var(--brand-gold-hover);
+  font-size: 11px;
 }
 .studio-transforms input {
   width: 100%;
-  margin-top: 10px;
+  margin-top: 8px;
   accent-color: var(--brand-gold);
+  cursor: pointer;
 }
-.studio-transforms p {
-  font-size: 11px;
+.studio-dimension-badge {
+  font-size: 10.5px;
   font-weight: 600;
   color: var(--brand-gold-hover);
+  background: rgba(73, 55, 46, 0.35);
+  border: 1px solid rgba(178, 148, 96, 0.3);
+  padding: 6px 10px;
+  border-radius: 4px;
+  margin-top: 10px;
+  text-align: center;
 }
+
+/* Hızlı Konumlandırma Butonları (Presets) */
 .studio-presets {
-  display: flex;
-  gap: 8px;
-  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-top: 12px;
 }
 .studio-presets button {
   font-size: 10px;
   font-weight: 600;
-  padding: 7px 10px;
+  padding: 8px 10px;
   background: var(--brand-surface);
   color: var(--brand-cream-light);
-  border: 1px solid rgba(201, 193, 181, 0.3);
+  border: 1px solid rgba(201, 193, 181, 0.25);
   border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 .studio-presets button:hover {
   border-color: var(--brand-gold);
-}
-.studio-technique {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--brand-stone-light);
-}
-.studio-price-note {
-  font-size: 11px;
-  line-height: 1.8;
-  color: var(--brand-stone-light);
-  margin-top: 16px;
-}
-.studio-price-note strong {
   color: var(--brand-gold-hover);
 }
-.studio-warning {
-  color: var(--brand-warning);
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.7;
+
+/* Geçmiş ve Sıfırlama Butonları */
+.studio-history-bar {
+  display: flex;
+  gap: 6px;
   margin-top: 12px;
 }
-.studio-save,
-.studio-checkout {
-  width: 100%;
+.studio-history-bar button {
+  flex: 1;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 7px 8px;
+  background: var(--brand-surface);
+  color: var(--brand-cream-light);
+  border: 1px solid rgba(201, 193, 181, 0.25);
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+.studio-history-bar button:hover:not(:disabled) {
+  border-color: var(--brand-gold);
+  color: var(--brand-gold-hover);
+}
+.studio-history-bar button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Alt Sabit Çubuk (Bottom Action Bar) */
+.studio-bottom-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+  background: rgba(34, 35, 37, 0.98);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(178, 148, 96, 0.3);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45);
+}
+.studio-price-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 11.5px;
+  color: var(--brand-stone-light);
+}
+.studio-price-summary strong {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--brand-gold-hover);
+}
+.studio-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.studio-save {
   font-size: 12px;
   font-weight: 700;
-  padding: 14px 10px;
+  padding: 12px 18px;
+  border-radius: 6px;
+  background: var(--brand-surface);
+  color: var(--brand-cream-light);
+  border: 1px solid var(--brand-gold);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.studio-save:hover:not(:disabled) {
+  background: rgba(178, 148, 96, 0.25);
+  color: var(--brand-gold-hover);
+}
+.studio-save:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.studio-checkout {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 12px 22px;
   border-radius: 6px;
   background: var(--brand-gold);
   color: var(--brand-dark);
   border: 1px solid var(--brand-gold);
-}
-.studio-save:hover:not(:disabled) {
-  background: var(--brand-gold-hover);
-  color: var(--brand-dark);
-}
-.studio-save:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-.studio-checkout {
-  background: var(--brand-brown);
-  border: 1px solid var(--brand-gold);
-  color: var(--brand-cream-light);
-  margin-top: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
 }
 .studio-checkout:hover:not(:disabled) {
   background: var(--brand-gold-hover);
@@ -1590,72 +1839,91 @@ summary:focus-visible {
   background: var(--brand-surface);
   border-color: rgba(201, 193, 181, 0.2);
   color: var(--brand-stone);
-  opacity: 0.55;
+  opacity: 0.45;
   cursor: not-allowed;
 }
-.studio-export {
-  width: 100%;
+
+.studio-export-btn {
   font-size: 11px;
   font-weight: 600;
+  padding: 10px 14px;
+  background: transparent;
   color: var(--brand-gold-hover);
-  margin: 16px 0;
+  border: 1px solid rgba(178, 148, 96, 0.4);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
 }
-.studio-export:disabled {
-  opacity: 0.45;
+.studio-export-btn:hover:not(:disabled) {
+  border-color: var(--brand-gold);
+  background: rgba(178, 148, 96, 0.15);
+}
+.studio-export-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.studio-warning {
+  color: #ef4444;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.6;
+  margin-top: 8px;
 }
 .studio-status {
   font-size: 11px;
   color: var(--brand-cream);
-  line-height: 1.7;
-  overflow-wrap: anywhere;
+  line-height: 1.6;
+  margin-top: 6px;
 }
 .studio-saved {
   font-size: 10px;
   color: var(--brand-cream-light);
   background: var(--brand-surface);
   border: 1px solid rgba(178, 148, 96, 0.35);
-  padding: 10px;
+  padding: 8px 12px;
   border-radius: 6px;
-  margin: 12px 0;
-  overflow-wrap: anywhere;
+  margin-top: 8px;
 }
 .studio-saved small {
   display: block;
-  margin-top: 6px;
+  margin-top: 4px;
   color: var(--brand-stone-light);
 }
 
-@media (max-width: 767px) {
-  .studio-header {
-    height: 82px;
-    padding: 16px 6%;
-  }
-  .studio-header h2 {
-    font-size: 20px;
-  }
+/* Mobil / Tablet Görünümü */
+@media (max-width: 1024px) {
   .studio-workspace {
     grid-template-columns: 1fr;
   }
-  .studio-canvas-area {
-    position: relative;
-    padding: 18px 6%;
+  .studio-col-left,
+  .studio-col-right {
+    max-height: none;
+    border-left: none;
+    border-right: none;
+    border-top: 1px solid rgba(201, 193, 181, 0.16);
+    padding: 20px 6%;
+  }
+  .studio-col-center {
+    padding: 16px 6%;
   }
   .studio-canvas {
     min-height: 340px;
     height: 44svh;
   }
-  .studio-toolbar button {
-    padding: 9px 10px;
-    font-size: 10px;
-  }
-  .studio-controls {
-    padding: 26px 6%;
-    border-left: 0;
-    border-top: 1px solid rgba(201, 193, 181, 0.2);
-  }
-  .studio-product-info {
+  .studio-bottom-bar {
     flex-direction: column;
-    gap: 8px;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px 6%;
+  }
+  .studio-action-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  .studio-action-buttons button {
+    width: 100%;
   }
 }
 

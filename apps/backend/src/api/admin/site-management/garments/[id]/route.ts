@@ -1,5 +1,6 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { queryDb } from "../../../../../lib/db"
+import { notifyStorefrontSync } from "../../../../../lib/storefront-sync"
 
 /**
  * GET /admin/site-management/garments/:id
@@ -44,6 +45,16 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
       isActive,
       isPublished,
     } = body
+
+    if (productId) {
+      const productCheck = await queryDb(
+        "SELECT id, handle, title FROM product WHERE id = $1 AND deleted_at IS NULL LIMIT 1;",
+        [productId]
+      )
+      if (productCheck.length === 0) {
+        return res.status(400).json({ message: "Seçilen ürün katalogda bulunamadı veya silinmiş." })
+      }
+    }
 
     const updateQuery = `
       UPDATE garment_display_config
@@ -90,6 +101,9 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
       return res.status(404).json({ message: "Güncellenecek askılık ürünü bulunamadı." })
     }
 
+    // Storefront cache revalidation
+    await notifyStorefrontSync({ tags: ["site-content"] })
+
     return res.status(200).json({
       message: "Askılık ürünü başarıyla güncellendi.",
       garment: updated[0],
@@ -112,6 +126,10 @@ export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
     if (deleted.length === 0) {
       return res.status(404).json({ message: "Silinecek askılık ürünü bulunamadı." })
     }
+
+    // Storefront cache revalidation
+    await notifyStorefrontSync({ tags: ["site-content"] })
+
     return res.status(200).json({ message: "Askılık ürünü başarıyla silindi.", id })
   } catch (error: any) {
     return res.status(500).json({ message: "Askılık ürünü silinemedi.", error: error.message })

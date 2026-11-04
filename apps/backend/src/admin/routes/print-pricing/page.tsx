@@ -85,7 +85,7 @@ const PrintPricingPage = () => {
   }
 
   if (loading) {
-    return <Container className="p-8 text-center text-gray-500 max-w-7xl">Fiyatlandırma verileri yükleniyor...</Container>
+    return <Container className="p-8 text-center text-ui-fg-muted max-w-7xl">Fiyatlandırma verileri yükleniyor...</Container>
   }
 
   if (!configData) return null
@@ -95,12 +95,12 @@ const PrintPricingPage = () => {
       <Container className="p-6">
         <div className="flex items-center gap-2">
           <Badge color="orange">FİYATLANDIRMA MOTORU</Badge>
-          <span className="text-xs text-gray-500">Maliyet ve İskonto Parametreleri</span>
+          <span className="text-xs text-ui-fg-subtle">Maliyet ve İskonto Parametreleri</span>
         </div>
-        <Heading level="h1" className="text-2xl font-bold text-gray-900 mt-1">
+        <Heading level="h1" className="text-2xl font-bold text-ui-fg-base mt-1">
           Baskı Fiyatlandırması ve Kurumsal Baremler
         </Heading>
-        <Text className="text-xs text-gray-600 mt-1">
+        <Text className="text-xs text-ui-fg-subtle mt-1">
           Baskı tekniklerinin temel birim maliyetleri (DTF, Serigrafi, Nakış), boyut çarpanları, KDV
           oranı ve toplu sipariş kademeli indirim oranları.
         </Text>
@@ -109,8 +109,8 @@ const PrintPricingPage = () => {
           <div
             className={`mt-4 p-3 rounded-lg text-xs font-semibold ${
               feedback.type === "success"
-                ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                : "bg-red-50 text-red-800 border border-red-200"
+                ? "bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800"
+                : "bg-red-50 text-red-800 border border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-800"
             }`}
           >
             {feedback.text}
@@ -121,12 +121,12 @@ const PrintPricingPage = () => {
       <form onSubmit={handleSave} className="flex flex-col gap-6">
         {/* Baskı Teknik Maliyetleri */}
         <Container className="p-6 flex flex-col gap-4">
-          <Heading level="h2" className="text-base font-bold text-gray-900 border-b pb-2">
+          <Heading level="h2" className="text-base font-bold text-ui-fg-base border-b border-ui-border-base pb-2">
             Baskı Teknik Birim Taban Fiyatları (TRY)
           </Heading>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <Label className="text-xs font-semibold text-gray-700">DTF Baskı Birim Fiyatı (TL)</Label>
+              <Label className="text-xs font-semibold text-ui-fg-base">DTF Baskı Birim Fiyatı (TL)</Label>
               <Input
                 type="number"
                 step="0.5"
@@ -141,7 +141,7 @@ const PrintPricingPage = () => {
               />
             </div>
             <div>
-              <Label className="text-xs font-semibold text-gray-700">Serigrafi Birim Fiyatı (TL)</Label>
+              <Label className="text-xs font-semibold text-ui-fg-base">Serigrafi Birim Fiyatı (TL)</Label>
               <Input
                 type="number"
                 step="0.5"
@@ -156,7 +156,7 @@ const PrintPricingPage = () => {
               />
             </div>
             <div>
-              <Label className="text-xs font-semibold text-gray-700">Nakış / Flok Birim Fiyatı (TL)</Label>
+              <Label className="text-xs font-semibold text-ui-fg-base">Nakış / Flok Birim Fiyatı (TL)</Label>
               <Input
                 type="number"
                 step="0.5"
@@ -175,12 +175,12 @@ const PrintPricingPage = () => {
 
         {/* Boyut Çarpanları */}
         <Container className="p-6 flex flex-col gap-4">
-          <Heading level="h2" className="text-base font-bold text-gray-900 border-b pb-2">
+          <Heading level="h2" className="text-base font-bold text-ui-fg-base border-b border-ui-border-base pb-2">
             Baskı Ebat Çarpanları
           </Heading>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
             <div>
-              <Label className="text-xs text-gray-600">Cep (Pocket)</Label>
+              <Label className="text-xs text-ui-fg-subtle font-medium">Cep (Pocket)</Label>
               <Input
                 type="number"
                 step="0.05"
@@ -195,7 +195,7 @@ const PrintPricingPage = () => {
               />
             </div>
             <div>
-              <Label className="text-xs text-gray-600">A5 Boyut</Label>
+              <Label className="text-xs text-ui-fg-subtle font-medium">A5 Boyut</Label>
               <Input
                 type="number"
                 step="0.05"
@@ -210,7 +210,7 @@ const PrintPricingPage = () => {
               />
             </div>
             <div>
-              <Label className="text-xs text-gray-600">A4 Standart (1.00x)</Label>
+              <Label className="text-xs text-ui-fg-subtle font-medium">A4 Standart (1.00x)</Label>
               <Input
                 type="number"
                 step="0.05"
@@ -225,7 +225,7 @@ const PrintPricingPage = () => {
               />
             </div>
             <div>
-              <Label className="text-xs text-gray-600">A3 Boyut</Label>
+              <Label className="text-xs text-ui-fg-subtle font-medium">A3 Boyut</Label>
               <Input
                 type="number"
                 step="0.05"
@@ -240,7 +240,7 @@ const PrintPricingPage = () => {
               />
             </div>
             <div>
-              <Label className="text-xs text-gray-600">A3+ Jumbo</Label>
+              <Label className="text-xs text-ui-fg-subtle font-medium">A3+ Jumbo</Label>
               <Input
                 type="number"
                 step="0.05"
@@ -259,12 +259,12 @@ const PrintPricingPage = () => {
 
         {/* KDV ve İskonto Baremleri */}
         <Container className="p-6 flex flex-col gap-4">
-          <Heading level="h2" className="text-base font-bold text-gray-900 border-b pb-2">
+          <Heading level="h2" className="text-base font-bold text-ui-fg-base border-b border-ui-border-base pb-2">
             Vergi Oranı & Toplu Sipariş İndirimleri
           </Heading>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs font-semibold text-gray-700">KDV Oranı (%)</Label>
+              <Label className="text-xs font-semibold text-ui-fg-base">KDV Oranı (%)</Label>
               <Input
                 type="number"
                 step="1"
@@ -277,17 +277,17 @@ const PrintPricingPage = () => {
             </div>
           </div>
 
-          <div className="mt-2 p-4 bg-gray-50 rounded-lg border">
-            <Label className="text-xs font-bold text-gray-800 mb-2 block">
+          <div className="mt-2 p-4 bg-ui-bg-subtle/80 rounded-lg border border-ui-border-base">
+            <Label className="text-xs font-bold text-ui-fg-base mb-2 block">
               Kurumsal Adet İskonto Kademeleri
             </Label>
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
               {configData.discount_tiers?.map((tier, idx) => (
-                <div key={idx} className="p-3 bg-white rounded border flex flex-col gap-1 text-xs">
-                  <span className="font-semibold text-gray-900">
+                <div key={idx} className="p-3 bg-ui-bg-base rounded border border-ui-border-base flex flex-col gap-1 text-xs">
+                  <span className="font-semibold text-ui-fg-base">
                     {tier.minQuantity}+ Adet Sipariş
                   </span>
-                  <span className="text-amber-700 font-bold">%{tier.discountPercent} İskonto</span>
+                  <span className="text-[#B29460] font-bold">%{tier.discountPercent} İskonto</span>
                 </div>
               ))}
             </div>
@@ -300,7 +300,7 @@ const PrintPricingPage = () => {
             size="large"
             type="submit"
             disabled={saving}
-            className="bg-[#D4AF37] hover:bg-[#c19d29] text-gray-950 font-bold px-8"
+            className="bg-[#B29460] hover:bg-[#9a7d4a] text-[#222325] font-bold px-8"
           >
             {saving ? "Kaydediliyor..." : "💾 Fiyatlandırma Parametrelerini Kaydet"}
           </Button>

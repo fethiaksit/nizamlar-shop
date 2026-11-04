@@ -243,15 +243,15 @@ const SimpleProductsPage = () => {
   })
 
   return (
-    <div className="p-6 max-w-7xl mx-auto font-sans text-[#161718] bg-[#F8F6F0] min-h-screen">
+    <div className="p-6 max-w-7xl mx-auto font-sans text-ui-fg-base bg-ui-bg-subtle/40 min-h-screen">
       {/* Üst Başlık & Eylemler */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#E5E0D8]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-ui-border-base">
         <div>
           <div className="flex items-center gap-2.5">
             <span className="w-3.5 h-3.5 rounded-full bg-[#B29460] inline-block shadow-sm" />
-            <h1 className="text-2xl font-black tracking-tight text-[#222325]">Hızlı Ürün Yönetimi</h1>
+            <h1 className="text-2xl font-black tracking-tight text-ui-fg-base">Hızlı Ürün Yönetimi</h1>
           </div>
-          <p className="text-sm text-[#49372E] mt-1 font-medium">
+          <p className="text-sm text-ui-fg-subtle mt-1 font-medium">
             Ürün adı, fotoğraf, fiyat ve stok düzenlemelerini hiçbir teknik karmaşa olmadan kolayca yapın.
           </p>
         </div>
@@ -259,7 +259,7 @@ const SimpleProductsPage = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={openCreateModal}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-[#B29460] hover:bg-[#9E8250] text-[#FFFFFF] shadow-sm transition-all"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-[#B29460] hover:bg-[#9E8250] text-[#222325] shadow-sm transition-all"
           >
             <Plus />
             <span>Yeni Ürün Ekle</span>
@@ -272,8 +272,8 @@ const SimpleProductsPage = () => {
         <div
           className={`mt-4 p-4 rounded-xl flex items-center gap-3 text-sm font-semibold border transition-all ${
             feedback.type === "success"
-              ? "bg-[#EBF7EE] text-[#1E5D2F] border-[#A8E2B6]"
-              : "bg-[#FDEDEC] text-[#922B21] border-[#F5B7B1]"
+              ? "bg-[#EBF7EE] text-[#1E5D2F] border-[#A8E2B6] dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800"
+              : "bg-[#FDEDEC] text-[#922B21] border-[#F5B7B1] dark:bg-red-950/30 dark:text-red-300 dark:border-red-800"
           }`}
         >
           {feedback.type === "success" ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
@@ -282,25 +282,27 @@ const SimpleProductsPage = () => {
       )}
 
       {/* Arama ve Filtreleme */}
-      <div className="mt-6 flex flex-col sm:flex-row gap-3 items-center justify-between bg-[#FFFFFF] p-4 rounded-2xl border border-[#E5E0D8] shadow-sm">
+      <div className="mt-6 flex flex-col sm:flex-row gap-3 items-center justify-between bg-ui-bg-base p-4 rounded-2xl border border-ui-border-base shadow-sm">
         <div className="relative w-full sm:w-96">
-          <MagnifyingGlass className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C827A]" />
+          <MagnifyingGlass className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ui-fg-muted" />
           <input
             type="text"
             placeholder="Ürün adı ile ara..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-xl text-sm border border-[#D1C9BE] bg-[#FFFFFF] text-[#161718] placeholder-[#8C827A] focus:outline-none focus:ring-2 focus:ring-[#B29460]"
+            className="w-full pl-10 pr-4 py-2 rounded-xl text-sm border border-ui-border-base bg-ui-bg-field text-ui-fg-base placeholder:text-ui-fg-muted focus:outline-none focus:ring-2 focus:ring-[#B29460]"
           />
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <span className="text-xs font-bold text-[#49372E] uppercase tracking-wider">Durum:</span>
-          <div className="inline-flex rounded-xl bg-[#F8F6F0] p-1 border border-[#E5E0D8]">
+          <span className="text-xs font-bold text-ui-fg-subtle uppercase tracking-wider">Durum:</span>
+          <div className="inline-flex rounded-xl bg-ui-bg-subtle p-1 border border-ui-border-base">
             <button
               onClick={() => setFilterStatus("all")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                filterStatus === "all" ? "bg-[#222325] text-[#FFFFFF]" : "text-[#49372E] hover:text-[#222325]"
+                filterStatus === "all"
+                  ? "bg-[#222325] text-[#FFFFFF] dark:bg-ui-bg-component dark:text-ui-fg-base"
+                  : "text-ui-fg-subtle hover:text-ui-fg-base"
               }`}
             >
               Tümü ({products.length})
@@ -308,7 +310,9 @@ const SimpleProductsPage = () => {
             <button
               onClick={() => setFilterStatus("published")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                filterStatus === "published" ? "bg-[#222325] text-[#FFFFFF]" : "text-[#49372E] hover:text-[#222325]"
+                filterStatus === "published"
+                  ? "bg-[#222325] text-[#FFFFFF] dark:bg-ui-bg-component dark:text-ui-fg-base"
+                  : "text-ui-fg-subtle hover:text-ui-fg-base"
               }`}
             >
               Yayında ({products.filter((p) => p.status === "published").length})
@@ -316,7 +320,9 @@ const SimpleProductsPage = () => {
             <button
               onClick={() => setFilterStatus("draft")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                filterStatus === "draft" ? "bg-[#222325] text-[#FFFFFF]" : "text-[#49372E] hover:text-[#222325]"
+                filterStatus === "draft"
+                  ? "bg-[#222325] text-[#FFFFFF] dark:bg-ui-bg-component dark:text-ui-fg-base"
+                  : "text-ui-fg-subtle hover:text-ui-fg-base"
               }`}
             >
               Gizli ({products.filter((p) => p.status === "draft").length})
@@ -326,16 +332,16 @@ const SimpleProductsPage = () => {
       </div>
 
       {/* Ürün Tablosu */}
-      <div className="mt-6 bg-[#FFFFFF] rounded-2xl border border-[#E5E0D8] shadow-sm overflow-hidden">
+      <div className="mt-6 bg-ui-bg-base rounded-2xl border border-ui-border-base shadow-sm overflow-hidden">
         {loading ? (
-          <div className="p-12 text-center text-[#49372E] font-medium">Ürünler yükleniyor...</div>
+          <div className="p-12 text-center text-ui-fg-muted font-medium">Ürünler yükleniyor...</div>
         ) : filteredProducts.length === 0 ? (
-          <div className="p-12 text-center text-[#49372E] font-medium">Arama kriterlerine uygun ürün bulunamadı.</div>
+          <div className="p-12 text-center text-ui-fg-muted font-medium">Arama kriterlerine uygun ürün bulunamadı.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr className="bg-[#FAF8F5] border-b border-[#E5E0D8] text-xs font-bold text-[#49372E] uppercase tracking-wider">
+                <tr className="bg-ui-bg-subtle/80 border-b border-ui-border-base text-xs font-bold text-ui-fg-subtle uppercase tracking-wider">
                   <th className="py-4 px-5">Ürün</th>
                   <th className="py-4 px-4">Durum</th>
                   <th className="py-4 px-4 text-right">Satış Fiyatı</th>
@@ -343,25 +349,25 @@ const SimpleProductsPage = () => {
                   <th className="py-4 px-5 text-right">Hızlı İşlemler</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E5E0D8]">
+              <tbody className="divide-y divide-ui-border-base">
                 {filteredProducts.map((prod) => (
-                  <tr key={prod.id} className="hover:bg-[#FAF8F5] transition-colors">
+                  <tr key={prod.id} className="hover:bg-ui-bg-subtle/50 transition-colors">
                     {/* Görsel ve İsim */}
                     <td className="py-4 px-5">
                       <div className="flex items-center gap-3.5">
                         <img
                           src={prod.thumbnail || "https://placehold.co/120x120/222325/FFFFFF?text=Ürün"}
                           alt={prod.title}
-                          className="w-14 h-14 object-cover rounded-xl border border-[#D1C9BE] bg-[#F8F6F0] shrink-0"
+                          className="w-14 h-14 object-cover rounded-xl border border-ui-border-base bg-ui-bg-subtle shrink-0"
                         />
                         <div className="min-w-0">
-                          <h3 className="font-extrabold text-[#222325] text-base leading-snug truncate max-w-sm">
+                          <h3 className="font-extrabold text-ui-fg-base text-base leading-snug truncate max-w-sm">
                             {prod.title}
                           </h3>
-                          <p className="text-xs text-[#5A524C] line-clamp-1 mt-0.5">
+                          <p className="text-xs text-ui-fg-subtle line-clamp-1 mt-0.5">
                             {prod.description || "Açıklama girilmedi"}
                           </p>
-                          <span className="text-[11px] font-mono text-[#8C827A] mt-0.5 inline-block">
+                          <span className="text-[11px] font-mono text-ui-fg-muted mt-0.5 inline-block">
                             /{prod.handle}
                           </span>
                         </div>
@@ -371,12 +377,12 @@ const SimpleProductsPage = () => {
                     {/* Durum */}
                     <td className="py-4 px-4 whitespace-nowrap">
                       {prod.status === "published" ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#EBF7EE] text-[#1E5D2F] border border-[#A8E2B6]">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#EBF7EE] text-[#1E5D2F] border border-[#A8E2B6] dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
                           <span className="w-2 h-2 rounded-full bg-[#27AE60]" />
                           Yayında
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#F4F1EA] text-[#5A524C] border border-[#D1C9BE]">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#F4F1EA] text-[#5A524C] border border-[#D1C9BE] dark:bg-ui-bg-component dark:text-ui-fg-subtle dark:border-ui-border-base">
                           <span className="w-2 h-2 rounded-full bg-[#8C827A]" />
                           Gizli (Taslak)
                         </span>
@@ -385,7 +391,7 @@ const SimpleProductsPage = () => {
 
                     {/* Fiyat */}
                     <td className="py-4 px-4 text-right whitespace-nowrap">
-                      <div className="font-black text-base text-[#222325]">
+                      <div className="font-black text-base text-ui-fg-base">
                         {prod.hasVariablePrice ? (
                           <>
                             {prod.priceMinTRY.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} ₺ –{" "}
@@ -404,7 +410,7 @@ const SimpleProductsPage = () => {
 
                     {/* Stok */}
                     <td className="py-4 px-4 text-center whitespace-nowrap">
-                      <span className="font-extrabold text-[#222325] px-2.5 py-1 rounded-lg bg-[#FAF8F5] border border-[#D1C9BE] text-xs">
+                      <span className="font-extrabold text-ui-fg-base px-2.5 py-1 rounded-lg bg-ui-bg-subtle border border-ui-border-base text-xs">
                         {prod.totalStock.toLocaleString("tr-TR")} Adet
                       </span>
                     </td>
@@ -416,7 +422,7 @@ const SimpleProductsPage = () => {
                         <button
                           onClick={() => openQuickPrice(prod)}
                           title="Fiyatı Değiştir"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#FAF2E6] hover:bg-[#F3E2C7] text-[#8C6D32] border border-[#E5CE9F] transition-all shadow-sm"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#FAF2E6] hover:bg-[#F3E2C7] text-[#8C6D32] border border-[#E5CE9F] dark:bg-amber-950/30 dark:hover:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800 transition-all shadow-sm"
                         >
                           <CurrencyDollar className="w-3.5 h-3.5" />
                           <span>Fiyatı Değiştir</span>
@@ -426,7 +432,7 @@ const SimpleProductsPage = () => {
                         <button
                           onClick={() => openEditModal(prod)}
                           title="Ürünü Düzenle"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#222325] hover:bg-[#49372E] text-[#FFFFFF] transition-all shadow-sm"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#222325] hover:bg-[#49372E] text-[#FFFFFF] dark:bg-ui-bg-component dark:hover:bg-ui-bg-field dark:text-ui-fg-base dark:border dark:border-ui-border-base transition-all shadow-sm"
                         >
                           <PencilSquare className="w-3.5 h-3.5" />
                           <span>Düzenle</span>
@@ -438,7 +444,7 @@ const SimpleProductsPage = () => {
                           target="_blank"
                           rel="noreferrer"
                           title="Mağazada Önizle"
-                          className="p-1.5 rounded-lg text-[#49372E] hover:text-[#222325] hover:bg-[#F4F1EA] border border-[#D1C9BE] transition-all inline-block"
+                          className="p-1.5 rounded-lg text-ui-fg-subtle hover:text-ui-fg-base hover:bg-ui-bg-subtle border border-ui-border-base transition-all inline-block"
                         >
                           <Eye className="w-4 h-4" />
                         </a>
@@ -456,33 +462,33 @@ const SimpleProductsPage = () => {
       {/* 1. HIZLI FİYAT DEĞİŞTİRME POPUP MODAL                                    */}
       {/* ========================================================================= */}
       {quickPriceProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#222325]/70 backdrop-blur-sm">
-          <div className="bg-[#FFFFFF] rounded-3xl p-6 sm:p-8 max-w-md w-full border border-[#D1C9BE] shadow-2xl relative text-[#161718]">
-            <div className="flex items-start justify-between gap-4 pb-4 border-b border-[#E5E0D8]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#222325]/70 dark:bg-black/80 backdrop-blur-sm">
+          <div className="bg-ui-bg-base rounded-3xl p-6 sm:p-8 max-w-md w-full border border-ui-border-base shadow-2xl relative text-ui-fg-base">
+            <div className="flex items-start justify-between gap-4 pb-4 border-b border-ui-border-base">
               <div>
                 <span className="text-[11px] uppercase tracking-wider font-extrabold text-[#B29460]">
                   Hızlı Fiyat Güncelleme
                 </span>
-                <h2 className="text-xl font-extrabold text-[#222325] mt-0.5">{quickPriceProduct.title}</h2>
+                <h2 className="text-xl font-extrabold text-ui-fg-base mt-0.5">{quickPriceProduct.title}</h2>
               </div>
               <button
                 onClick={() => setQuickPriceProduct(null)}
-                className="text-[#8C827A] hover:text-[#222325] p-1 text-lg font-bold"
+                className="text-ui-fg-muted hover:text-ui-fg-base p-1 text-lg font-bold"
               >
                 ✕
               </button>
             </div>
 
             <form onSubmit={handleSaveQuickPrice} className="mt-5 flex flex-col gap-4">
-              <div className="p-3.5 bg-[#FAF8F5] rounded-xl border border-[#E5E0D8] text-xs">
-                <span className="text-[#5A524C] font-semibold block">Mevcut Fiyat:</span>
-                <span className="text-lg font-black text-[#222325]">
+              <div className="p-3.5 bg-ui-bg-subtle rounded-xl border border-ui-border-base text-xs">
+                <span className="text-ui-fg-subtle font-semibold block">Mevcut Fiyat:</span>
+                <span className="text-lg font-black text-ui-fg-base">
                   {quickPriceProduct.priceTRY.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} ₺
                 </span>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#222325] uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-ui-fg-base uppercase tracking-wider mb-1.5">
                   Yeni Satış Fiyatı (₺) *
                 </label>
                 <div className="relative">
@@ -494,9 +500,9 @@ const SimpleProductsPage = () => {
                     value={quickPriceVal}
                     onChange={(e) => setQuickPriceVal(e.target.value)}
                     placeholder="Örn: 550.00"
-                    className="w-full px-4 py-3 rounded-xl text-lg font-black border border-[#D1C9BE] bg-[#FFFFFF] text-[#161718] focus:outline-none focus:ring-2 focus:ring-[#B29460]"
+                    className="w-full px-4 py-3 rounded-xl text-lg font-black border border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:outline-none focus:ring-2 focus:ring-[#B29460]"
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-sm text-[#5A524C]">
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-sm text-ui-fg-subtle">
                     TRY
                   </span>
                 </div>
@@ -504,11 +510,11 @@ const SimpleProductsPage = () => {
 
               {quickPriceProduct.variants?.length > 1 && (
                 <div className="mt-1">
-                  <label className="block text-xs font-bold text-[#222325] uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-bold text-ui-fg-base uppercase tracking-wider mb-2">
                     Değişecek Varyantlar:
                   </label>
                   <div className="flex flex-col gap-2">
-                    <label className="flex items-center gap-2.5 text-xs font-semibold cursor-pointer text-[#222325]">
+                    <label className="flex items-center gap-2.5 text-xs font-semibold cursor-pointer text-ui-fg-base">
                       <input
                         type="radio"
                         name="scope"
@@ -518,7 +524,7 @@ const SimpleProductsPage = () => {
                       />
                       <span>Tüm beden ve renklerin fiyatını güncelle ({quickPriceProduct.variants.length} varyant)</span>
                     </label>
-                    <label className="flex items-center gap-2.5 text-xs font-semibold cursor-pointer text-[#222325]">
+                    <label className="flex items-center gap-2.5 text-xs font-semibold cursor-pointer text-ui-fg-base">
                       <input
                         type="radio"
                         name="scope"
@@ -534,7 +540,7 @@ const SimpleProductsPage = () => {
                     <select
                       value={selectedVariantId}
                       onChange={(e) => setSelectedVariantId(e.target.value)}
-                      className="mt-2 w-full p-2.5 rounded-xl text-xs font-semibold border border-[#D1C9BE] bg-[#FFFFFF] text-[#161718] focus:outline-none focus:ring-2 focus:ring-[#B29460]"
+                      className="mt-2 w-full p-2.5 rounded-xl text-xs font-semibold border border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:outline-none focus:ring-2 focus:ring-[#B29460]"
                     >
                       {quickPriceProduct.variants.map((v) => (
                         <option key={v.id} value={v.id}>
@@ -546,18 +552,18 @@ const SimpleProductsPage = () => {
                 </div>
               )}
 
-              <div className="mt-3 flex items-center justify-end gap-3 pt-4 border-t border-[#E5E0D8]">
+              <div className="mt-3 flex items-center justify-end gap-3 pt-4 border-t border-ui-border-base">
                 <button
                   type="button"
                   onClick={() => setQuickPriceProduct(null)}
-                  className="px-4 py-2.5 rounded-xl font-bold text-xs text-[#5A524C] hover:bg-[#F4F1EA] transition-all"
+                  className="px-4 py-2.5 rounded-xl font-bold text-xs text-ui-fg-subtle hover:bg-ui-bg-subtle transition-all"
                 >
                   Vazgeç
                 </button>
                 <button
                   type="submit"
                   disabled={savingPrice}
-                  className="px-6 py-2.5 rounded-xl font-bold text-xs bg-[#B29460] hover:bg-[#9E8250] text-[#FFFFFF] shadow-sm transition-all disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-xl font-bold text-xs bg-[#B29460] hover:bg-[#9E8250] text-[#222325] shadow-sm transition-all disabled:opacity-50"
                 >
                   {savingPrice ? "Kaydediliyor..." : "Fiyatı Kaydet"}
                 </button>
@@ -571,20 +577,20 @@ const SimpleProductsPage = () => {
       {/* 2. SADE ÜRÜN DÜZENLEME & EKLEME MODAL                                     */}
       {/* ========================================================================= */}
       {(editProduct || isCreatingNew) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#222325]/70 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-[#FFFFFF] rounded-3xl p-6 sm:p-8 max-w-2xl w-full border border-[#D1C9BE] shadow-2xl relative text-[#161718] my-8">
-            <div className="flex items-start justify-between gap-4 pb-4 border-b border-[#E5E0D8]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#222325]/70 dark:bg-black/80 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-ui-bg-base rounded-3xl p-6 sm:p-8 max-w-2xl w-full border border-ui-border-base shadow-2xl relative text-ui-fg-base my-8">
+            <div className="flex items-start justify-between gap-4 pb-4 border-b border-ui-border-base">
               <div>
                 <span className="text-[11px] uppercase tracking-wider font-extrabold text-[#B29460]">
                   {isCreatingNew ? "Yeni Ürün Oluştur" : "Sade Ürün Düzenleyici"}
                 </span>
-                <h2 className="text-xl font-black text-[#222325] mt-0.5">
+                <h2 className="text-xl font-black text-ui-fg-base mt-0.5">
                   {isCreatingNew ? "Yeni Ürün Bilgileri" : editProduct?.title}
                 </h2>
               </div>
               <button
                 onClick={handleCloseEditModal}
-                className="text-[#8C827A] hover:text-[#222325] p-1 text-lg font-bold"
+                className="text-ui-fg-muted hover:text-ui-fg-base p-1 text-lg font-bold"
               >
                 ✕
               </button>
@@ -593,12 +599,12 @@ const SimpleProductsPage = () => {
             <form onSubmit={handleSaveProduct} className="mt-5 flex flex-col gap-5">
               {/* Bölüm 1: Ürün Bilgileri */}
               <div className="flex flex-col gap-4">
-                <h3 className="text-xs font-black text-[#49372E] uppercase tracking-wider pb-1 border-b border-[#F0ECE1]">
+                <h3 className="text-xs font-black text-ui-fg-subtle uppercase tracking-wider pb-1 border-b border-ui-border-base">
                   1. Ürün Bilgileri
                 </h3>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#222325] mb-1">Ürün Adı *</label>
+                  <label className="block text-xs font-bold text-ui-fg-base mb-1">Ürün Adı *</label>
                   <input
                     type="text"
                     required
@@ -608,12 +614,12 @@ const SimpleProductsPage = () => {
                       setFormDirty(true)
                     }}
                     placeholder="Örn: 240 GSM Premium Oversize Tişört"
-                    className="w-full px-3.5 py-2.5 rounded-xl text-sm font-semibold border border-[#D1C9BE] bg-[#FFFFFF] text-[#161718] focus:outline-none focus:ring-2 focus:ring-[#B29460]"
+                    className="w-full px-3.5 py-2.5 rounded-xl text-sm font-semibold border border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:outline-none focus:ring-2 focus:ring-[#B29460]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#222325] mb-1">Ürün Açıklaması</label>
+                  <label className="block text-xs font-bold text-ui-fg-base mb-1">Ürün Açıklaması</label>
                   <textarea
                     rows={3}
                     value={formData.description}
@@ -622,17 +628,17 @@ const SimpleProductsPage = () => {
                       setFormDirty(true)
                     }}
                     placeholder="Kumaş kalitesi, kalıp ve ürün özellikleri hakkında müşteriye gösterilecek açıklama..."
-                    className="w-full px-3.5 py-2.5 rounded-xl text-sm border border-[#D1C9BE] bg-[#FFFFFF] text-[#161718] focus:outline-none focus:ring-2 focus:ring-[#B29460] leading-relaxed"
+                    className="w-full px-3.5 py-2.5 rounded-xl text-sm border border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:outline-none focus:ring-2 focus:ring-[#B29460] leading-relaxed"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#222325] mb-1">Ürün Fotoğrafı (URL)</label>
+                  <label className="block text-xs font-bold text-ui-fg-base mb-1">Ürün Fotoğrafı (URL)</label>
                   <div className="flex gap-3 items-center">
                     <img
                       src={formData.thumbnail || "https://placehold.co/120x120/222325/FFFFFF?text=Görsel"}
                       alt="Önizleme"
-                      className="w-16 h-16 rounded-xl border border-[#D1C9BE] object-cover bg-[#FAF8F5] shrink-0"
+                      className="w-16 h-16 rounded-xl border border-ui-border-base object-cover bg-ui-bg-subtle shrink-0"
                     />
                     <div className="flex-1">
                       <input
@@ -643,9 +649,9 @@ const SimpleProductsPage = () => {
                           setFormDirty(true)
                         }}
                         placeholder="https://... görsel adresi"
-                        className="w-full px-3.5 py-2 rounded-xl text-xs border border-[#D1C9BE] bg-[#FFFFFF] text-[#161718] focus:outline-none focus:ring-2 focus:ring-[#B29460]"
+                        className="w-full px-3.5 py-2 rounded-xl text-xs border border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:outline-none focus:ring-2 focus:ring-[#B29460]"
                       />
-                      <span className="text-[11px] text-[#8C827A] mt-1 block">
+                      <span className="text-[11px] text-ui-fg-muted mt-1 block">
                         Görsel Kütüphanesindeki veya web üzerindeki fotoğraf bağlantısını yapıştırın.
                       </span>
                     </div>
@@ -655,13 +661,13 @@ const SimpleProductsPage = () => {
 
               {/* Bölüm 2: Satış Bilgileri */}
               <div className="flex flex-col gap-4">
-                <h3 className="text-xs font-black text-[#49372E] uppercase tracking-wider pb-1 border-b border-[#F0ECE1]">
+                <h3 className="text-xs font-black text-ui-fg-subtle uppercase tracking-wider pb-1 border-b border-ui-border-base">
                   2. Satış ve Stok Bilgileri
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-[#222325] mb-1">Satış Fiyatı (₺) *</label>
+                    <label className="block text-xs font-bold text-ui-fg-base mb-1">Satış Fiyatı (₺) *</label>
                     <input
                       type="number"
                       step="0.01"
@@ -673,12 +679,12 @@ const SimpleProductsPage = () => {
                         setFormDirty(true)
                       }}
                       placeholder="Örn: 450.00"
-                      className="w-full px-3.5 py-2.5 rounded-xl text-base font-black border border-[#D1C9BE] bg-[#FFFFFF] text-[#161718] focus:outline-none focus:ring-2 focus:ring-[#B29460]"
+                      className="w-full px-3.5 py-2.5 rounded-xl text-base font-black border border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:outline-none focus:ring-2 focus:ring-[#B29460]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#222325] mb-1">Toplam Stok Adedi</label>
+                    <label className="block text-xs font-bold text-ui-fg-base mb-1">Toplam Stok Adedi</label>
                     <input
                       type="number"
                       min="0"
@@ -688,7 +694,7 @@ const SimpleProductsPage = () => {
                         setFormDirty(true)
                       }}
                       placeholder="Örn: 500"
-                      className="w-full px-3.5 py-2.5 rounded-xl text-base font-black border border-[#D1C9BE] bg-[#FFFFFF] text-[#161718] focus:outline-none focus:ring-2 focus:ring-[#B29460]"
+                      className="w-full px-3.5 py-2.5 rounded-xl text-base font-black border border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:outline-none focus:ring-2 focus:ring-[#B29460]"
                     />
                   </div>
                 </div>
@@ -696,12 +702,12 @@ const SimpleProductsPage = () => {
 
               {/* Bölüm 3: Görünürlük Durumu */}
               <div className="flex flex-col gap-2">
-                <h3 className="text-xs font-black text-[#49372E] uppercase tracking-wider pb-1 border-b border-[#F0ECE1]">
+                <h3 className="text-xs font-black text-ui-fg-subtle uppercase tracking-wider pb-1 border-b border-ui-border-base">
                   3. Mağaza Yayını
                 </h3>
 
                 <div className="flex items-center gap-6 mt-1">
-                  <label className="inline-flex items-center gap-2 cursor-pointer font-bold text-sm text-[#222325]">
+                  <label className="inline-flex items-center gap-2 cursor-pointer font-bold text-sm text-ui-fg-base">
                     <input
                       type="radio"
                       name="status"
@@ -716,7 +722,7 @@ const SimpleProductsPage = () => {
                     <span>✅ Mağazada Yayında</span>
                   </label>
 
-                  <label className="inline-flex items-center gap-2 cursor-pointer font-bold text-sm text-[#5A524C]">
+                  <label className="inline-flex items-center gap-2 cursor-pointer font-bold text-sm text-ui-fg-subtle">
                     <input
                       type="radio"
                       name="status"
@@ -734,13 +740,13 @@ const SimpleProductsPage = () => {
               </div>
 
               {/* Alt Butonlar */}
-              <div className="mt-4 flex flex-col-reverse sm:flex-row items-center justify-between gap-3 pt-4 border-t border-[#E5E0D8]">
+              <div className="mt-4 flex flex-col-reverse sm:flex-row items-center justify-between gap-3 pt-4 border-t border-ui-border-base">
                 {editProduct && (
                   <a
                     href={`http://localhost:8000/products/${editProduct.handle}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#8C6D32] hover:underline"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#B29460] hover:underline"
                   >
                     <span>Mağazada Önizle</span>
                     <Eye className="w-3.5 h-3.5" />
@@ -752,14 +758,14 @@ const SimpleProductsPage = () => {
                   <button
                     type="button"
                     onClick={handleCloseEditModal}
-                    className="px-4 py-2.5 rounded-xl font-bold text-xs text-[#5A524C] hover:bg-[#F4F1EA] transition-all"
+                    className="px-4 py-2.5 rounded-xl font-bold text-xs text-ui-fg-subtle hover:bg-ui-bg-subtle transition-all"
                   >
                     Vazgeç
                   </button>
                   <button
                     type="submit"
                     disabled={savingProduct}
-                    className="px-6 py-2.5 rounded-xl font-bold text-xs bg-[#222325] hover:bg-[#49372E] text-[#FFFFFF] shadow-sm transition-all disabled:opacity-50"
+                    className="px-6 py-2.5 rounded-xl font-bold text-xs bg-[#222325] hover:bg-[#49372E] text-[#FFFFFF] dark:bg-ui-bg-component dark:hover:bg-ui-bg-field dark:text-ui-fg-base dark:border dark:border-ui-border-base shadow-sm transition-all disabled:opacity-50"
                   >
                     {savingProduct ? "Kaydediliyor..." : isCreatingNew ? "Ürünü Oluştur" : "Değişiklikleri Kaydet"}
                   </button>

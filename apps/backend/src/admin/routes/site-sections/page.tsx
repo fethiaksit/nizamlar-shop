@@ -78,12 +78,12 @@ const SiteSectionsPage = () => {
           <div>
             <div className="flex items-center gap-2">
               <Badge color="purple">BÖLÜMLER & KAMPANYALAR</Badge>
-              <span className="text-xs text-gray-500">Ana Sayfa Mimari Düzeni</span>
+              <span className="text-xs text-ui-fg-muted font-medium">Ana Sayfa Mimari Düzeni</span>
             </div>
-            <Heading level="h1" className="text-2xl font-bold text-gray-900 mt-1">
+            <Heading level="h1" className="text-2xl font-bold text-ui-fg-base mt-1">
               Bölüm ve Kampanya Sıralaması
             </Heading>
-            <Text className="text-xs text-gray-600 mt-1">
+            <Text className="text-xs text-ui-fg-subtle mt-1 leading-relaxed">
               Ana sayfadaki vitrin bloklarının (Hero, Dimaac Askılık, 3D Stüdyo, Popüler Ürünler,
               Hizmetler) başlıklarını ve görünürlüğünü yönetin.
             </Text>
@@ -94,7 +94,7 @@ const SiteSectionsPage = () => {
             size="base"
             disabled={saving || loading}
             onClick={handleSaveAll}
-            className="bg-[#D4AF37] hover:bg-[#c19d29] text-gray-950 font-bold"
+            className="bg-[#B29460] hover:bg-[#9E8250] text-[#222325] font-bold"
           >
             {saving ? "Kaydediliyor..." : "💾 Sıralamayı ve Değişiklikleri Kaydet"}
           </Button>
@@ -116,54 +116,54 @@ const SiteSectionsPage = () => {
       {/* Bölüm Listesi */}
       <div className="flex flex-col gap-4">
         {loading ? (
-          <Container className="p-8 text-center text-gray-500">
+          <Container className="p-8 text-center text-ui-fg-muted">
             Bölümler yükleniyor...
           </Container>
         ) : (
           sections.map((sec, idx) => (
             <Container key={sec.id} className="p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="w-8 h-8 rounded-full bg-gray-100 border text-gray-700 font-bold flex items-center justify-center text-xs shrink-0">
+                <div className="w-8 h-8 rounded-full bg-ui-bg-subtle border border-ui-border-base text-ui-fg-base font-bold flex items-center justify-center text-xs shrink-0">
                   {idx + 1}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <Heading level="h3" className="text-sm font-bold text-gray-900">
+                    <Heading level="h3" className="text-sm font-bold text-ui-fg-base">
                       {sec.name}
                     </Heading>
-                    <code className="text-[10px] text-gray-500 font-mono">#{sec.id}</code>
+                    <code className="text-[10px] text-ui-fg-subtle font-mono">#{sec.id}</code>
                   </div>
-                  <Text className="text-xs text-gray-600 mt-0.5">{sec.subtitle}</Text>
+                  <Text className="text-xs text-ui-fg-subtle mt-0.5">{sec.subtitle}</Text>
                 </div>
               </div>
 
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full md:w-auto">
                 <div className="flex flex-col">
-                  <Label className="text-[10px] text-gray-500">Bölüm Başlığı</Label>
+                  <Label className="text-[10px] text-ui-fg-subtle">Bölüm Başlığı</Label>
                   <Input
                     value={sec.title}
                     onChange={(e) => handleUpdateField(sec.id, "title", e.target.value)}
-                    className="w-full sm:w-64 text-xs font-semibold"
+                    className="w-full sm:w-64 text-xs font-semibold border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:border-[#B29460]"
                   />
                 </div>
 
                 <div className="flex flex-col">
-                  <Label className="text-[10px] text-gray-500">Rozet Metni</Label>
+                  <Label className="text-[10px] text-ui-fg-subtle">Rozet Metni</Label>
                   <Input
                     value={sec.badge_text || ""}
                     onChange={(e) => handleUpdateField(sec.id, "badge_text", e.target.value)}
-                    className="w-full sm:w-44 text-xs"
+                    className="w-full sm:w-44 text-xs border-ui-border-base bg-ui-bg-field text-ui-fg-base focus:border-[#B29460]"
                   />
                 </div>
 
                 <div className="flex flex-col items-center justify-center shrink-0">
-                  <Label className="text-[10px] text-gray-500">Görünürlük</Label>
+                  <Label className="text-[10px] text-ui-fg-subtle">Görünürlük</Label>
                   <div className="mt-1 flex items-center gap-2">
                     <Switch
                       checked={sec.is_active}
                       onCheckedChange={(val) => handleUpdateField(sec.id, "is_active", val)}
                     />
-                    <span className="text-xs font-semibold text-gray-700">
+                    <span className="text-xs font-semibold text-ui-fg-base">
                       {sec.is_active ? "Açık" : "Kapalı"}
                     </span>
                   </div>

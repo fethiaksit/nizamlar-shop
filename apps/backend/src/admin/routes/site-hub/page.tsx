@@ -77,13 +77,13 @@ const SiteHubPage = () => {
   }
 
   return (
-    <div className="flex flex-col gap-y-6 max-w-7xl font-sans text-[#161718]">
+    <div className="flex flex-col gap-y-6 max-w-7xl font-sans text-ui-fg-base">
       {/* Üst Banner */}
       <Container className="bg-[#222325] text-[#FFFFFF] p-8 rounded-2xl border border-[#49372E] shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <Badge className="bg-[#B29460] text-[#FFFFFF] font-black tracking-wider text-[11px] uppercase border-0">
+              <Badge className="bg-[#B29460] text-[#222325] font-black tracking-wider text-[11px] uppercase border-0">
                 NİZAMLAR MERKEZİ YÖNETİM
               </Badge>
               <span className="text-xs text-[#F3EFE7] font-semibold">Medusa v2 Yönetim Paneli</span>
@@ -109,7 +109,7 @@ const SiteHubPage = () => {
             <Button
               variant="primary"
               size="large"
-              className="w-full sm:w-auto bg-[#B29460] hover:bg-[#9E8250] text-[#FFFFFF] font-black text-xs rounded-xl px-6 py-2.5 shadow-sm"
+              className="w-full sm:w-auto bg-[#B29460] hover:bg-[#9E8250] text-[#222325] font-black text-xs rounded-xl px-6 py-2.5 shadow-sm"
               disabled={publishing || loading}
               onClick={handlePublishAll}
             >
@@ -133,65 +133,65 @@ const SiteHubPage = () => {
 
       {/* İstatistik Özet Kartları */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Container className="p-5 flex items-center justify-between bg-[#FFFFFF] border border-[#E5E0D8] rounded-2xl shadow-sm">
+        <Container className="p-5 flex items-center justify-between bg-ui-bg-base border border-ui-border-base rounded-2xl shadow-xs">
           <div>
-            <Text className="text-xs text-[#49372E] font-bold uppercase tracking-wider">Hero Slider</Text>
-            <Heading level="h2" className="text-2xl font-black mt-1 text-[#222325]">
+            <Text className="text-xs text-ui-fg-subtle font-bold uppercase tracking-wider">Hero Slider</Text>
+            <Heading level="h2" className="text-2xl font-black mt-1 text-ui-fg-base">
               {loading ? "..." : stats.slideCount} Slayt
             </Heading>
             <Text className="text-xs text-[#27AE60] font-bold mt-1">Aktif & Yayında</Text>
           </div>
-          <div className="p-3 bg-[#FAF8F5] border border-[#E5E0D8] rounded-xl text-[#B29460]">
+          <div className="p-3 bg-ui-bg-subtle border border-ui-border-base rounded-xl text-[#B29460]">
             <Photo />
           </div>
         </Container>
 
-        <Container className="p-5 flex items-center justify-between bg-[#FFFFFF] border border-[#E5E0D8] rounded-2xl shadow-sm">
+        <Container className="p-5 flex items-center justify-between bg-ui-bg-base border border-ui-border-base rounded-2xl shadow-xs">
           <div>
-            <Text className="text-xs text-[#49372E] font-bold uppercase tracking-wider">Dimaac Vitrin</Text>
-            <Heading level="h2" className="text-2xl font-black mt-1 text-[#222325]">
+            <Text className="text-xs text-ui-fg-subtle font-bold uppercase tracking-wider">Dimaac Vitrin</Text>
+            <Heading level="h2" className="text-2xl font-black mt-1 text-ui-fg-base">
               {loading ? "..." : stats.rackCount} Model
             </Heading>
             <Text className="text-xs text-[#27AE60] font-bold mt-1">Askılıkta Gösterimde</Text>
           </div>
-          <div className="p-3 bg-[#FAF8F5] border border-[#E5E0D8] rounded-xl text-[#B29460]">
+          <div className="p-3 bg-ui-bg-subtle border border-ui-border-base rounded-xl text-[#B29460]">
             <Sparkles />
           </div>
         </Container>
 
-        <Container className="p-5 flex items-center justify-between bg-[#FFFFFF] border border-[#E5E0D8] rounded-2xl shadow-sm">
+        <Container className="p-5 flex items-center justify-between bg-ui-bg-base border border-ui-border-base rounded-2xl shadow-xs">
           <div>
-            <Text className="text-xs text-[#49372E] font-bold uppercase tracking-wider">Bölümler</Text>
-            <Heading level="h2" className="text-2xl font-black mt-1 text-[#222325]">
+            <Text className="text-xs text-ui-fg-subtle font-bold uppercase tracking-wider">Bölümler</Text>
+            <Heading level="h2" className="text-2xl font-black mt-1 text-ui-fg-base">
               {loading ? "..." : stats.sectionCount} Blok
             </Heading>
             <Text className="text-xs text-[#27AE60] font-bold mt-1">Ana Sayfa Düzeni</Text>
           </div>
-          <div className="p-3 bg-[#FAF8F5] border border-[#E5E0D8] rounded-xl text-[#B29460]">
+          <div className="p-3 bg-ui-bg-subtle border border-ui-border-base rounded-xl text-[#B29460]">
             <SquaresPlus />
           </div>
         </Container>
 
-        <Container className="p-5 flex items-center justify-between bg-[#FFFFFF] border border-[#E5E0D8] rounded-2xl shadow-sm">
+        <Container className="p-5 flex items-center justify-between bg-ui-bg-base border border-ui-border-base rounded-2xl shadow-xs">
           <div>
-            <Text className="text-xs text-[#49372E] font-bold uppercase tracking-wider">Görsel Kütüphanesi</Text>
-            <Heading level="h2" className="text-2xl font-black mt-1 text-[#222325]">
+            <Text className="text-xs text-ui-fg-subtle font-bold uppercase tracking-wider">Görsel Kütüphanesi</Text>
+            <Heading level="h2" className="text-2xl font-black mt-1 text-ui-fg-base">
               {loading ? "..." : stats.mediaCount} Öğe
             </Heading>
-            <Text className="text-xs text-[#49372E] font-bold mt-1">Logo, Model & Doku</Text>
+            <Text className="text-xs text-ui-fg-subtle font-bold mt-1">Logo, Model & Doku</Text>
           </div>
-          <div className="p-3 bg-[#FAF8F5] border border-[#E5E0D8] rounded-xl text-[#B29460]">
+          <div className="p-3 bg-ui-bg-subtle border border-ui-border-base rounded-xl text-[#B29460]">
             <Folder />
           </div>
         </Container>
       </div>
 
       {/* Modül Seçim Alanı 1: Vitrin ve İçerik Yönetimi */}
-      <Container className="p-6 bg-[#FFFFFF] border border-[#E5E0D8] rounded-2xl shadow-sm">
-        <div className="flex items-center justify-between pb-4 border-b border-[#E5E0D8] mb-5">
+      <Container className="p-6 bg-ui-bg-base border border-ui-border-base rounded-2xl shadow-xs">
+        <div className="flex items-center justify-between pb-4 border-b border-ui-border-base mb-5">
           <div>
             <span className="text-[11px] font-black uppercase tracking-wider text-[#B29460]">Bölüm 1</span>
-            <Heading level="h2" className="text-lg font-black text-[#222325]">
+            <Heading level="h2" className="text-lg font-black text-ui-fg-base">
               Vitrin, Slider ve Tasarım Alanları
             </Heading>
           </div>
@@ -200,52 +200,52 @@ const SiteHubPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <a
             href="/app/site-hero"
-            className="p-5 rounded-xl border border-[#E5E0D8] bg-[#FAF8F5] hover:border-[#B29460] hover:bg-[#FFFFFF] hover:shadow-md transition-all flex flex-col gap-2 group"
+            className="p-5 rounded-xl border border-ui-border-base bg-ui-bg-subtle/60 hover:border-[#B29460] hover:bg-ui-bg-base hover:shadow-md transition-all flex flex-col gap-2 group"
           >
-            <div className="flex items-center gap-2 text-[#222325] font-black text-sm group-hover:text-[#B29460]">
+            <div className="flex items-center gap-2 text-ui-fg-base font-black text-sm group-hover:text-[#B29460]">
               <Photo />
               <span>Hero Slider</span>
             </div>
-            <Text className="text-xs text-[#49372E] leading-relaxed">
+            <Text className="text-xs text-ui-fg-subtle leading-relaxed">
               Ana sayfa 3D tişörtlü açılış slaytlarını, başlıkları, renkleri ve sıralamayı düzenleyin.
             </Text>
           </a>
 
           <a
             href="/app/site-rack"
-            className="p-5 rounded-xl border border-[#E5E0D8] bg-[#FAF8F5] hover:border-[#B29460] hover:bg-[#FFFFFF] hover:shadow-md transition-all flex flex-col gap-2 group"
+            className="p-5 rounded-xl border border-ui-border-base bg-ui-bg-subtle/60 hover:border-[#B29460] hover:bg-ui-bg-base hover:shadow-md transition-all flex flex-col gap-2 group"
           >
-            <div className="flex items-center gap-2 text-[#222325] font-black text-sm group-hover:text-[#B29460]">
+            <div className="flex items-center gap-2 text-ui-fg-base font-black text-sm group-hover:text-[#B29460]">
               <Sparkles />
               <span>Dimaac Askılık Vitrini</span>
             </div>
-            <Text className="text-xs text-[#49372E] leading-relaxed">
+            <Text className="text-xs text-ui-fg-subtle leading-relaxed">
               Askılıktaki giysi modellerini, 240 GSM kumaş rozetlerini ve askılık ürün sırasını yönetin.
             </Text>
           </a>
 
           <a
             href="/app/site-customizer"
-            className="p-5 rounded-xl border border-[#E5E0D8] bg-[#FAF8F5] hover:border-[#B29460] hover:bg-[#FFFFFF] hover:shadow-md transition-all flex flex-col gap-2 group"
+            className="p-5 rounded-xl border border-ui-border-base bg-ui-bg-subtle/60 hover:border-[#B29460] hover:bg-ui-bg-base hover:shadow-md transition-all flex flex-col gap-2 group"
           >
-            <div className="flex items-center gap-2 text-[#222325] font-black text-sm group-hover:text-[#B29460]">
+            <div className="flex items-center gap-2 text-ui-fg-base font-black text-sm group-hover:text-[#B29460]">
               <Eye />
               <span>3D Tasarım Stüdyosu</span>
             </div>
-            <Text className="text-xs text-[#49372E] leading-relaxed">
+            <Text className="text-xs text-ui-fg-subtle leading-relaxed">
               tshirt3d varsayılan kumaş rengi, renk seçici paleti ve milimetre baskı sınırlarını belirleyin.
             </Text>
           </a>
 
           <a
             href="/app/site-sections"
-            className="p-5 rounded-xl border border-[#E5E0D8] bg-[#FAF8F5] hover:border-[#B29460] hover:bg-[#FFFFFF] hover:shadow-md transition-all flex flex-col gap-2 group"
+            className="p-5 rounded-xl border border-ui-border-base bg-ui-bg-subtle/60 hover:border-[#B29460] hover:bg-ui-bg-base hover:shadow-md transition-all flex flex-col gap-2 group"
           >
-            <div className="flex items-center gap-2 text-[#222325] font-black text-sm group-hover:text-[#B29460]">
+            <div className="flex items-center gap-2 text-ui-fg-base font-black text-sm group-hover:text-[#B29460]">
               <ListBullet />
               <span>Bölümler & Kampanyalar</span>
             </div>
-            <Text className="text-xs text-[#49372E] leading-relaxed">
+            <Text className="text-xs text-ui-fg-subtle leading-relaxed">
               Ana sayfadaki blokların (Hero, Askılık, Tasarım Stüdyosu vb.) görünürlük ve sırasını kontrol edin.
             </Text>
           </a>
@@ -253,11 +253,11 @@ const SiteHubPage = () => {
       </Container>
 
       {/* Modül Seçim Alanı 2: Medya, Menü ve Site Ayarları */}
-      <Container className="p-6 bg-[#FFFFFF] border border-[#E5E0D8] rounded-2xl shadow-sm">
-        <div className="flex items-center justify-between pb-4 border-b border-[#E5E0D8] mb-5">
+      <Container className="p-6 bg-ui-bg-base border border-ui-border-base rounded-2xl shadow-xs">
+        <div className="flex items-center justify-between pb-4 border-b border-ui-border-base mb-5">
           <div>
             <span className="text-[11px] font-black uppercase tracking-wider text-[#B29460]">Bölüm 2</span>
-            <Heading level="h2" className="text-lg font-black text-[#222325]">
+            <Heading level="h2" className="text-lg font-black text-ui-fg-base">
               Medya, Navigasyon ve Genel İletişim
             </Heading>
           </div>
@@ -266,39 +266,39 @@ const SiteHubPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <a
             href="/app/site-media"
-            className="p-5 rounded-xl border border-[#E5E0D8] bg-[#FAF8F5] hover:border-[#B29460] hover:bg-[#FFFFFF] hover:shadow-md transition-all flex flex-col gap-2 group"
+            className="p-5 rounded-xl border border-ui-border-base bg-ui-bg-subtle/60 hover:border-[#B29460] hover:bg-ui-bg-base hover:shadow-md transition-all flex flex-col gap-2 group"
           >
-            <div className="flex items-center gap-2 text-[#222325] font-black text-sm group-hover:text-[#B29460]">
+            <div className="flex items-center gap-2 text-ui-fg-base font-black text-sm group-hover:text-[#B29460]">
               <Folder />
               <span>Görsel Kütüphanesi</span>
             </div>
-            <Text className="text-xs text-[#49372E] leading-relaxed">
+            <Text className="text-xs text-ui-fg-subtle leading-relaxed">
               Logo, desen, mockup ve 3D GLB modelleri için medya dosyalarını yükleyin ve yönetin.
             </Text>
           </a>
 
           <a
             href="/app/site-navigation"
-            className="p-5 rounded-xl border border-[#E5E0D8] bg-[#FAF8F5] hover:border-[#B29460] hover:bg-[#FFFFFF] hover:shadow-md transition-all flex flex-col gap-2 group"
+            className="p-5 rounded-xl border border-ui-border-base bg-ui-bg-subtle/60 hover:border-[#B29460] hover:bg-ui-bg-base hover:shadow-md transition-all flex flex-col gap-2 group"
           >
-            <div className="flex items-center gap-2 text-[#222325] font-black text-sm group-hover:text-[#B29460]">
+            <div className="flex items-center gap-2 text-ui-fg-base font-black text-sm group-hover:text-[#B29460]">
               <EllipsisHorizontal />
               <span>Menü ve Footer</span>
             </div>
-            <Text className="text-xs text-[#49372E] leading-relaxed">
+            <Text className="text-xs text-ui-fg-subtle leading-relaxed">
               Header navigasyon bağlantılarını, sosyal medya linklerini ve footer metinlerini düzenleyin.
             </Text>
           </a>
 
           <a
             href="/app/site-settings"
-            className="p-5 rounded-xl border border-[#E5E0D8] bg-[#FAF8F5] hover:border-[#B29460] hover:bg-[#FFFFFF] hover:shadow-md transition-all flex flex-col gap-2 group"
+            className="p-5 rounded-xl border border-ui-border-base bg-ui-bg-subtle/60 hover:border-[#B29460] hover:bg-ui-bg-base hover:shadow-md transition-all flex flex-col gap-2 group"
           >
-            <div className="flex items-center gap-2 text-[#222325] font-black text-sm group-hover:text-[#B29460]">
+            <div className="flex items-center gap-2 text-ui-fg-base font-black text-sm group-hover:text-[#B29460]">
               <CogSixTooth />
               <span>Site Ayarları</span>
             </div>
-            <Text className="text-xs text-[#49372E] leading-relaxed">
+            <Text className="text-xs text-ui-fg-subtle leading-relaxed">
               Mağaza başlığı, slogan, duyuru barı metni, WhatsApp hattı ve iletişim e-postasını belirleyin.
             </Text>
           </a>
@@ -306,11 +306,11 @@ const SiteHubPage = () => {
       </Container>
 
       {/* Modül Seçim Alanı 3: 3D ve Baskı Yönetimi */}
-      <Container className="p-6 bg-[#FFFFFF] border border-[#E5E0D8] rounded-2xl shadow-sm">
-        <div className="flex items-center justify-between pb-4 border-b border-[#E5E0D8] mb-5">
+      <Container className="p-6 bg-ui-bg-base border border-ui-border-base rounded-2xl shadow-xs">
+        <div className="flex items-center justify-between pb-4 border-b border-ui-border-base mb-5">
           <div>
             <span className="text-[11px] font-black uppercase tracking-wider text-[#B29460]">Bölüm 3</span>
-            <Heading level="h2" className="text-lg font-black text-[#222325]">
+            <Heading level="h2" className="text-lg font-black text-ui-fg-base">
               3D & Baskı Stüdyosu Yönetimi
             </Heading>
           </div>
@@ -319,65 +319,65 @@ const SiteHubPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <a
             href="/app/print-models"
-            className="p-4 rounded-xl border border-[#E5E0D8] bg-[#FAF8F5] hover:border-[#B29460] hover:bg-[#FFFFFF] hover:shadow-md transition-all flex flex-col gap-2 group"
+            className="p-4 rounded-xl border border-ui-border-base bg-ui-bg-subtle/60 hover:border-[#B29460] hover:bg-ui-bg-base hover:shadow-md transition-all flex flex-col gap-2 group"
           >
-            <div className="flex items-center gap-2 text-[#222325] font-black text-sm group-hover:text-[#B29460]">
+            <div className="flex items-center gap-2 text-ui-fg-base font-black text-sm group-hover:text-[#B29460]">
               <CubeSolid />
               <span>3D Modeller</span>
             </div>
-            <Text className="text-xs text-[#49372E]">
+            <Text className="text-xs text-ui-fg-subtle">
               GLB 3D giysi modellerinin dosya yolu ve poligon ayarları.
             </Text>
           </a>
 
           <a
             href="/app/print-tshirts"
-            className="p-4 rounded-xl border border-[#E5E0D8] bg-[#FAF8F5] hover:border-[#B29460] hover:bg-[#FFFFFF] hover:shadow-md transition-all flex flex-col gap-2 group"
+            className="p-4 rounded-xl border border-ui-border-base bg-ui-bg-subtle/60 hover:border-[#B29460] hover:bg-ui-bg-base hover:shadow-md transition-all flex flex-col gap-2 group"
           >
-            <div className="flex items-center gap-2 text-[#222325] font-black text-sm group-hover:text-[#B29460]">
+            <div className="flex items-center gap-2 text-ui-fg-base font-black text-sm group-hover:text-[#B29460]">
               <Swatch />
               <span>Kalıplar & Renkler</span>
             </div>
-            <Text className="text-xs text-[#49372E]">
+            <Text className="text-xs text-ui-fg-subtle">
               Oversize ve standart tişört kalıpları ile kumaş renk kartelası.
             </Text>
           </a>
 
           <a
             href="/app/print-placements"
-            className="p-4 rounded-xl border border-[#E5E0D8] bg-[#FAF8F5] hover:border-[#B29460] hover:bg-[#FFFFFF] hover:shadow-md transition-all flex flex-col gap-2 group"
+            className="p-4 rounded-xl border border-ui-border-base bg-ui-bg-subtle/60 hover:border-[#B29460] hover:bg-ui-bg-base hover:shadow-md transition-all flex flex-col gap-2 group"
           >
-            <div className="flex items-center gap-2 text-[#222325] font-black text-sm group-hover:text-[#B29460]">
+            <div className="flex items-center gap-2 text-ui-fg-base font-black text-sm group-hover:text-[#B29460]">
               <DocumentText />
               <span>Baskı Alanları</span>
             </div>
-            <Text className="text-xs text-[#49372E]">
+            <Text className="text-xs text-ui-fg-subtle">
               Göğüs, sırt ve cep milimetre baskı sınır ölçüleri.
             </Text>
           </a>
 
           <a
             href="/app/print-designs"
-            className="p-4 rounded-xl border border-[#E5E0D8] bg-[#FAF8F5] hover:border-[#B29460] hover:bg-[#FFFFFF] hover:shadow-md transition-all flex flex-col gap-2 group"
+            className="p-4 rounded-xl border border-ui-border-base bg-ui-bg-subtle/60 hover:border-[#B29460] hover:bg-ui-bg-base hover:shadow-md transition-all flex flex-col gap-2 group"
           >
-            <div className="flex items-center gap-2 text-[#222325] font-black text-sm group-hover:text-[#B29460]">
+            <div className="flex items-center gap-2 text-ui-fg-base font-black text-sm group-hover:text-[#B29460]">
               <Sparkles />
               <span>Tasarım Kayıtları</span>
             </div>
-            <Text className="text-xs text-[#49372E]">
+            <Text className="text-xs text-ui-fg-subtle">
               Müşterilerin oluşturduğu sipariş baskı dosyalarını indirin.
             </Text>
           </a>
 
           <a
             href="/app/print-pricing"
-            className="p-4 rounded-xl border border-[#E5E0D8] bg-[#FAF8F5] hover:border-[#B29460] hover:bg-[#FFFFFF] hover:shadow-md transition-all flex flex-col gap-2 group"
+            className="p-4 rounded-xl border border-ui-border-base bg-ui-bg-subtle/60 hover:border-[#B29460] hover:bg-ui-bg-base hover:shadow-md transition-all flex flex-col gap-2 group"
           >
-            <div className="flex items-center gap-2 text-[#222325] font-black text-sm group-hover:text-[#B29460]">
+            <div className="flex items-center gap-2 text-ui-fg-base font-black text-sm group-hover:text-[#B29460]">
               <CurrencyDollar />
               <span>Baskı Fiyatları</span>
             </div>
-            <Text className="text-xs text-[#49372E]">
+            <Text className="text-xs text-ui-fg-subtle">
               DTF ve Serigrafi baskı maliyetleri ve adet indirim baremleri.
             </Text>
           </a>

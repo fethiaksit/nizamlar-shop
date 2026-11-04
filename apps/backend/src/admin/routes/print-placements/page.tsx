@@ -71,12 +71,12 @@ const PrintPlacementsPage = () => {
       <Container className="p-6">
         <div className="flex items-center gap-2">
           <Badge color="blue">MİLİMETRİK KALIP STANDARTLARI</Badge>
-          <span className="text-xs text-gray-500">Baskı Alanı ve Yüzey Sınırları</span>
+          <span className="text-xs text-ui-fg-subtle">Baskı Alanı ve Yüzey Sınırları</span>
         </div>
-        <Heading level="h1" className="text-2xl font-bold text-gray-900 mt-1">
+        <Heading level="h1" className="text-2xl font-bold text-ui-fg-base mt-1">
           Baskı Alanları ve Ölçü Sınırları
         </Heading>
-        <Text className="text-xs text-gray-600 mt-1">
+        <Text className="text-xs text-ui-fg-subtle mt-1">
           T-Designer 3D stüdyosunda ve atölye üretim hattında geçerli milimetrik baskı alanları,
           fiyatlandırma çarpanları ve teknik sınırlar.
         </Text>
@@ -86,33 +86,33 @@ const PrintPlacementsPage = () => {
         {placements.map((p) => (
           <Container key={p.id} className="p-5 flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between border-b pb-2 mb-3">
-                <Heading level="h2" className="text-sm font-bold text-gray-900">
+              <div className="flex items-center justify-between border-b border-ui-border-base pb-2 mb-3">
+                <Heading level="h2" className="text-sm font-bold text-ui-fg-base">
                   {p.name}
                 </Heading>
                 <Badge color="orange">{p.dimensions}</Badge>
               </div>
 
-              <Text className="text-xs text-gray-600 mb-3">{p.description}</Text>
+              <Text className="text-xs text-ui-fg-subtle mb-3">{p.description}</Text>
 
-              <div className="space-y-1.5 text-xs text-gray-700 bg-gray-50 p-3 rounded-lg border">
+              <div className="space-y-1.5 text-xs text-ui-fg-base bg-ui-bg-subtle/80 p-3 rounded-lg border border-ui-border-base">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Maksimum Alan:</span>
-                  <span className="font-semibold">{p.maxPrintArea}</span>
+                  <span className="text-ui-fg-subtle font-medium">Maksimum Alan:</span>
+                  <span className="font-semibold text-ui-fg-base">{p.maxPrintArea}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Uygulanabilir Yüzey:</span>
-                  <span className="font-medium text-gray-900">{p.allowedSurfaces}</span>
+                  <span className="text-ui-fg-subtle font-medium">Uygulanabilir Yüzey:</span>
+                  <span className="font-medium text-ui-fg-base">{p.allowedSurfaces}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Fiyat Çarpanı:</span>
-                  <span className="font-bold text-amber-700">{p.sizeMultiplier}</span>
+                  <span className="text-ui-fg-subtle font-medium">Fiyat Çarpanı:</span>
+                  <span className="font-bold text-[#B29460]">{p.sizeMultiplier}</span>
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 pt-3 border-t text-[11px] text-gray-500">
-              Uygun Teknik: <span className="font-semibold text-gray-800">{p.recommendedTechnique}</span>
+            <div className="mt-4 pt-3 border-t border-ui-border-base text-xs text-ui-fg-subtle">
+              Uygun Teknik: <span className="font-semibold text-ui-fg-base">{p.recommendedTechnique}</span>
             </div>
           </Container>
         ))}

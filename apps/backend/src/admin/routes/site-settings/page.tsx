@@ -85,7 +85,7 @@ const SiteSettingsPage = () => {
   }
 
   if (loading) {
-    return <Container className="p-8 text-center text-gray-500 max-w-7xl">Ayarlar yükleniyor...</Container>
+    return <Container className="p-8 text-center text-ui-fg-muted max-w-7xl">Ayarlar yükleniyor...</Container>
   }
 
   if (!settings) return null
@@ -95,12 +95,12 @@ const SiteSettingsPage = () => {
       <Container className="p-6">
         <div className="flex items-center gap-2">
           <Badge color="orange">GENEL AYARLAR</Badge>
-          <span className="text-xs text-gray-500">Kurumsal Marka ve İletişim</span>
+          <span className="text-xs text-ui-fg-subtle">Kurumsal Marka ve İletişim</span>
         </div>
-        <Heading level="h1" className="text-2xl font-bold text-gray-900 mt-1">
+        <Heading level="h1" className="text-2xl font-bold text-ui-fg-base mt-1">
           Site Ayarları
         </Heading>
-        <Text className="text-xs text-gray-600 mt-1">
+        <Text className="text-xs text-ui-fg-subtle mt-1">
           Site başlığı, duyuru çubuğu, müşteri iletişim bilgileri ve sosyal medya bağlantılarını
           yönetin.
         </Text>
@@ -109,8 +109,8 @@ const SiteSettingsPage = () => {
           <div
             className={`mt-4 p-3 rounded-lg text-xs font-semibold ${
               feedback.type === "success"
-                ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                : "bg-red-50 text-red-800 border border-red-200"
+                ? "bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800"
+                : "bg-red-50 text-red-800 border border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-800"
             }`}
           >
             {feedback.text}
@@ -121,12 +121,12 @@ const SiteSettingsPage = () => {
       <form onSubmit={handleSave} className="flex flex-col gap-6">
         {/* Marka & Duyuru */}
         <Container className="p-6 flex flex-col gap-4">
-          <Heading level="h2" className="text-base font-bold text-gray-900 border-b pb-2">
+          <Heading level="h2" className="text-base font-bold text-ui-fg-base border-b border-ui-border-base pb-2">
             Marka Kimliği ve Duyuru Barı
           </Heading>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs font-semibold text-gray-700">Site Başlığı</Label>
+              <Label className="text-xs font-semibold text-ui-fg-base">Site Başlığı</Label>
               <Input
                 value={settings.site_title}
                 onChange={(e) => setSettings({ ...settings, site_title: e.target.value })}
@@ -134,7 +134,7 @@ const SiteSettingsPage = () => {
               />
             </div>
             <div>
-              <Label className="text-xs font-semibold text-gray-700">Slogan (Tagline)</Label>
+              <Label className="text-xs font-semibold text-ui-fg-base">Slogan (Tagline)</Label>
               <Input
                 value={settings.tagline}
                 onChange={(e) => setSettings({ ...settings, tagline: e.target.value })}
@@ -145,7 +145,7 @@ const SiteSettingsPage = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs font-semibold text-gray-700">Üst Duyuru Çubuğu Metni</Label>
+              <Label className="text-xs font-semibold text-ui-fg-base">Üst Duyuru Çubuğu Metni</Label>
               <Input
                 value={settings.announcement_text}
                 onChange={(e) =>
@@ -155,7 +155,7 @@ const SiteSettingsPage = () => {
               />
             </div>
             <div>
-              <Label className="text-xs font-semibold text-gray-700">Duyuru Bağlantı Linki</Label>
+              <Label className="text-xs font-semibold text-ui-fg-base">Duyuru Bağlantı Linki</Label>
               <Input
                 value={settings.announcement_link}
                 onChange={(e) =>
@@ -169,12 +169,12 @@ const SiteSettingsPage = () => {
 
         {/* İletişim Bilgileri */}
         <Container className="p-6 flex flex-col gap-4">
-          <Heading level="h2" className="text-base font-bold text-gray-900 border-b pb-2">
+          <Heading level="h2" className="text-base font-bold text-ui-fg-base border-b border-ui-border-base pb-2">
             İletişim & Konum
           </Heading>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <Label className="text-xs font-semibold text-gray-700">E-Posta</Label>
+              <Label className="text-xs font-semibold text-ui-fg-base">E-Posta</Label>
               <Input
                 value={settings.contact_email}
                 onChange={(e) => setSettings({ ...settings, contact_email: e.target.value })}
@@ -182,7 +182,7 @@ const SiteSettingsPage = () => {
               />
             </div>
             <div>
-              <Label className="text-xs font-semibold text-gray-700">Telefon</Label>
+              <Label className="text-xs font-semibold text-ui-fg-base">Telefon</Label>
               <Input
                 value={settings.contact_phone}
                 onChange={(e) => setSettings({ ...settings, contact_phone: e.target.value })}
@@ -190,7 +190,7 @@ const SiteSettingsPage = () => {
               />
             </div>
             <div>
-              <Label className="text-xs font-semibold text-gray-700">WhatsApp Hattı</Label>
+              <Label className="text-xs font-semibold text-ui-fg-base">WhatsApp Hattı</Label>
               <Input
                 value={settings.whatsapp_number}
                 onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value })}
@@ -200,7 +200,7 @@ const SiteSettingsPage = () => {
           </div>
 
           <div>
-            <Label className="text-xs font-semibold text-gray-700">Fiziksel Atölye / Fabrika Adresi</Label>
+            <Label className="text-xs font-semibold text-ui-fg-base">Fiziksel Atölye / Fabrika Adresi</Label>
             <Input
               value={settings.address}
               onChange={(e) => setSettings({ ...settings, address: e.target.value })}
@@ -211,12 +211,12 @@ const SiteSettingsPage = () => {
 
         {/* Sosyal Medya ve Telif */}
         <Container className="p-6 flex flex-col gap-4">
-          <Heading level="h2" className="text-base font-bold text-gray-900 border-b pb-2">
+          <Heading level="h2" className="text-base font-bold text-ui-fg-base border-b border-ui-border-base pb-2">
             Sosyal Medya & Telif Hakları
           </Heading>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs font-semibold text-gray-700">Instagram Profili</Label>
+              <Label className="text-xs font-semibold text-ui-fg-base">Instagram Profili</Label>
               <Input
                 value={settings.social_instagram}
                 onChange={(e) => setSettings({ ...settings, social_instagram: e.target.value })}
@@ -224,7 +224,7 @@ const SiteSettingsPage = () => {
               />
             </div>
             <div>
-              <Label className="text-xs font-semibold text-gray-700">LinkedIn Sayfası</Label>
+              <Label className="text-xs font-semibold text-ui-fg-base">LinkedIn Sayfası</Label>
               <Input
                 value={settings.social_linkedin}
                 onChange={(e) => setSettings({ ...settings, social_linkedin: e.target.value })}
@@ -234,7 +234,7 @@ const SiteSettingsPage = () => {
           </div>
 
           <div>
-            <Label className="text-xs font-semibold text-gray-700">Footer Telif Metni</Label>
+            <Label className="text-xs font-semibold text-ui-fg-base">Footer Telif Metni</Label>
             <Input
               value={settings.footer_copyright}
               onChange={(e) => setSettings({ ...settings, footer_copyright: e.target.value })}
@@ -249,7 +249,7 @@ const SiteSettingsPage = () => {
             size="large"
             type="submit"
             disabled={saving}
-            className="bg-[#D4AF37] hover:bg-[#c19d29] text-gray-950 font-bold px-8"
+            className="bg-[#B29460] hover:bg-[#9a7d4a] text-[#222325] font-bold px-8"
           >
             {saving ? "Kaydediliyor..." : "💾 Site Ayarlarını Kaydet"}
           </Button>

@@ -42,7 +42,7 @@ export function calculateClientPrintPricing({
 }) {
   const techCost = technique === "serigrafi" ? 60 : 85
   const sizeMultiplier = maxWidthMm > 210 ? 1.4 : 1.0
-  const safeSurfaces = Math.max(1, surfaceCount)
+  const safeSurfaces = surfaceCount === 0 ? 0 : Math.max(1, surfaceCount)
   const discountPct =
     quantity >= 250
       ? 30
@@ -57,9 +57,10 @@ export function calculateClientPrintPricing({
               : quantity >= 5
                 ? 5
                 : 0
-  const printUnitCost = Math.round(
-    techCost * sizeMultiplier * safeSurfaces * (1 - discountPct / 100),
-  )
+  const printUnitCost =
+    safeSurfaces === 0
+      ? 0
+      : Math.round(techCost * sizeMultiplier * safeSurfaces * (1 - discountPct / 100))
   const unitTotal = baseUnitPrice + printUnitCost
   const grandTotal = unitTotal * quantity
 

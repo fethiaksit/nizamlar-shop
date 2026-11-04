@@ -61,20 +61,20 @@ const ProductAura3dWidget = ({ data }: DetailWidgetProps<AdminProduct>) => {
   }
 
   return (
-    <Container className="p-6 divide-y divide-gray-200 border border-amber-900/20 bg-white rounded-lg shadow-xs">
+    <Container className="p-6 divide-y divide-ui-border-base border border-ui-border-base bg-ui-bg-base text-ui-fg-base rounded-lg shadow-xs">
       <div className="pb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-amber-50 rounded-lg text-amber-700">
+          <div className="p-2 bg-amber-50 rounded-lg text-[#B29460] dark:bg-amber-950/40 dark:text-amber-300">
             <CubeSolid />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <Heading level="h2" className="text-base font-bold text-gray-900">
+              <Heading level="h2" className="text-base font-bold text-ui-fg-base">
                 Aura 3D Dijital İkiz ve Özel Sunum Yönetimi
               </Heading>
               <Badge color="orange">Aura 3D</Badge>
             </div>
-            <Text className="text-xs text-gray-500 mt-0.5">
+            <Text className="text-xs text-ui-fg-subtle mt-0.5">
               Bu ürünün Storefront 3D vitrinindeki GLB modelini, kumaş kalitesini ve etkileşim
               rozetini yönetin.
             </Text>
@@ -86,7 +86,7 @@ const ProductAura3dWidget = ({ data }: DetailWidgetProps<AdminProduct>) => {
           size="base"
           disabled={saving}
           onClick={handleSave3dConfig}
-          className="bg-[#D4AF37] hover:bg-[#c19d29] text-gray-950 font-bold"
+          className="bg-[#B29460] hover:bg-[#9a7d4a] text-[#222325] font-bold"
         >
           {saving ? "Kaydediliyor..." : "3D Ayarlarını Kaydet"}
         </Button>
@@ -94,7 +94,7 @@ const ProductAura3dWidget = ({ data }: DetailWidgetProps<AdminProduct>) => {
 
       <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
         <div>
-          <Label className="text-xs font-semibold text-gray-700">3D GLB/GLTF Model Dosyası</Label>
+          <Label className="text-xs font-semibold text-ui-fg-base">3D GLB/GLTF Model Dosyası</Label>
           <Input
             value={model3dPath}
             onChange={(e) => setModel3dPath(e.target.value)}
@@ -104,7 +104,7 @@ const ProductAura3dWidget = ({ data }: DetailWidgetProps<AdminProduct>) => {
         </div>
 
         <div>
-          <Label className="text-xs font-semibold text-gray-700">Aura Vitrin Rozeti (Badge)</Label>
+          <Label className="text-xs font-semibold text-ui-fg-base">Aura Vitrin Rozeti (Badge)</Label>
           <Input
             value={auraBadge}
             onChange={(e) => setAuraBadge(e.target.value)}
@@ -114,7 +114,7 @@ const ProductAura3dWidget = ({ data }: DetailWidgetProps<AdminProduct>) => {
         </div>
 
         <div>
-          <Label className="text-xs font-semibold text-gray-700">Kumaş ve Doku Özelliği</Label>
+          <Label className="text-xs font-semibold text-ui-fg-base">Kumaş ve Doku Özelliği</Label>
           <Input
             value={fabricSpec}
             onChange={(e) => setFabricSpec(e.target.value)}
@@ -124,12 +124,12 @@ const ProductAura3dWidget = ({ data }: DetailWidgetProps<AdminProduct>) => {
         </div>
 
         <div>
-          <Label className="text-xs font-semibold text-gray-700">
+          <Label className="text-xs font-semibold text-ui-fg-base">
             3D Vitrinde & Askılıkta Öne Çıkarılsın
           </Label>
           <div className="mt-2 flex items-center gap-2">
             <Switch checked={is3dFeatured} onCheckedChange={(val) => setIs3dFeatured(val)} />
-            <span className="text-xs text-gray-600">
+            <span className="text-xs text-ui-fg-subtle">
               {is3dFeatured ? "Evet, 3D vitrinde gösterilir" : "Hayır, yalnızca standart katalogda"}
             </span>
           </div>
@@ -137,7 +137,7 @@ const ProductAura3dWidget = ({ data }: DetailWidgetProps<AdminProduct>) => {
       </div>
 
       {savedMsg && (
-        <div className="mt-4 pt-3 text-xs font-semibold text-emerald-700 flex items-center gap-1.5">
+        <div className="mt-4 pt-3 text-xs font-semibold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
           <Sparkles />
           <span>{savedMsg}</span>
         </div>

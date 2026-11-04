@@ -1,5 +1,6 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { queryDb } from "../../../../lib/db"
+import { notifyStorefrontSync } from "../../../../lib/storefront-sync"
 
 /**
  * POST /admin/site-management/publish
@@ -23,6 +24,9 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
 
     // 5. Site settings
     await queryDb("UPDATE site_settings SET is_published = true, updated_at = NOW() WHERE id = 'default';")
+
+    // Storefront cache revalidation
+    await notifyStorefrontSync({ tags: ["site-content"] })
 
     return res.status(200).json({
       success: true,

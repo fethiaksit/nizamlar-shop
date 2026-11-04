@@ -20,9 +20,11 @@ function FacingShirt({
   const group = useRef<THREE.Group>(null)
   const invalidate = useThree((s) => s.invalidate)
   const targetY = side === "back" ? Math.PI : 0
+
   useEffect(() => {
     invalidate()
   }, [targetY, invalidate])
+
   useFrame((_, dt) => {
     if (!group.current) return
     if (Math.abs(group.current.rotation.y - targetY) > 0.002) {
@@ -37,6 +39,7 @@ function FacingShirt({
       group.current.rotation.y = targetY
     }
   })
+
   return (
     <group ref={group} rotation={[0, targetY, 0]}>
       <GarmentModel color={color} layers={layers} />
@@ -49,14 +52,16 @@ export default function Studio3DViewer({
   layers,
   side,
   capture,
+  resetKey = 0,
 }: {
   color: string
   layers: PrintLayer[]
   side: "front" | "back"
   capture?: (callback: () => string) => void
+  resetKey?: number
 }) {
   return (
-    <GarmentScene key={side} interactive dark onCapture={capture}>
+    <GarmentScene key={resetKey} interactive dark onCapture={capture}>
       <FacingShirt side={side} color={color} layers={layers} />
     </GarmentScene>
   )
