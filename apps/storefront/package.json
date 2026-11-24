@@ -8,11 +8,15 @@
     "medusa-storefront"
   ],
   "scripts": {
+    "predev": "node ../../scripts/quarantine-appledouble.cjs",
     "dev": "next dev --webpack -p 8000",
+    "prebuild": "node ../../scripts/quarantine-appledouble.cjs",
     "build": "next build --webpack",
     "start": "next start -p 8000",
+    "prelint": "node ../../scripts/quarantine-appledouble.cjs",
     "lint": "eslint .",
     "analyze": "ANALYZE=true next build",
+    "pretest:e2e": "node ../../scripts/quarantine-appledouble.cjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {

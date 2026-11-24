@@ -2,7 +2,7 @@
   "status": "provisional; phase 00 gate failing",
   "date": "2026-11-24",
   "baseCommit": "35168b05ce3633eac756f9dc7330382487e30677",
-  "source": "current working tree with pre-existing user edits; not clean main",
+  "source": "original working-tree source now preserved in user-approved commit 970a3e2; PNG hashes unchanged",
   "preExistingPatchSha256": "53aabc5ac9791726fbadedeb484a92fa2af18470def6766fbf0c10311a0cad36",
   "widths": [
     390,
@@ -75,5 +75,6 @@
   "harnessSha256": {
     "apps/storefront/playwright.visual.config.ts": "72942f702d9a79c475b784ad3a7959203af314004d627c4cdcb9050393dccd11",
     "apps/storefront/e2e/visual/design-preservation.spec.ts": "83c16e3dba87f3d7651c15b41ab0976e249290f6d63113132e39cf655da25a27"
-  }
+  },
+  "preservationCommit": "970a3e2c45da089deb3881d9ae89ce41c3dcd727"
 }

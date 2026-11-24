@@ -30,10 +30,19 @@ test("Hero slider 3 slides, native page scroll without pinning, lazy 3D rack and
 }, info) => {
   const errors: string[] = []
   page.on("pageerror", (error) => errors.push(error.message))
-  await page.goto("/tr")
+  await page.goto("/tr", { waitUntil: "networkidle" })
 
   const hero = page.getByTestId("cinematic-hero")
   await expect(hero).toBeVisible()
+  // Ensure React hydration has bound event handlers before interacting with slider controls
+  await expect
+    .poll(async () => {
+      await page.getByTestId("hero-dot-0").click()
+      return page
+        .getByTestId("hero-autoplay-toggle")
+        .getAttribute("aria-pressed")
+    })
+    .toBe("false")
   await expect(hero).toHaveAttribute("data-slide", "0")
   await expect(hero).toContainText("KENDİ TARZINI")
 
@@ -119,10 +128,10 @@ test("Hero slider 3 slides, native page scroll without pinning, lazy 3D rack and
     ),
   })
 
-  // 4. Tişört öne çıkmış hali (Nizamlar Premium Oversize Tişört · Beyaz)
+  // Select the currently published shirt label; the catalog no longer names it Premium Oversize.
   const garment = rack
     .locator("[data-garments] button")
-    .filter({ hasText: "Premium Oversize" })
+    .filter({ hasText: /Tişört|T-Shirt|Tee/i })
     .first()
   await garment.focus()
   await page.waitForTimeout(650)

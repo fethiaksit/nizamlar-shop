@@ -1,5 +1,10 @@
 import { defineConfig } from "@playwright/test"
 
+const baselineDir =
+  process.env.VISUAL_BASELINE_SET === "candidate"
+    ? "candidate-baselines"
+    : "baselines"
+
 export default defineConfig({
   testDir: "./e2e/visual",
   testIgnore: ["**/._*"],
@@ -12,12 +17,14 @@ export default defineConfig({
   workers: 1,
   retries: 0,
   updateSnapshots: process.env.VISUAL_CAPTURE === "1" ? "missing" : "none",
-  snapshotPathTemplate:
-    "{testDir}/baselines/{projectName}/{testFilePath}/{arg}{ext}",
+  snapshotPathTemplate: `{testDir}/${baselineDir}/{projectName}/{testFilePath}/{arg}{ext}`,
   outputDir: "../../artifacts/dtf-visual/results",
   reporter: [
     ["list"],
-    ["html", { outputFolder: "../../artifacts/dtf-visual/report", open: "never" }],
+    [
+      "html",
+      { outputFolder: "../../artifacts/dtf-visual/report", open: "never" },
+    ],
     ["json", { outputFile: "../../artifacts/dtf-visual/results.json" }],
   ],
   use: {

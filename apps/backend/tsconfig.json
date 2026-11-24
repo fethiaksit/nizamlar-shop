@@ -33,6 +33,7 @@
     ".medusa/types/*"
   ],
   "exclude": [
+    "**/._*",
     "node_modules",
     ".medusa/server",
     ".medusa/admin",

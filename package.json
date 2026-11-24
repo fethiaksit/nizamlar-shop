@@ -13,7 +13,8 @@
     "test": "turbo test",
     "backend:seed": "turbo seed --filter=@nizamlar/backend",
     "backend:dev": "turbo dev --filter=@nizamlar/backend",
-    "storefront:dev": "turbo dev --filter=@nizamlar/storefront"
+    "storefront:dev": "turbo dev --filter=@nizamlar/storefront",
+    "quarantine:appledouble": "node ./scripts/quarantine-appledouble.cjs"
   },
   "pnpm": {
     "overrides": {
