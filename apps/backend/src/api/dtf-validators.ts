@@ -104,8 +104,34 @@ export const CreateDtfDesignAssetSchema = z.object({
   allowLowDpi: z.boolean().default(false),
 })
 
+export const GangSheetItemPlacementSchema = z.object({
+  id: z.string().min(1).max(120),
+  artworkId: z.string().min(1).max(120),
+  fileName: z.string().min(1).max(240),
+  mimeType: z.string().min(3).max(80),
+  pixelWidth: z.number().int().min(1).max(40000),
+  pixelHeight: z.number().int().min(1).max(40000),
+  xIn: z.number().min(-100).max(200),
+  yIn: z.number().min(-100).max(600),
+  widthIn: z.number().positive().max(60),
+  heightIn: z.number().positive().max(600),
+  rotationDeg: z.number().min(-360).max(360).default(0),
+})
+
+export const SaveDtfGangSheetSchema = z.object({
+  productHandle: z.string().min(1).max(160).optional(),
+  sheetWidthIn: z.number().positive().max(60).optional(),
+  sheetLengthIn: z.number().positive().max(600),
+  quantity: z.number().int().min(1).max(10000).default(1),
+  items: z.array(GangSheetItemPlacementSchema).min(1).max(500),
+  productionPrintPngBase64: z.string().min(32),
+  previewGarmentColor: z.string().max(80).optional(),
+  allowLowDpi: z.boolean().default(false),
+})
+
 export type DtfQuoteRequestBody = z.infer<typeof DtfQuoteRequestSchema>
 export type DtfAddToCartBody = z.infer<typeof DtfAddToCartSchema>
 export type CreateDtfDesignAssetBody = z.infer<typeof CreateDtfDesignAssetSchema>
+export type SaveDtfGangSheetBody = z.infer<typeof SaveDtfGangSheetSchema>
 export type UpsertDtfPricingRuleBody = z.infer<typeof UpsertDtfPricingRuleSchema>
 export type UpsertDtfProductSpecBody = z.infer<typeof UpsertDtfProductSpecSchema>

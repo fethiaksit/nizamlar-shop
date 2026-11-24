@@ -195,6 +195,56 @@ export async function saveDtfDesignAsset(input: {
   })
 }
 
+export interface GangSheetServerItemInput {
+  id: string
+  artworkId: string
+  fileName: string
+  mimeType: string
+  pixelWidth: number
+  pixelHeight: number
+  xIn: number
+  yIn: number
+  widthIn: number
+  heightIn: number
+  rotationDeg: number
+}
+
+export interface SavedGangSheetResponse {
+  designAsset: {
+    id: string
+    product_handle: string | null
+    product_type: "gang_sheet"
+    width_in: number
+    height_in: number
+    quantity: number
+    pixel_width: number
+    pixel_height: number
+    effective_dpi: number
+    has_transparency: boolean
+    item_count: number
+    printer_rip_verified: boolean
+    status: string
+  }
+  quote: DtfVerifiedQuote
+  quoteSignature: string
+}
+
+export async function saveDtfGangSheet(input: {
+  productHandle?: string
+  sheetWidthIn?: number
+  sheetLengthIn: number
+  quantity: number
+  items: GangSheetServerItemInput[]
+  productionPrintPngBase64: string
+  previewGarmentColor?: string
+  allowLowDpi?: boolean
+}): Promise<SavedGangSheetResponse> {
+  return sdk.client.fetch<SavedGangSheetResponse>("/store/dtf/gang-sheets", {
+    method: "POST",
+    body: input,
+  })
+}
+
 export function resolveProductDtfType(
   product?: {
     handle?: string | null

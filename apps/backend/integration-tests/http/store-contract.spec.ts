@@ -549,6 +549,97 @@ medusaIntegrationTestRunner({
         garment_included: false,
         design_asset_id: assetId,
       })
+
+      // 6. Validates gang sheet overlaps/bounds and persists valid 22" x 24" sheet
+      const sheetRgba = makePngHeaderBase64(6600, 7200, 6, 9)
+      await expect(
+        api.post(
+          "/store/dtf/gang-sheets",
+          {
+            sheetWidthIn: 22,
+            sheetLengthIn: 24,
+            quantity: 2,
+            productionPrintPngBase64: sheetRgba,
+            items: [
+              {
+                id: "ov_1",
+                artworkId: "a1",
+                fileName: "logo1.png",
+                mimeType: "image/png",
+                pixelWidth: 1500,
+                pixelHeight: 1500,
+                xIn: 1,
+                yIn: 1,
+                widthIn: 5,
+                heightIn: 5,
+                rotationDeg: 0,
+              },
+              {
+                id: "ov_2",
+                artworkId: "a2",
+                fileName: "logo2.png",
+                mimeType: "image/png",
+                pixelWidth: 1500,
+                pixelHeight: 1500,
+                xIn: 3,
+                yIn: 2,
+                widthIn: 5,
+                heightIn: 5,
+                rotationDeg: 0,
+              },
+            ],
+          },
+          { headers },
+        ),
+      ).rejects.toMatchObject({ response: { status: 400 } })
+
+      const validSheet = await api.post(
+        "/store/dtf/gang-sheets",
+        {
+          sheetWidthIn: 22,
+          sheetLengthIn: 24,
+          quantity: 2,
+          productionPrintPngBase64: sheetRgba,
+          items: [
+            {
+              id: "ok_1",
+              artworkId: "a1",
+              fileName: "logo1.png",
+              mimeType: "image/png",
+              pixelWidth: 1500,
+              pixelHeight: 1500,
+              xIn: 0.5,
+              yIn: 0.5,
+              widthIn: 5,
+              heightIn: 5,
+              rotationDeg: 0,
+            },
+            {
+              id: "ok_2",
+              artworkId: "a2",
+              fileName: "logo2.png",
+              mimeType: "image/png",
+              pixelWidth: 1500,
+              pixelHeight: 1500,
+              xIn: 6.5,
+              yIn: 0.5,
+              widthIn: 5,
+              heightIn: 5,
+              rotationDeg: 0,
+            },
+          ],
+        },
+        { headers },
+      )
+      expect(validSheet.status).toBe(201)
+      expect(validSheet.data.designAsset).toMatchObject({
+        product_type: "gang_sheet",
+        width_in: 22,
+        height_in: 24,
+        quantity: 2,
+        item_count: 2,
+      })
+      expect(validSheet.data.quote.subtotalCents).toBe(3580)
     })
   },
 })

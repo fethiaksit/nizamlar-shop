@@ -8,6 +8,7 @@ import {
   CreateDtfDesignAssetSchema,
   DtfAddToCartSchema,
   DtfQuoteRequestSchema,
+  SaveDtfGangSheetSchema,
   UpsertDtfPricingRuleSchema,
   UpsertDtfProductSpecSchema,
 } from "./dtf-validators"
@@ -47,6 +48,12 @@ export default defineMiddlewares({
       matcher: "/store/dtf/designs",
       bodyParser: { sizeLimit: "45mb" },
       middlewares: [validateAndTransformBody(CreateDtfDesignAssetSchema)],
+    },
+    {
+      methods: ["POST"],
+      matcher: "/store/dtf/gang-sheets",
+      bodyParser: { sizeLimit: "45mb" },
+      middlewares: [validateAndTransformBody(SaveDtfGangSheetSchema)],
     },
     {
       methods: ["GET", "POST"],

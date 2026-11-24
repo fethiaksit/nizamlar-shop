@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import type { HttpTypes } from "@medusajs/types"
+import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import {
   DTF_GARMENT_DISCLAIMER,
   requestServerDtfQuote,
@@ -366,6 +367,14 @@ export default function DtfTransferConfigurator({
             UPLOAD ARTWORK IN 3D DTF STUDIO <span aria-hidden="true">→</span>
           </button>
         )}
+
+        <LocalizedClientLink
+          href="/gang-sheet-builder"
+          data-testid="open-gang-sheet-builder"
+          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-brand-gold bg-brand-cream-light px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-brand-anthracite hover:bg-brand-cream transition"
+        >
+          OPEN MULTI-DESIGN GANG SHEET BUILDER <span aria-hidden="true">↗</span>
+        </LocalizedClientLink>
 
         {statusMsg && (
           <p role="status" className="aura-message">
