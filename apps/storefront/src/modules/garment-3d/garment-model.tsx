@@ -5,8 +5,8 @@ import {
   Suspense,
   useEffect,
   useLayoutEffect,
-  useMemo,
   type ReactNode,
+  useMemo,
 } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
 import { Decal, useGLTF, useTexture } from "@react-three/drei"
@@ -32,8 +32,8 @@ export type GarmentPart = {
 
 /**
  * Classifies GLB mesh parts by geometric orientation:
- * - avgNormZ > 0.5: Front torso fabric
- * - avgNormZ < -0.5: Back torso fabric
+ * - avgNormZ > 0.5: Front torso fabric (Mesh 0 in nizamlar-tee.glb)
+ * - avgNormZ < -0.5: Back torso fabric (Mesh 1 in nizamlar-tee.glb)
  * - Small vertical height: Collar / hems
  * - Others: Sleeves
  */
@@ -58,26 +58,73 @@ function classifyPartRole(geometry: THREE.BufferGeometry): GarmentPartRole {
   return "sleeve"
 }
 
+/**
+ * Visual error fallback Decal displayed when a texture fails to load.
+ * Renders a distinct wireframe boundary in place of the failed artwork.
+ */
+function ErrorDecalIndicator({ layer }: { layer: PrintLayer }) {
+  const back = layer.side === "back"
+  const decalPos: [number, number, number] = [
+    ((back ? -1 : 1) * layer.xMm) / 1000,
+    0.01 - layer.yMm / 1000,
+    back ? -0.020 : 0.045,
+  ]
+  const decalScale: [number, number, number] = [
+    layer.widthMm / 1000,
+    layer.heightMm / 1000,
+    0.15,
+  ]
+
+  return (
+    <Decal position={decalPos} scale={decalScale}>
+      <meshBasicMaterial
+        color="#EF4444"
+        wireframe
+        transparent
+        opacity={0.6}
+        depthWrite={false}
+      />
+    </Decal>
+  )
+}
+
+/**
+ * Error boundary that catches any texture loading/decoding failures.
+ * Dispatches an event to the UI so the user sees a visible error banner,
+ * and renders an ErrorDecalIndicator instead of failing silently.
+ */
 class ArtworkErrorBoundary extends Component<
-  { children: ReactNode; side: "front" | "back"; url: string },
-  { hasError: boolean; error: Error | null }
+  { children: ReactNode; layer: PrintLayer },
+  { hasError: boolean; errorMessage: string }
 > {
-  state = { hasError: false, error: null as Error | null }
+  state = { hasError: false, errorMessage: "" }
 
   static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error }
+    return { hasError: true, errorMessage: error.message || "Bilinmeyen doku hatası" }
   }
 
   componentDidCatch(error: Error) {
+    const errorMsg = error.message || "Görsel formatı okunamadı veya WebGL dokusu oluşturulamadı."
     console.error(
-      `[3D Texture Error]: Failed to load or display ${this.props.side} artwork (${this.props.url.slice(0, 40)}...):`,
-      error.message || error,
+      `[3D Artwork Error] ${this.props.layer.side} artwork failed to load (${this.props.layer.url.slice(0, 40)}...):`,
+      errorMsg,
     )
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("nizamlar:studio-error", {
+          detail: {
+            source: "3d",
+            side: this.props.layer.side,
+            message: `3D modelde logo yüklenemedi: ${errorMsg}`,
+          },
+        }),
+      )
+    }
   }
 
   render() {
     if (this.state.hasError) {
-      return null
+      return <ErrorDecalIndicator layer={this.props.layer} />
     }
     return this.props.children
   }
@@ -85,18 +132,12 @@ class ArtworkErrorBoundary extends Component<
 
 function Artwork({ layer }: { layer: PrintLayer }) {
   const invalidate = useThree((s) => s.invalidate)
-  const source = useTexture(layer.url)
-  const texture = useMemo(() => {
-    const t = source.clone()
-    t.colorSpace = THREE.SRGBColorSpace
-    t.needsUpdate = true
-    return t
-  }, [source])
+  const texture = useTexture(layer.url)
 
-  // Invalidate when texture loads
   useEffect(() => {
+    texture.colorSpace = THREE.SRGBColorSpace
+    texture.needsUpdate = true
     invalidate()
-    return () => texture.dispose()
   }, [texture, invalidate])
 
   // Invalidate immediately upon any transform change
@@ -137,10 +178,11 @@ function Artwork({ layer }: { layer: PrintLayer }) {
         map={texture}
         transparent
         polygonOffset
-        polygonOffsetFactor={-6}
-        polygonOffsetUnits={-6}
-        roughness={0.9}
+        polygonOffsetFactor={-10}
+        polygonOffsetUnits={-10}
+        roughness={0.7}
         depthWrite={false}
+        toneMapped={false}
       />
     </Decal>
   )
@@ -214,8 +256,7 @@ export default function GarmentModel({
             .map((layer) => (
               <ArtworkErrorBoundary
                 key={`${layer.side}-${layer.url}`}
-                side={layer.side}
-                url={layer.url}
+                layer={layer}
               >
                 <Suspense fallback={null}>
                   <Artwork layer={layer} />

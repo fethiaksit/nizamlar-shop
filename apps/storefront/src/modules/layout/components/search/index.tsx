@@ -129,10 +129,11 @@ const Search = () => {
           open()
         }}
         aria-label="Ürünlerde ara"
-        className="flex items-center text-[#DED9CF] hover:text-brand-gold-hover transition-colors"
+        className="relative w-10 h-10 flex items-center justify-center shrink-0 text-[#F3EFE7]/80 hover:text-[#B29460] transition-colors rounded-full hover:bg-white/5 focus:outline-none"
         data-testid="nav-search-button"
+        title="Arama"
       >
-        <MagnifyingGlass />
+        <MagnifyingGlass className="w-5 h-5 text-current shrink-0" />
       </Link>
 
       <SearchDrawer isOpen={isOpen} close={close}>

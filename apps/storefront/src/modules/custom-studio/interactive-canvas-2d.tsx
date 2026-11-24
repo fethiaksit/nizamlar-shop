@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useMemo, useCallback } from "react"
+import { useRef, useState, useMemo, useCallback, useEffect } from "react"
 import { printPlacement } from "@lib/3d/product"
 import { generateProductSvgString } from "./mockup-engine"
 
@@ -58,6 +58,48 @@ export default function InteractiveCanvas2D({
   const [isDragOver, setIsDragOver] = useState(false)
   const [snapX, setSnapX] = useState(false)
   const [snapY, setSnapY] = useState(false)
+  const [imgError, setImgError] = useState(false)
+  const [isSelected, setIsSelected] = useState(true)
+
+  // Auto-select when artwork is provided or changed
+  useEffect(() => {
+    if (artwork) {
+      setIsSelected(true)
+    }
+  }, [artwork?.url, side])
+
+  // Verify image can be decoded and rendered
+  useEffect(() => {
+    if (!artwork?.url) {
+      setImgError(false)
+      return
+    }
+    let active = true
+    const img = new Image()
+    img.onload = () => {
+      if (active) setImgError(false)
+    }
+    img.onerror = () => {
+      if (active) {
+        setImgError(true)
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("nizamlar:studio-error", {
+              detail: {
+                source: "2d",
+                side,
+                message: "2D tuvalde görsel dosyası okunamadı veya format desteklenmiyor.",
+              },
+            }),
+          )
+        }
+      }
+    }
+    img.src = artwork.url
+    return () => {
+      active = false
+    }
+  }, [artwork?.url, side])
 
   // Drag interaction refs to prevent stale closure during pointermove
   const dragStartRef = useRef<{
@@ -119,10 +161,13 @@ export default function InteractiveCanvas2D({
     if (!artwork) return
     if (e.pointerType === "mouse" && e.button !== 0) return
     e.stopPropagation()
-    try {
-      ;(e.currentTarget as SVGElement).setPointerCapture(e.pointerId)
-    } catch {
-      // ignore
+    setIsSelected(true)
+    if (svgRef.current) {
+      try {
+        svgRef.current.setPointerCapture(e.pointerId)
+      } catch {
+        // ignore
+      }
     }
     const { x, y } = getSvgCoordinates(e.clientX, e.clientY)
     dragStartRef.current = {
@@ -142,10 +187,13 @@ export default function InteractiveCanvas2D({
     if (!artwork) return
     if (e.pointerType === "mouse" && e.button !== 0) return
     e.stopPropagation()
-    try {
-      ;(e.currentTarget as SVGElement).setPointerCapture(e.pointerId)
-    } catch {
-      // ignore
+    setIsSelected(true)
+    if (svgRef.current) {
+      try {
+        svgRef.current.setPointerCapture(e.pointerId)
+      } catch {
+        // ignore
+      }
     }
     const { x, y } = getSvgCoordinates(e.clientX, e.clientY)
     dragStartRef.current = {
@@ -165,10 +213,13 @@ export default function InteractiveCanvas2D({
     if (!artwork) return
     if (e.pointerType === "mouse" && e.button !== 0) return
     e.stopPropagation()
-    try {
-      ;(e.currentTarget as SVGElement).setPointerCapture(e.pointerId)
-    } catch {
-      // ignore
+    setIsSelected(true)
+    if (svgRef.current) {
+      try {
+        svgRef.current.setPointerCapture(e.pointerId)
+      } catch {
+        // ignore
+      }
     }
     const { x, y } = getSvgCoordinates(e.clientX, e.clientY)
     dragStartRef.current = {
@@ -216,16 +267,19 @@ export default function InteractiveCanvas2D({
 
       onUpdate({ xMm: newXMm, yMm: newYMm }, false)
     } else if (dragMode.startsWith("resize")) {
-      // Local coordinate calculation accounting for rotation
-      const rad = (-artwork.rotation * Math.PI) / 180
-      const dx = x - artworkSvg.cx
-      const dy = y - artworkSvg.cy
-      const localX = Math.abs(dx * Math.cos(rad) - dy * Math.sin(rad))
+      // 4-corner aspect-ratio preserving scaling
+      const v0x = start.startX - artworkSvg.cx
+      const v0y = start.startY - artworkSvg.cy
+      const startDist = Math.hypot(v0x, v0y)
 
-      let newWidthMm = Math.round((localX * 2) / SCALE)
-      newWidthMm = Math.max(25, Math.min(300, newWidthMm))
-
-      onUpdate({ widthMm: newWidthMm }, false)
+      if (startDist > 4) {
+        const v1x = x - artworkSvg.cx
+        const v1y = y - artworkSvg.cy
+        const projection = (v1x * v0x + v1y * v0y) / (startDist * startDist)
+        let newWidthMm = Math.round(start.startWidthMm * projection)
+        newWidthMm = Math.max(25, Math.min(300, newWidthMm))
+        onUpdate({ widthMm: newWidthMm }, false)
+      }
     } else if (dragMode === "rotate") {
       const dx = x - artworkSvg.cx
       const dy = y - artworkSvg.cy
@@ -244,7 +298,14 @@ export default function InteractiveCanvas2D({
   }
 
   // Pointer Up Handler - commits the change to history
-  const handlePointerUp = () => {
+  const handlePointerUp = (e?: React.PointerEvent) => {
+    if (svgRef.current && e) {
+      try {
+        svgRef.current.releasePointerCapture(e.pointerId)
+      } catch {
+        // ignore
+      }
+    }
     if (dragMode !== "none") {
       setDragMode("none")
       setSnapX(false)
@@ -302,6 +363,7 @@ export default function InteractiveCanvas2D({
           width="600"
           height="680"
           preserveAspectRatio="xMidYMid meet"
+          onPointerDown={() => setIsSelected(false)}
         />
 
         {/* 2. 320 x 400 mm Baskı Alanı Sınır Çerçevesi */}
@@ -363,93 +425,123 @@ export default function InteractiveCanvas2D({
             {/* Orijinal Baskı Görseli */}
             <image
               href={artwork.url}
+              xlinkHref={artwork.url}
               x={artworkSvg.cx - artworkSvg.w / 2}
               y={artworkSvg.cy - artworkSvg.h / 2}
               width={artworkSvg.w}
               height={artworkSvg.h}
               preserveAspectRatio="none"
-              filter="url(#shadow2d)"
               onPointerDown={handlePointerDownMove}
             />
 
-            {/* Seçim & Sınır Kutusu */}
-            <rect
-              x={artworkSvg.cx - artworkSvg.w / 2}
-              y={artworkSvg.cy - artworkSvg.h / 2}
-              width={artworkSvg.w}
-              height={artworkSvg.h}
-              fill="transparent"
-              stroke={isValid ? "#B29460" : "#EF4444"}
-              strokeWidth="1.5"
-              strokeDasharray={isValid ? "none" : "4 3"}
-              onPointerDown={handlePointerDownMove}
-            />
+            {/* Hata Durumu Göstergesi */}
+            {imgError && (
+              <g pointerEvents="none">
+                <rect
+                  x={artworkSvg.cx - artworkSvg.w / 2}
+                  y={artworkSvg.cy - artworkSvg.h / 2}
+                  width={artworkSvg.w}
+                  height={artworkSvg.h}
+                  fill="rgba(239, 68, 68, 0.25)"
+                  stroke="#EF4444"
+                  strokeWidth="1.5"
+                  strokeDasharray="4 2"
+                />
+                <text
+                  x={artworkSvg.cx}
+                  y={artworkSvg.cy + 4}
+                  fill="#EF4444"
+                  fontSize="11"
+                  fontWeight="bold"
+                  textAnchor="middle"
+                >
+                  Görsel Yüklenemedi
+                </text>
+              </g>
+            )}
 
-            {/* Döndürme Sapı ve Tutamacı */}
-            <line
-              x1={artworkSvg.cx}
-              y1={artworkSvg.cy - artworkSvg.h / 2}
-              x2={artworkSvg.cx}
-              y2={artworkSvg.cy - artworkSvg.h / 2 - 24}
-              stroke="#B29460"
-              strokeWidth="1.5"
-            />
-            <circle
-              cx={artworkSvg.cx}
-              y={artworkSvg.cy - artworkSvg.h / 2 - 24}
-              r="6"
-              fill="#B29460"
-              stroke="#FFFFFF"
-              strokeWidth="1.5"
-              className="cursor-crosshair transition-transform hover:scale-125"
-              onPointerDown={handlePointerDownRotate}
-            />
+            {/* Seçim & Sınır Kutusu ve Tutamaçlar (Yalnızca Seçiliyken Görünür) */}
+            {isSelected && (
+              <>
+                <rect
+                  x={artworkSvg.cx - artworkSvg.w / 2}
+                  y={artworkSvg.cy - artworkSvg.h / 2}
+                  width={artworkSvg.w}
+                  height={artworkSvg.h}
+                  fill="transparent"
+                  stroke={isValid ? "#B29460" : "#EF4444"}
+                  strokeWidth="1.5"
+                  strokeDasharray={isValid ? "none" : "4 3"}
+                  onPointerDown={handlePointerDownMove}
+                />
 
-            {/* 4 Köşe Boyutlandırma Tutamaçları */}
-            {/* Sol-Üst */}
-            <circle
-              cx={artworkSvg.cx - artworkSvg.w / 2}
-              y={artworkSvg.cy - artworkSvg.h / 2}
-              r="5.5"
-              fill="#FFFFFF"
-              stroke="#B29460"
-              strokeWidth="1.5"
-              className="cursor-nwse-resize hover:scale-125"
-              onPointerDown={(e) => handlePointerDownResize("resize-nw", e)}
-            />
-            {/* Sağ-Üst */}
-            <circle
-              cx={artworkSvg.cx + artworkSvg.w / 2}
-              y={artworkSvg.cy - artworkSvg.h / 2}
-              r="5.5"
-              fill="#FFFFFF"
-              stroke="#B29460"
-              strokeWidth="1.5"
-              className="cursor-nesw-resize hover:scale-125"
-              onPointerDown={(e) => handlePointerDownResize("resize-ne", e)}
-            />
-            {/* Sol-Alt */}
-            <circle
-              cx={artworkSvg.cx - artworkSvg.w / 2}
-              y={artworkSvg.cy + artworkSvg.h / 2}
-              r="5.5"
-              fill="#FFFFFF"
-              stroke="#B29460"
-              strokeWidth="1.5"
-              className="cursor-nesw-resize hover:scale-125"
-              onPointerDown={(e) => handlePointerDownResize("resize-sw", e)}
-            />
-            {/* Sağ-Alt */}
-            <circle
-              cx={artworkSvg.cx + artworkSvg.w / 2}
-              y={artworkSvg.cy + artworkSvg.h / 2}
-              r="5.5"
-              fill="#FFFFFF"
-              stroke="#B29460"
-              strokeWidth="1.5"
-              className="cursor-nwse-resize hover:scale-125"
-              onPointerDown={(e) => handlePointerDownResize("resize-se", e)}
-            />
+                {/* Döndürme Sapı ve Tutamacı */}
+                <line
+                  x1={artworkSvg.cx}
+                  y1={artworkSvg.cy - artworkSvg.h / 2}
+                  x2={artworkSvg.cx}
+                  y2={artworkSvg.cy - artworkSvg.h / 2 - 24}
+                  stroke="#B29460"
+                  strokeWidth="1.5"
+                />
+                <circle
+                  cx={artworkSvg.cx}
+                  y={artworkSvg.cy - artworkSvg.h / 2 - 24}
+                  r="6"
+                  fill="#B29460"
+                  stroke="#FFFFFF"
+                  strokeWidth="1.5"
+                  className="cursor-crosshair transition-transform hover:scale-125"
+                  onPointerDown={handlePointerDownRotate}
+                />
+
+                {/* 4 Köşe Boyutlandırma Tutamaçları */}
+                {/* Sol-Üst */}
+                <circle
+                  cx={artworkSvg.cx - artworkSvg.w / 2}
+                  y={artworkSvg.cy - artworkSvg.h / 2}
+                  r="5.5"
+                  fill="#FFFFFF"
+                  stroke="#B29460"
+                  strokeWidth="1.5"
+                  className="cursor-nwse-resize hover:scale-125"
+                  onPointerDown={(e) => handlePointerDownResize("resize-nw", e)}
+                />
+                {/* Sağ-Üst */}
+                <circle
+                  cx={artworkSvg.cx + artworkSvg.w / 2}
+                  y={artworkSvg.cy - artworkSvg.h / 2}
+                  r="5.5"
+                  fill="#FFFFFF"
+                  stroke="#B29460"
+                  strokeWidth="1.5"
+                  className="cursor-nesw-resize hover:scale-125"
+                  onPointerDown={(e) => handlePointerDownResize("resize-ne", e)}
+                />
+                {/* Sol-Alt */}
+                <circle
+                  cx={artworkSvg.cx - artworkSvg.w / 2}
+                  y={artworkSvg.cy + artworkSvg.h / 2}
+                  r="5.5"
+                  fill="#FFFFFF"
+                  stroke="#B29460"
+                  strokeWidth="1.5"
+                  className="cursor-nesw-resize hover:scale-125"
+                  onPointerDown={(e) => handlePointerDownResize("resize-sw", e)}
+                />
+                {/* Sağ-Alt */}
+                <circle
+                  cx={artworkSvg.cx + artworkSvg.w / 2}
+                  y={artworkSvg.cy + artworkSvg.h / 2}
+                  r="5.5"
+                  fill="#FFFFFF"
+                  stroke="#B29460"
+                  strokeWidth="1.5"
+                  className="cursor-nwse-resize hover:scale-125"
+                  onPointerDown={(e) => handlePointerDownResize("resize-se", e)}
+                />
+              </>
+            )}
           </g>
         ) : (
           /* 5. Tasarım Yoksa: Çağrışımlı Yükleme Alanı */
@@ -468,17 +560,17 @@ export default function InteractiveCanvas2D({
               y={BOX_Y + 40}
               width={BOX_WIDTH - 40}
               height={BOX_HEIGHT - 80}
-              fill="rgba(34, 35, 37, 0.65)"
-              stroke="rgba(178, 148, 96, 0.45)"
+              fill="rgba(255, 255, 255, 0.85)"
+              stroke="#B29460"
               strokeWidth="1.5"
-              strokeDasharray="6 4"
+              strokeDasharray="5 4"
               rx="8"
             />
             <circle
               cx={SVG_CENTER_X}
               cy={SVG_CENTER_Y - 20}
               r="20"
-              fill="rgba(178, 148, 96, 0.25)"
+              fill="#FAF5EB"
               stroke="#B29460"
               strokeWidth="1.5"
             />
@@ -495,7 +587,7 @@ export default function InteractiveCanvas2D({
             <text
               x={SVG_CENTER_X}
               y={SVG_CENTER_Y + 16}
-              fill="#F3EFE7"
+              fill="#222325"
               fontSize="11"
               fontWeight="600"
               textAnchor="middle"
@@ -505,7 +597,7 @@ export default function InteractiveCanvas2D({
             <text
               x={SVG_CENTER_X}
               y={SVG_CENTER_Y + 34}
-              fill="rgba(243, 239, 231, 0.7)"
+              fill="#6B6863"
               fontSize="8.5"
               textAnchor="middle"
             >
@@ -517,15 +609,15 @@ export default function InteractiveCanvas2D({
 
       {/* Sürükle-Bırak Aktif Göstergesi */}
       {isDragOver && (
-        <div className="absolute inset-4 z-20 flex flex-col items-center justify-center bg-[#222325]/90 border-2 border-dashed border-[#B29460] rounded-xl backdrop-blur-sm animate-pulse pointer-events-none">
+        <div className="absolute inset-4 z-20 flex flex-col items-center justify-center bg-white/95 border-2 border-dashed border-[#B29460] rounded-xl backdrop-blur-sm shadow-lg pointer-events-none">
           <p className="text-[#B29460] font-bold text-base mb-1">Görseli Buraya Bırakın</p>
-          <p className="text-[#F3EFE7] text-xs">Maksimum 25 MB · PNG, JPG veya WebP</p>
+          <p className="text-[#6B6863] text-xs">Maksimum 25 MB · PNG, JPG veya WebP</p>
         </div>
       )}
 
       {/* Alan Dışı Uyarı Rozeti */}
       {artwork && !isValid && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-3 py-1.5 bg-red-950/90 border border-red-500/80 rounded-md shadow-lg flex items-center gap-2 text-red-200 text-xs font-semibold">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-3 py-1.5 bg-red-50 border border-red-300 rounded-md shadow flex items-center gap-2 text-red-800 text-xs font-semibold">
           <span>⚠️</span>
           <span>Baskı 320 × 400 mm sınırını aşıyor! Lütfen boyutu küçültün veya içeri kaydırın.</span>
         </div>

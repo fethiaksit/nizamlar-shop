@@ -61,7 +61,7 @@ export default function Studio3DViewer({
   resetKey?: number
 }) {
   return (
-    <GarmentScene key={resetKey} interactive dark onCapture={capture}>
+    <GarmentScene key={resetKey} interactive onCapture={capture}>
       <FacingShirt side={side} color={color} layers={layers} />
     </GarmentScene>
   )

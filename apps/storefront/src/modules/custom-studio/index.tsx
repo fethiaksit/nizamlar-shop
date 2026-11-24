@@ -85,8 +85,8 @@ export default function CustomPrintStudio({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Undo / Redo History Stack
-  const [history, setHistory] = useState<Array<Partial<Record<Side, Artwork>>>>([])
-  const [historyIndex, setHistoryIndex] = useState(-1)
+  const [history, setHistory] = useState<Array<Partial<Record<Side, Artwork>>>>([{}])
+  const [historyIndex, setHistoryIndex] = useState(0)
 
   // Push new state to history
   const pushHistory = useCallback(
@@ -100,29 +100,73 @@ export default function CustomPrintStudio({
     [historyIndex],
   )
 
+  // Listen to 2D / 3D artwork errors and notify user
+  useEffect(() => {
+    const handleStudioError = (e: Event) => {
+      const detail = (e as CustomEvent).detail
+      if (detail?.message) {
+        setMessage(`⚠️ ${detail.message}`)
+      }
+    }
+    window.addEventListener("nizamlar:studio-error", handleStudioError)
+    return () => {
+      window.removeEventListener("nizamlar:studio-error", handleStudioError)
+    }
+  }, [])
+
   // Undo
-  const handleUndo = () => {
+  const handleUndo = useCallback(() => {
     if (historyIndex > 0) {
       const targetIndex = historyIndex - 1
-      const restored = history[targetIndex]
+      const restored = history[targetIndex] || {}
       setHistoryIndex(targetIndex)
       setArtworks(restored)
       setSaved([])
       setMessage("İşlem geri alındı.")
     }
-  }
+  }, [history, historyIndex])
 
   // Redo
-  const handleRedo = () => {
+  const handleRedo = useCallback(() => {
     if (historyIndex < history.length - 1) {
       const targetIndex = historyIndex + 1
-      const restored = history[targetIndex]
+      const restored = history[targetIndex] || {}
       setHistoryIndex(targetIndex)
       setArtworks(restored)
       setSaved([])
       setMessage("İşlem yinelendi.")
     }
-  }
+  }, [history, historyIndex])
+
+  // Keyboard Shortcuts (Ctrl+Z / Cmd+Z for Undo, Ctrl+Shift+Z / Cmd+Shift+Z / Ctrl+Y for Redo)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      ) {
+        return
+      }
+      const isMac =
+        typeof navigator !== "undefined" &&
+        navigator.platform.toUpperCase().indexOf("MAC") >= 0
+      const modifier = isMac ? e.metaKey : e.ctrlKey
+      if (modifier && e.key.toLowerCase() === "z") {
+        e.preventDefault()
+        if (e.shiftKey) {
+          handleRedo()
+        } else {
+          handleUndo()
+        }
+      } else if (modifier && e.key.toLowerCase() === "y") {
+        e.preventDefault()
+        handleRedo()
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [handleUndo, handleRedo])
 
   // Active Variant lookup
   const variant = useMemo(
@@ -187,23 +231,21 @@ export default function CustomPrintStudio({
   })
 
   // Update artwork helper
-  const updateActiveArtwork = (
-    patch: Partial<Artwork>,
-    pushToHistoryFlag = false,
-  ) => {
-    setArtworks((current) => {
-      const currSide = current[side]
-      if (!currSide) return current
+  const updateActiveArtwork = useCallback(
+    (patch: Partial<Artwork>, pushToHistoryFlag = false) => {
+      const currSide = artworks[side]
+      if (!currSide) return
       const nextArt = { ...currSide, ...patch }
-      const nextMap = { ...current, [side]: nextArt }
+      const nextMap = { ...artworks, [side]: nextArt }
+      setArtworks(nextMap)
       if (pushToHistoryFlag) {
         pushHistory(nextMap)
       }
-      return nextMap
-    })
-    setSaved([])
-    setMessage("")
-  }
+      setSaved([])
+      setMessage("")
+    },
+    [artworks, pushHistory, side],
+  )
 
   // Safe SVG sanitization and rasterization to PNG
   const convertSvgToPngDataUrl = async (
@@ -402,29 +444,50 @@ export default function CustomPrintStudio({
   }
 
   // Presets
-  const applyPreset = (preset: "left-chest" | "center-chest" | "back-full" | "center") => {
+  const applyPreset = (
+    preset:
+      | "left-chest"
+      | "right-chest"
+      | "center-chest"
+      | "back-full"
+      | "back-upper"
+      | "center",
+  ) => {
     if (!activeArtwork) return
     const asp = activeArtwork.aspect || 1
     if (preset === "left-chest") {
       updateActiveArtwork(
         {
-          widthMm: Math.min(85, Math.round(95 * asp)),
+          widthMm: Math.min(85, Math.round(90 * asp)),
           xMm: -75,
           yMm: -95,
           rotation: 0,
         },
         true,
       )
+      setMessage("Sol göğüs konumu uygulandı.")
+    } else if (preset === "right-chest") {
+      updateActiveArtwork(
+        {
+          widthMm: Math.min(85, Math.round(90 * asp)),
+          xMm: 75,
+          yMm: -95,
+          rotation: 0,
+        },
+        true,
+      )
+      setMessage("Sağ göğüs konumu uygulandı.")
     } else if (preset === "center-chest") {
       updateActiveArtwork(
         {
-          widthMm: Math.min(180, Math.round(240 * asp)),
+          widthMm: Math.min(180, Math.round(220 * asp)),
           xMm: 0,
           yMm: -60,
           rotation: 0,
         },
         true,
       )
+      setMessage("Orta göğüs konumu uygulandı.")
     } else if (preset === "back-full") {
       updateActiveArtwork(
         {
@@ -435,6 +498,18 @@ export default function CustomPrintStudio({
         },
         true,
       )
+      setMessage("Tam sırt konumu uygulandı.")
+    } else if (preset === "back-upper") {
+      updateActiveArtwork(
+        {
+          widthMm: Math.min(180, Math.round(200 * asp)),
+          xMm: 0,
+          yMm: -80,
+          rotation: 0,
+        },
+        true,
+      )
+      setMessage("Üst sırt konumu uygulandı.")
     } else if (preset === "center") {
       updateActiveArtwork(
         {
@@ -444,6 +519,7 @@ export default function CustomPrintStudio({
         },
         true,
       )
+      setMessage("Tasarım ortalandı.")
     }
   }
 
@@ -605,36 +681,37 @@ export default function CustomPrintStudio({
 
           {/* HEADER */}
           <header className="studio-header">
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="studio-eyebrow">NİZAMLAR / DESIGN LAB</p>
-              <DialogTitle>{product.title} — Özel Tasarım Stüdyosu</DialogTitle>
+              <DialogTitle className="truncate">{product.title} — Özel Tasarım Stüdyosu</DialogTitle>
             </div>
             <button
               onClick={onClose}
               disabled={busy}
               aria-label="Stüdyoyu kapat"
+              className="shrink-0"
             >
               Kapat ×
             </button>
           </header>
 
           {/* MOBİL TAB BUTONLARI (<= 1024px) */}
-          <div className="flex md:hidden bg-[#222325] border-b border-[rgba(201,193,181,0.2)] px-4 py-2 gap-2">
+          <div className="flex md:hidden bg-[#FFFFFF] border-b border-[#DDD9D1] px-4 py-2 gap-2">
             <button
-              className={`flex-1 py-2 text-xs font-semibold rounded ${
+              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition ${
                 mobileTab === "tools"
-                  ? "bg-[#B29460] text-[#222325]"
-                  : "bg-[#2B2C2F] text-[#F3EFE7]"
+                  ? "bg-[#222325] text-[#FFFFFF]"
+                  : "bg-[#F7F6F3] text-[#6B6863] border border-[#DDD9D1]"
               }`}
               onClick={() => setMobileTab("tools")}
             >
               01 / Tasarım Araçları
             </button>
             <button
-              className={`flex-1 py-2 text-xs font-semibold rounded ${
+              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition ${
                 mobileTab === "product"
-                  ? "bg-[#B29460] text-[#222325]"
-                  : "bg-[#2B2C2F] text-[#F3EFE7]"
+                  ? "bg-[#222325] text-[#FFFFFF]"
+                  : "bg-[#F7F6F3] text-[#6B6863] border border-[#DDD9D1]"
               }`}
               onClick={() => setMobileTab("product")}
             >
@@ -655,7 +732,7 @@ export default function CustomPrintStudio({
                 <h3 className="studio-section-title">01 / Tişört Modeli</h3>
                 {availableTshirts.length > 1 ? (
                   <select
-                    className="w-full bg-[#2B2C2F] text-[#F3EFE7] border border-[rgba(201,193,181,0.3)] rounded-md p-2 text-xs focus:border-[#B29460] outline-none"
+                    className="w-full bg-[#F7F6F3] text-[#222325] border border-[#DDD9D1] rounded-lg p-2.5 text-xs focus:border-[#B29460] focus:bg-[#FFFFFF] outline-none transition"
                     value={product.id}
                     disabled={busy}
                     onChange={(e) => {
@@ -678,7 +755,7 @@ export default function CustomPrintStudio({
                     ))}
                   </select>
                 ) : (
-                  <div className="text-xs text-[#F3EFE7] font-semibold bg-[#2B2C2F] p-2.5 rounded border border-[rgba(201,193,181,0.2)]">
+                  <div className="text-xs text-[#222325] font-semibold bg-[#F7F6F3] p-2.5 rounded-lg border border-[#DDD9D1]">
                     {product.title}
                   </div>
                 )}
@@ -755,7 +832,7 @@ export default function CustomPrintStudio({
                 <div key={o.id} className="studio-section">
                   <h3 className="studio-section-title">{o.title}</h3>
                   <select
-                    className="w-full bg-[#2B2C2F] text-[#F3EFE7] border border-[rgba(201,193,181,0.3)] rounded-md p-2 text-xs focus:border-[#B29460] outline-none"
+                    className="w-full bg-[#F7F6F3] text-[#222325] border border-[#DDD9D1] rounded-lg p-2.5 text-xs focus:border-[#B29460] focus:bg-[#FFFFFF] outline-none transition"
                     value={options[o.id] || ""}
                     disabled={busy}
                     onChange={(e) => {
@@ -971,9 +1048,9 @@ export default function CustomPrintStudio({
                 </h3>
 
                 {activeArtwork ? (
-                  <div className="bg-[#2B2C2F] border border-[rgba(178,148,96,0.35)] rounded-lg p-3">
+                  <div className="bg-[#FAF9F6] border border-[#DDD9D1] rounded-xl p-3.5 shadow-sm">
                     <div className="flex items-center gap-3 mb-2.5">
-                      <div className="w-10 h-10 rounded bg-[#161718] border border-[rgba(201,193,181,0.2)] flex items-center justify-center overflow-hidden shrink-0">
+                      <div className="w-11 h-11 rounded-lg bg-[#EAE8E3] border border-[#DDD9D1] flex items-center justify-center overflow-hidden shrink-0">
                         <img
                           src={activeArtwork.url}
                           alt="Yüklenen logo"
@@ -981,10 +1058,10 @@ export default function CustomPrintStudio({
                         />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-semibold text-[#F3EFE7] truncate" title={activeArtwork.fileName}>
+                        <p className="text-xs font-semibold text-[#222325] truncate" title={activeArtwork.fileName}>
                           {activeArtwork.fileName}
                         </p>
-                        <p className="text-[10px] text-[#B29460]">
+                        <p className="text-[10px] text-[#B29460] font-medium">
                           {side === "front" ? "Ön Yüz Baskısı" : "Arka Yüz Baskısı"}
                         </p>
                       </div>
@@ -994,7 +1071,7 @@ export default function CustomPrintStudio({
                         type="button"
                         disabled={busy}
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex-1 py-1.5 px-2 bg-[rgba(178,148,96,0.15)] hover:bg-[rgba(178,148,96,0.3)] text-[#B29460] hover:text-[#F3EFE7] border border-[rgba(178,148,96,0.4)] rounded text-[11px] font-semibold transition"
+                        className="flex-1 py-1.5 px-2 bg-[#FFFFFF] hover:bg-[#FAF5EB] text-[#222325] hover:text-[#B29460] border border-[#DDD9D1] hover:border-[#B29460] rounded-md text-[11px] font-semibold transition"
                       >
                         🔄 Değiştir
                       </button>
@@ -1002,7 +1079,7 @@ export default function CustomPrintStudio({
                         type="button"
                         disabled={busy}
                         onClick={handleClearCurrentSide}
-                        className="py-1.5 px-3 bg-red-950/40 hover:bg-red-950/70 text-red-300 border border-red-800/40 rounded text-[11px] font-semibold transition"
+                        className="py-1.5 px-3 bg-[#FFF1F2] hover:bg-[#FFE4E6] text-[#BE123C] border border-[#FECDD3] rounded-md text-[11px] font-semibold transition"
                       >
                         ✕ Kaldır
                       </button>
@@ -1045,6 +1122,13 @@ export default function CustomPrintStudio({
                         </button>
                         <button
                           type="button"
+                          onClick={() => applyPreset("right-chest")}
+                          disabled={busy}
+                        >
+                          Sağ Göğüs
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => applyPreset("center-chest")}
                           disabled={busy}
                         >
@@ -1062,7 +1146,7 @@ export default function CustomPrintStudio({
                         </button>
                         <button
                           type="button"
-                          onClick={() => applyPreset("center-chest")}
+                          onClick={() => applyPreset("back-upper")}
                           disabled={busy}
                         >
                           Üst Sırt
@@ -1087,15 +1171,31 @@ export default function CustomPrintStudio({
                 </div>
               )}
 
-              {/* Boyutlandırma ve İnce Ayar Kaydırıcıları */}
+              {/* Boyutlandırma ve İnce Ayar Kaydırıcıları & Milimetre Girişleri */}
               {activeArtwork && (
                 <div className="studio-section">
                   <h3 className="studio-section-title">Hassas Ölçü & Konum</h3>
                   <div className="studio-transforms">
                     {/* Genişlik */}
-                    <label>
-                      Genişlik (mm)
-                      <output>{activeArtwork.widthMm} mm</output>
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] text-[#6B6863] font-medium">Genişlik (mm)</span>
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            min={25}
+                            max={300}
+                            value={activeArtwork.widthMm}
+                            disabled={busy}
+                            onChange={(e) => {
+                              const val = Math.max(25, Math.min(300, Number(e.target.value) || 25))
+                              updateActiveArtwork({ widthMm: val }, true)
+                            }}
+                            className="studio-num-input"
+                          />
+                          <span className="text-[10px] text-[#B29460] font-mono">mm</span>
+                        </div>
+                      </div>
                       <input
                         type="range"
                         min={25}
@@ -1112,12 +1212,28 @@ export default function CustomPrintStudio({
                           })
                         }
                       />
-                    </label>
+                    </div>
 
                     {/* Yatay Konum (X) */}
-                    <label>
-                      Yatay Konum X (mm)
-                      <output>{activeArtwork.xMm} mm</output>
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] text-[#6B6863] font-medium">Yatay Konum X (mm)</span>
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            min={-140}
+                            max={140}
+                            value={activeArtwork.xMm}
+                            disabled={busy}
+                            onChange={(e) => {
+                              const val = Math.max(-140, Math.min(140, Number(e.target.value) || 0))
+                              updateActiveArtwork({ xMm: val }, true)
+                            }}
+                            className="studio-num-input"
+                          />
+                          <span className="text-[10px] text-[#B29460] font-mono">mm</span>
+                        </div>
+                      </div>
                       <input
                         type="range"
                         min={-140}
@@ -1134,12 +1250,28 @@ export default function CustomPrintStudio({
                           })
                         }
                       />
-                    </label>
+                    </div>
 
                     {/* Dikey Konum (Y) */}
-                    <label>
-                      Dikey Konum Y (mm)
-                      <output>{activeArtwork.yMm} mm</output>
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] text-[#6B6863] font-medium">Dikey Konum Y (mm)</span>
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            min={-180}
+                            max={180}
+                            value={activeArtwork.yMm}
+                            disabled={busy}
+                            onChange={(e) => {
+                              const val = Math.max(-180, Math.min(180, Number(e.target.value) || 0))
+                              updateActiveArtwork({ yMm: val }, true)
+                            }}
+                            className="studio-num-input"
+                          />
+                          <span className="text-[10px] text-[#B29460] font-mono">mm</span>
+                        </div>
+                      </div>
                       <input
                         type="range"
                         min={-180}
@@ -1156,12 +1288,30 @@ export default function CustomPrintStudio({
                           })
                         }
                       />
-                    </label>
+                    </div>
 
                     {/* Döndürme */}
-                    <label>
-                      Döndürme (°)
-                      <output>{activeArtwork.rotation}°</output>
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] text-[#6B6863] font-medium">Döndürme (°)</span>
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            min={-180}
+                            max={180}
+                            value={activeArtwork.rotation}
+                            disabled={busy}
+                            onChange={(e) => {
+                              let val = Number(e.target.value) || 0
+                              if (val > 180) val -= 360
+                              if (val < -180) val += 360
+                              updateActiveArtwork({ rotation: val }, true)
+                            }}
+                            className="studio-num-input"
+                          />
+                          <span className="text-[10px] text-[#B29460] font-mono">°</span>
+                        </div>
+                      </div>
                       <input
                         type="range"
                         min={-180}
@@ -1178,7 +1328,7 @@ export default function CustomPrintStudio({
                           })
                         }
                       />
-                    </label>
+                    </div>
 
                     {/* Fiziksel Ölçü Rozeti */}
                     {activePlacement && (
@@ -1240,7 +1390,7 @@ export default function CustomPrintStudio({
             <div className="studio-price-summary">
               <div>
                 <span>Birim Tişört: </span>
-                <span className="font-semibold text-[#F3EFE7]">
+                <span className="font-semibold text-[#222325]">
                   {convertToLocale({
                     amount: baseUnitPrice,
                     currency_code: currencyCode,
@@ -1256,7 +1406,7 @@ export default function CustomPrintStudio({
                   })}
                 </span>
               </div>
-              <div className="border-l border-[rgba(201,193,181,0.25)] pl-4">
+              <div className="border-l border-[#DDD9D1] pl-4">
                 <span>Toplam ({quantity} adet): </span>
                 <strong>
                   {convertToLocale({
@@ -1309,7 +1459,7 @@ export default function CustomPrintStudio({
 
           {/* Durum Mesajı ve Kaydedilen Tasarım Rozetleri (Varsa) */}
           {(message || saved.length > 0) && (
-            <div className="bg-[#161718] border-t border-[rgba(201,193,181,0.15)] px-6 py-2.5 flex flex-wrap items-center justify-between gap-4">
+            <div className="bg-[#FFFFFF] border-t border-[#DDD9D1] px-6 py-2.5 flex flex-wrap items-center justify-between gap-4">
               {message && (
                 <p role="status" className="studio-status">
                   {message}
@@ -1326,7 +1476,7 @@ export default function CustomPrintStudio({
                       <span className="font-bold text-[#B29460]">
                         {d.side === "front" ? "Ön" : "Arka"}
                       </span>
-                      <span className="font-mono text-[9px] text-stone-400">
+                      <span className="font-mono text-[9px] text-[#6B6863]">
                         {d.id}
                       </span>
                     </div>

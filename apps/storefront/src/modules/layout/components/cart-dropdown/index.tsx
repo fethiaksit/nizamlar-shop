@@ -6,18 +6,18 @@ import {
   PopoverPanel,
   Transition,
 } from "@headlessui/react"
+import { ShoppingBag } from "@medusajs/icons"
 import { retrieveCart } from "@lib/data/cart"
 import { CART_UPDATED_EVENT } from "@lib/util/cart-events"
 import { convertToLocale } from "@lib/util/money"
 import { HttpTypes } from "@medusajs/types"
-import { Button } from "@modules/common/components/ui"
 import DeleteButton from "@modules/common/components/delete-button"
 import LineItemOptions from "@modules/common/components/line-item-options"
 import LineItemPrice from "@modules/common/components/line-item-price"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import Thumbnail from "@modules/products/components/thumbnail"
-import { usePathname } from "next/navigation"
-import { Fragment, useEffect, useRef, useState } from "react"
+import { useParams, usePathname, useRouter } from "next/navigation"
+import { Fragment, useCallback, useEffect, useRef, useState } from "react"
 
 const countItems = (cart?: HttpTypes.StoreCart | null) =>
   cart?.items?.reduce((acc, item) => acc + item.quantity, 0) || 0
@@ -27,10 +27,15 @@ const CartDropdown = ({
 }: {
   cart?: HttpTypes.StoreCart | null
 }) => {
+  const router = useRouter()
+  const { countryCode } = useParams()
+  const pathname = usePathname()
+  const containerRef = useRef<HTMLDivElement>(null)
+
   // Statically rendered pages can't read the cart cookie, so the cart is loaded in the browser.
-  const [clientCart, setClientCart] = useState<HttpTypes.StoreCart | null>(null)
-  const cartState = serverCart ?? clientCart
-  const [activeTimer, setActiveTimer] = useState<NodeJS.Timer | undefined>(
+  // We keep a single unified cart state initialized with serverCart if provided.
+  const [cart, setCart] = useState<HttpTypes.StoreCart | null>(serverCart ?? null)
+  const [activeTimer, setActiveTimer] = useState<ReturnType<typeof setTimeout> | undefined>(
     undefined
   )
   const [cartDropdownOpen, setCartDropdownOpen] = useState(false)
@@ -38,51 +43,57 @@ const CartDropdown = ({
   const open = () => setCartDropdownOpen(true)
   const close = () => setCartDropdownOpen(false)
 
-  const totalItems = countItems(cartState)
+  const totalItems = countItems(cart)
+  const subtotal = cart?.subtotal ?? 0
+  const itemRef = useRef<number>(totalItems)
 
-  const subtotal = cartState?.subtotal ?? 0
-  const itemRef = useRef<number>(totalItems || 0)
+  // 1. Sync serverCart if prop changes during navigation
+  const [prevServerCart, setPrevServerCart] = useState(serverCart)
+  if (serverCart !== prevServerCart) {
+    setPrevServerCart(serverCart)
+    setCart(serverCart ?? null)
+  }
 
+  // 2. Fetch cart on mount if serverCart is null or undefined
   useEffect(() => {
-    if (serverCart) {
-      return
-    }
-
-    let isInitialLoad = true
-    const load = () =>
+    if (!serverCart) {
       retrieveCart()
-        .then((cart) => {
-          if (isInitialLoad) {
-            // Don't auto-open the dropdown for items that were already in the cart.
-            itemRef.current = countItems(cart)
-            isInitialLoad = false
-          }
-          setClientCart(cart)
+        .then((latestCart) => {
+          setCart(latestCart)
+          itemRef.current = countItems(latestCart)
         })
         .catch(() => {})
-
-    load()
-    window.addEventListener(CART_UPDATED_EVENT, load)
-    return () => window.removeEventListener(CART_UPDATED_EVENT, load)
+    }
   }, [serverCart])
 
-  const timedOpen = () => {
+  // 3. Always listen to CART_UPDATED_EVENT (even when serverCart was initially provided!)
+  useEffect(() => {
+    const handleCartUpdated = () => {
+      retrieveCart()
+        .then((latestCart) => {
+          setCart(latestCart)
+        })
+        .catch(() => {})
+    }
+
+    window.addEventListener(CART_UPDATED_EVENT, handleCartUpdated)
+    return () => window.removeEventListener(CART_UPDATED_EVENT, handleCartUpdated)
+  }, [])
+
+  const timedOpen = useCallback(() => {
     open()
-
     const timer = setTimeout(close, 5000)
-
     setActiveTimer(timer)
-  }
+  }, [])
 
   const openAndCancel = () => {
     if (activeTimer) {
       clearTimeout(activeTimer)
     }
-
     open()
   }
 
-  // Clean up the timer when the component unmounts
+  // Clean up timer on unmount
   useEffect(() => {
     return () => {
       if (activeTimer) {
@@ -91,30 +102,72 @@ const CartDropdown = ({
     }
   }, [activeTimer])
 
-  const pathname = usePathname()
-
-  // open cart dropdown when modifying the cart items, but only if we're not on the cart page
+  // Open cart dropdown when modifying the cart items (count increased), but only if not on cart page
   useEffect(() => {
-    if (itemRef.current !== totalItems && !pathname.includes("/cart")) {
+    if (totalItems > itemRef.current && !pathname.includes("/cart")) {
       timedOpen()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalItems, itemRef.current])
+    itemRef.current = totalItems
+  }, [totalItems, pathname, timedOpen])
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        close()
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const handleCartButtonClick = (e: React.MouseEvent) => {
+    // Mobil görünümde (<1024px) doğrudan sepet sayfasına git
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      e.preventDefault()
+      close()
+      const targetCountry =
+        (typeof countryCode === "string" && countryCode ? countryCode : "") ||
+        pathname.split("/")[1] ||
+        "tr"
+      router.push(`/${targetCountry}/cart`)
+      return
+    }
+
+    // Masaüstünde açılır menüyü aç / kapat
+    setCartDropdownOpen((prev) => !prev)
+  }
 
   return (
     <div
-      className="h-full z-[50]"
+      ref={containerRef}
+      className="flex items-center h-full z-[50] shrink-0"
       onMouseEnter={openAndCancel}
       onMouseLeave={close}
     >
-      <Popover className="relative h-full">
-        <PopoverButton className="h-full">
-          <LocalizedClientLink
-            className="text-brand-cream-light hover:text-brand-gold-hover font-semibold transition-colors"
-            href="/cart"
-            data-testid="nav-cart-link"
-          >{`Sepet (${totalItems})`}</LocalizedClientLink>
+      <Popover className="relative flex items-center h-full">
+        <PopoverButton
+          className="relative w-10 h-10 flex items-center justify-center shrink-0 text-[#F3EFE7]/80 hover:text-[#B29460] transition-colors rounded-full hover:bg-white/5 focus:outline-none"
+          data-testid="nav-cart-link"
+          aria-label={`Sepet (${totalItems})`}
+          title="Sepet"
+          onClick={handleCartButtonClick}
+        >
+          <ShoppingBag className="w-5 h-5 text-current shrink-0" />
+          {totalItems > 0 && (
+            <span
+              data-testid="cart-count-badge"
+              className="absolute top-1 right-1 min-w-[16px] h-4 px-1 bg-[#B29460] text-[#222325] text-[10px] font-black rounded-full flex items-center justify-center leading-none shadow-sm ring-2 ring-[#222325] pointer-events-none"
+            >
+              {totalItems}
+            </span>
+          )}
+          <span className="sr-only">{`Sepet (${totalItems})`}</span>
         </PopoverButton>
+
         <Transition
           show={cartDropdownOpen}
           as={Fragment}
@@ -133,10 +186,10 @@ const CartDropdown = ({
             <div className="p-4 flex items-center justify-center">
               <h3 className="text-large-semi">Sepet</h3>
             </div>
-            {cartState && cartState.items?.length ? (
+            {cart && cart.items?.length ? (
               <>
                 <div className="overflow-y-scroll max-h-[402px] px-4 grid grid-cols-1 gap-y-8 no-scrollbar p-px">
-                  {cartState.items
+                  {cart.items
                     .sort((a, b) => {
                       return (a.created_at ?? "") > (b.created_at ?? "")
                         ? -1
@@ -186,7 +239,7 @@ const CartDropdown = ({
                                 <LineItemPrice
                                   item={item}
                                   style="tight"
-                                  currencyCode={cartState.currency_code}
+                                  currencyCode={cart.currency_code}
                                 />
                               </div>
                             </div>
@@ -215,18 +268,17 @@ const CartDropdown = ({
                     >
                       {convertToLocale({
                         amount: subtotal,
-                        currency_code: cartState.currency_code,
+                        currency_code: cart.currency_code,
                       })}
                     </span>
                   </div>
-                  <LocalizedClientLink href="/cart" passHref>
-                    <Button
-                      className="w-full"
-                      size="large"
-                      data-testid="go-to-cart-button"
-                    >
-                      Sepete Git
-                    </Button>
+                  <LocalizedClientLink
+                    href="/cart"
+                    className="w-full inline-flex items-center justify-center rounded-md font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 bg-[#222325] text-white hover:bg-[#38393C] h-12 px-6 text-sm tracking-wide shadow-md active:scale-[0.99]"
+                    data-testid="go-to-cart-button"
+                    onClick={close}
+                  >
+                    Sepete Git
                   </LocalizedClientLink>
                 </div>
               </>
@@ -238,11 +290,12 @@ const CartDropdown = ({
                   </div>
                   <span>Sepetiniz şu anda boş.</span>
                   <div>
-                    <LocalizedClientLink href="/store">
-                      <>
-                        <span className="sr-only">Tüm ürünler sayfasına git</span>
-                        <Button onClick={close}>Ürünleri Keşfet</Button>
-                      </>
+                    <LocalizedClientLink
+                      href="/store"
+                      className="inline-flex items-center justify-center rounded-md font-semibold transition-colors bg-[#222325] text-white hover:bg-[#38393C] h-10 px-4 text-sm"
+                      onClick={close}
+                    >
+                      Ürünleri Keşfet
                     </LocalizedClientLink>
                   </div>
                 </div>
