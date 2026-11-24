@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
         revalidatedTags.push(tag)
       } catch {
         try {
-          ;(revalidateTag as any)(tag)
+          ;(revalidateTag as unknown as (tag: string) => void)(tag)
           revalidatedTags.push(tag)
         } catch {}
       }
@@ -55,8 +55,8 @@ export async function POST(req: NextRequest) {
       paths: revalidatedPaths,
       timestamp: Date.now(),
     })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Revalidation failed" }, { status: 500 })
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Revalidation failed" }, { status: 500 })
   }
 }
 
@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
       revalidateTag(tag, { expire: 0 })
     } catch {
       try {
-        ;(revalidateTag as any)(tag)
+        ;(revalidateTag as unknown as (tag: string) => void)(tag)
       } catch {}
     }
   }

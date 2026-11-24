@@ -132,13 +132,11 @@ class ArtworkErrorBoundary extends Component<
 
 function Artwork({ layer }: { layer: PrintLayer }) {
   const invalidate = useThree((s) => s.invalidate)
-  const texture = useTexture(layer.url)
-
-  useEffect(() => {
-    texture.colorSpace = THREE.SRGBColorSpace
-    texture.needsUpdate = true
+  const texture = useTexture(layer.url, (loadedTexture) => {
+    loadedTexture.colorSpace = THREE.SRGBColorSpace
+    loadedTexture.needsUpdate = true
     invalidate()
-  }, [texture, invalidate])
+  })
 
   // Invalidate immediately upon any transform change
   useLayoutEffect(() => {
