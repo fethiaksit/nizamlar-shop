@@ -361,5 +361,194 @@ medusaIntegrationTestRunner({
         ),
       ).rejects.toMatchObject({ response: { status: 400 } })
     })
+
+    it("enforces separate transparent production PNG vs garment mockup, DPI validation, and signed DTF cart binding", async () => {
+      const makePngHeaderBase64 = (
+        w: number,
+        h: number,
+        colorType: 2 | 6,
+        saltByte = 0,
+      ) => {
+        const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
+        const ihdrLen = Buffer.alloc(4)
+        ihdrLen.writeUInt32BE(13, 0)
+        const ihdrType = Buffer.from("IHDR", "ascii")
+        const ihdrData = Buffer.alloc(13)
+        ihdrData.writeUInt32BE(w, 0)
+        ihdrData.writeUInt32BE(h, 4)
+        ihdrData[8] = 8
+        ihdrData[9] = colorType
+        const crc = Buffer.from([0, 0, 0, saltByte])
+        const iend = Buffer.from([0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130])
+        return Buffer.concat([sig, ihdrLen, ihdrType, ihdrData, crc, iend]).toString(
+          "base64",
+        )
+      }
+
+      const hiResSourceRgba = makePngHeaderBase64(3000, 3300, 6, 1)
+      const printReadyRgba = makePngHeaderBase64(3000, 3300, 6, 2)
+      const opaqueGarmentMockupRgb = makePngHeaderBase64(1200, 1360, 2, 3)
+      const lowResSourceRgba = makePngHeaderBase64(400, 400, 6, 4)
+
+      // 1. Rejects opaque garment mockup passed as production print PNG
+      await expect(
+        api.post(
+          "/store/dtf/designs",
+          {
+            productType: "custom_dtf",
+            unit: "in",
+            width: 10,
+            height: 11,
+            quantity: 5,
+            originalFileName: "eagle.png",
+            originalFileMimeType: "image/png",
+            originalFileBase64: hiResSourceRgba,
+            productionPrintPngBase64: opaqueGarmentMockupRgb,
+          },
+          { headers },
+        ),
+      ).rejects.toMatchObject({ response: { status: 400 } })
+
+      // 2. Rejects low-DPI (<150 DPI) artwork unless allowLowDpi=true
+      await expect(
+        api.post(
+          "/store/dtf/designs",
+          {
+            productType: "custom_dtf",
+            unit: "in",
+            width: 10,
+            height: 10,
+            quantity: 1,
+            originalFileName: "tiny.png",
+            originalFileMimeType: "image/png",
+            originalFileBase64: lowResSourceRgba,
+            productionPrintPngBase64: printReadyRgba,
+          },
+          { headers },
+        ),
+      ).rejects.toMatchObject({ response: { status: 400 } })
+
+      // 3. Rejects malicious SVG XSS payload
+      await expect(
+        api.post(
+          "/store/dtf/designs",
+          {
+            productType: "custom_dtf",
+            unit: "in",
+            width: 4,
+            height: 4,
+            quantity: 1,
+            originalFileName: "xss.svg",
+            originalFileMimeType: "image/svg+xml",
+            originalFileBase64: Buffer.from(
+              '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
+            ).toString("base64"),
+            productionPrintPngBase64: printReadyRgba,
+          },
+          { headers },
+        ),
+      ).rejects.toMatchObject({ response: { status: 400 } })
+
+      // 4. Saves valid custom DTF transfer with distinct private source, transparent production PNG, and mockup
+      const created = await api.post(
+        "/store/dtf/designs",
+        {
+          productHandle: "custom-dtf-transfer",
+          productType: "custom_dtf",
+          unit: "in",
+          width: 10,
+          height: 11,
+          quantity: 5,
+          originalFileName: "crest-300dpi.png",
+          originalFileMimeType: "image/png",
+          originalFileBase64: hiResSourceRgba,
+          productionPrintPngBase64: printReadyRgba,
+          mockupPreviewPngBase64: opaqueGarmentMockupRgb,
+          previewGarmentColor: "Anthracite (#222325)",
+        },
+        { headers },
+      )
+      expect(created.status).toBe(201)
+      const assetId = created.data.designAsset.id
+      expect(created.data.designAsset).toMatchObject({
+        product_type: "custom_dtf",
+        width_in: 10,
+        height_in: 11,
+        quantity: 5,
+        effective_dpi: 300,
+        has_transparency: true,
+        has_separate_production_file: true,
+        has_mockup_preview: true,
+      })
+      // Never leaks filesystem paths in public store response
+      expect(created.data.designAsset.original_asset_path).toBeUndefined()
+      expect(created.data.designAsset.production_asset_path).toBeUndefined()
+
+      // Mockup endpoint serves only mockup PNG, never production asset
+      const mockupRes = await api.get(`/store/dtf/designs/${assetId}/mockup`, {
+        headers,
+        responseType: "arraybuffer",
+      })
+      expect(mockupRes.status).toBe(200)
+      expect(mockupRes.headers["content-type"]).toContain("image/png")
+
+      // 5. Adds verified DTF transfer to Medusa cart and rejects tampered dimensions
+      const cartRes = await api.post(
+        "/store/carts",
+        { region_id: regionId },
+        { headers },
+      )
+      const cartId = cartRes.data.cart.id
+
+      await expect(
+        api.post(
+          "/store/dtf/cart",
+          {
+            cartId,
+            variantId,
+            productType: "custom_dtf",
+            unit: "in",
+            width: 2,
+            height: 2,
+            quantity: 5,
+            designAssetId: assetId,
+          },
+          { headers },
+        ),
+      ).rejects.toMatchObject({ response: { status: 400 } })
+
+      const added = await api.post(
+        "/store/dtf/cart",
+        {
+          cartId,
+          variantId,
+          productType: "custom_dtf",
+          unit: "in",
+          width: 10,
+          height: 11,
+          quantity: 5,
+          designAssetId: assetId,
+          previewColorName: "Anthracite",
+          previewColorHex: "#222325",
+          quoteSignature: created.data.quoteSignature,
+        },
+        { headers },
+      )
+      expect(added.status).toBe(200)
+      expect(added.data.metadata).toMatchObject({
+        dtf_transfer: true,
+        garment_included: false,
+        disclaimer: "DTF transfer only. Garment not included.",
+        design_asset_id: assetId,
+        width_in: 10,
+        height_in: 11,
+      })
+      const fetchedCart = await api.get(`/store/carts/${cartId}`, { headers })
+      expect(fetchedCart.data.cart.items[0].metadata).toMatchObject({
+        dtf_transfer: true,
+        garment_included: false,
+        design_asset_id: assetId,
+      })
+    })
   },
 })

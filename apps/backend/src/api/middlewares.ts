@@ -5,6 +5,7 @@ import {
   validateAndTransformBody,
 } from "@medusajs/framework/http"
 import {
+  CreateDtfDesignAssetSchema,
   DtfAddToCartSchema,
   DtfQuoteRequestSchema,
   UpsertDtfPricingRuleSchema,
@@ -40,6 +41,12 @@ export default defineMiddlewares({
       methods: ["POST"],
       matcher: "/store/dtf/cart",
       middlewares: [validateAndTransformBody(DtfAddToCartSchema)],
+    },
+    {
+      methods: ["POST"],
+      matcher: "/store/dtf/designs",
+      bodyParser: { sizeLimit: "45mb" },
+      middlewares: [validateAndTransformBody(CreateDtfDesignAssetSchema)],
     },
     {
       methods: ["GET", "POST"],

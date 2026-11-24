@@ -128,6 +128,73 @@ export async function requestServerDtfQuote(input: {
   )
 }
 
+export interface DtfSavedDesignAssetResponse {
+  designAsset: {
+    id: string
+    product_handle: string | null
+    product_type: DtfProductType
+    unit_system: DtfDimensionUnit
+    width_in: number
+    height_in: number
+    width_cm: number
+    height_cm: number
+    quantity: number
+    pixel_width: number
+    pixel_height: number
+    effective_dpi: number
+    has_transparency: boolean
+    file_mime_type: string
+    original_file_name: string
+    preview_garment_color: string | null
+    has_separate_production_file: boolean
+    has_mockup_preview: boolean
+    status: string
+  }
+  quote: DtfVerifiedQuote
+  quoteSignature: string
+  mockupUrl: string | null
+  resolutionReport: {
+    sourcePixelWidth: number
+    sourcePixelHeight: number
+    productionPixelWidth: number
+    productionPixelHeight: number
+    effectiveDpi: number
+    targetDpi: number
+    minAcceptableDpi: number
+    meetsTarget300Dpi: boolean
+    meetsMinimum150Dpi: boolean
+    sourceHasTransparency: boolean
+    productionHasTransparency: boolean
+  }
+}
+
+export async function saveDtfDesignAsset(input: {
+  productHandle?: string
+  productType?: DtfProductType
+  unit: DtfDimensionUnit
+  width: number
+  height: number
+  quantity: number
+  filmLengthIn?: number
+  originalFileName: string
+  originalFileMimeType: string
+  originalFileBase64: string
+  productionPrintPngBase64: string
+  mockupPreviewPngBase64?: string
+  previewGarmentColor?: string
+  placement?: Record<string, unknown>
+  layoutState?: Record<string, unknown>
+  allowLowDpi?: boolean
+}): Promise<DtfSavedDesignAssetResponse> {
+  return sdk.client.fetch<DtfSavedDesignAssetResponse>("/store/dtf/designs", {
+    method: "POST",
+    body: {
+      productType: input.productType || "custom_dtf",
+      ...input,
+    },
+  })
+}
+
 export function resolveProductDtfType(
   product?: {
     handle?: string | null

@@ -266,13 +266,14 @@ export default function ProductActions({
           </button>
         </div>
       )}
-      {studio && variant && (
+      {studio && (variant || dtfProductType) && (
         <CustomPrintStudio
           product={product}
           region={region}
           countryCode={countryCode}
-          initialVariant={variant}
+          initialVariant={variant || product.variants?.[0]}
           initialQuantity={quantity}
+          dtfMode={Boolean(dtfProductType)}
           onClose={() => setStudio(false)}
         />
       )}

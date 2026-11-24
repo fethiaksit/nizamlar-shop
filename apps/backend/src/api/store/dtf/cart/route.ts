@@ -16,5 +16,6 @@ export async function POST(
     success: true,
     cartId: result.cartId,
     quote: result.verifiedQuote,
+    metadata: result.metadata,
   })
 }

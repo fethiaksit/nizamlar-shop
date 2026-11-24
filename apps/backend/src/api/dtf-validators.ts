@@ -85,7 +85,27 @@ export const DtfAddToCartSchema = z.object({
   quoteSignature: z.string().max(256).optional(),
 })
 
+export const CreateDtfDesignAssetSchema = z.object({
+  productHandle: z.string().min(1).max(160).optional(),
+  productType: DtfProductTypeEnum.default("custom_dtf"),
+  unit: z.enum(["in", "cm"]).default("in"),
+  width: z.number().positive(),
+  height: z.number().positive(),
+  quantity: z.number().int().min(1).max(10000).default(1),
+  filmLengthIn: z.number().positive().optional(),
+  originalFileName: z.string().min(1).max(240),
+  originalFileMimeType: z.string().min(3).max(80),
+  originalFileBase64: z.string().min(32),
+  productionPrintPngBase64: z.string().min(32),
+  mockupPreviewPngBase64: z.string().min(32).optional(),
+  previewGarmentColor: z.string().max(80).optional(),
+  placement: z.record(z.string(), z.unknown()).optional(),
+  layoutState: z.record(z.string(), z.unknown()).optional(),
+  allowLowDpi: z.boolean().default(false),
+})
+
 export type DtfQuoteRequestBody = z.infer<typeof DtfQuoteRequestSchema>
 export type DtfAddToCartBody = z.infer<typeof DtfAddToCartSchema>
+export type CreateDtfDesignAssetBody = z.infer<typeof CreateDtfDesignAssetSchema>
 export type UpsertDtfPricingRuleBody = z.infer<typeof UpsertDtfPricingRuleSchema>
 export type UpsertDtfProductSpecBody = z.infer<typeof UpsertDtfProductSpecSchema>

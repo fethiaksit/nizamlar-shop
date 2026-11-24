@@ -84,6 +84,7 @@ const verifyDtfCartQuoteStep = createStep(
       )
     }
 
+    let mockupUrl: string | null = null
     if (input.designAssetId) {
       const assets = await dtfService.listDtfDesignAssets(
         { id: input.designAssetId },
@@ -94,6 +95,22 @@ const verifyDtfCartQuoteStep = createStep(
           MedusaError.Types.NOT_FOUND,
           `DTF design asset '${input.designAssetId}' not found`
         )
+      }
+      if (
+        Math.abs(
+          Number(assets[0].width_in) - verifiedQuote.dimensions.widthIn
+        ) > 0.05 ||
+        Math.abs(
+          Number(assets[0].height_in) - verifiedQuote.dimensions.heightIn
+        ) > 0.05
+      ) {
+        throw new MedusaError(
+          MedusaError.Types.INVALID_DATA,
+          "Cart print dimensions do not match saved DTF design asset dimensions"
+        )
+      }
+      if (assets[0].mockup_preview_path) {
+        mockupUrl = `/store/dtf/designs/${assets[0].id}/mockup`
       }
       await dtfService.updateDtfDesignAssets({
         id: assets[0].id,
@@ -123,6 +140,7 @@ const verifyDtfCartQuoteStep = createStep(
         width_cm: verifiedQuote.dimensions.widthCm,
         height_cm: verifiedQuote.dimensions.heightCm,
         design_asset_id: input.designAssetId || null,
+        mockup_url: mockupUrl,
         preview_color_name: input.previewColorName || null,
         preview_color_hex: input.previewColorHex || null,
         verified_unit_cents_usd: verifiedQuote.discountedUnitCents,

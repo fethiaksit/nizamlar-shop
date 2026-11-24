@@ -17,15 +17,28 @@ import {
   isTshirt,
   printPlacement,
 } from "@lib/3d/product"
+import {
+  DTF_GARMENT_DISCLAIMER,
+  requestServerDtfQuote,
+  type DtfDimensionUnit,
+  type DtfSavedDesignAssetResponse,
+  type DtfVerifiedQuote,
+} from "@lib/data/dtf"
 import { isVariantInStock } from "@lib/util/inventory"
 import { convertToLocale } from "@lib/util/money"
 import {
   addSavedDesignsToMedusaCart,
+  addSavedDtfTransferToCart,
   calculateClientPrintPricing,
   saveCustomDesignSurface,
+  saveCustomDtfTransferSurface,
   type DesignArtworkInput,
   type SavedCustomDesign,
 } from "@modules/custom-studio/design-order-service"
+import {
+  inspectClientArtworkForDtf,
+  type DtfClientResolutionInfo,
+} from "@modules/custom-studio/preview"
 import {
   downloadCanvasElementToPng,
   fadeAnimation,
@@ -155,6 +168,16 @@ export default function Tshirt3dExperience({
   const [savedDesigns, setSavedDesigns] = useState<SavedCustomDesign[]>([])
   const [downloadedCount, setDownloadedCount] = useState(0)
   const [mobileOrderOpen, setMobileOrderOpen] = useState(false)
+
+  const isDtfMode = (countryCode || "").toLowerCase() === "us"
+  const [dtfUnit, setDtfUnit] = useState<DtfDimensionUnit>("in")
+  const [dtfWidth, setDtfWidth] = useState<number>(10)
+  const [dtfHeight, setDtfHeight] = useState<number>(11)
+  const [dtfQuote, setDtfQuote] = useState<DtfVerifiedQuote | null>(null)
+  const [dtfSavedAsset, setDtfSavedAsset] =
+    useState<DtfSavedDesignAssetResponse | null>(null)
+  const [dtfResolution, setDtfResolution] =
+    useState<DtfClientResolutionInfo | null>(null)
 
   const colorOption = useMemo(
     () =>
@@ -330,7 +353,103 @@ export default function Tshirt3dExperience({
       quantity,
     })
 
+  useEffect(() => {
+    if (!isDtfMode) return
+    let active = true
+    requestServerDtfQuote({
+      productType: "custom_dtf",
+      unit: dtfUnit,
+      width: dtfWidth,
+      height: dtfHeight,
+      quantity,
+    })
+      .then((res) => {
+        if (active) setDtfQuote(res.quote)
+      })
+      .catch(() => {
+        if (active) setDtfQuote(null)
+      })
+    return () => {
+      active = false
+    }
+  }, [isDtfMode, dtfUnit, dtfWidth, dtfHeight, quantity])
+
+  useEffect(() => {
+    if (!isDtfMode || (!isLogoTexture && !isFullTexture)) {
+      setDtfResolution(null)
+      return
+    }
+    let active = true
+    const widthIn = dtfUnit === "in" ? dtfWidth : dtfWidth / 2.54
+    const heightIn = dtfUnit === "in" ? dtfHeight : dtfHeight / 2.54
+    inspectClientArtworkForDtf({
+      artworkUrl: activeArtworkSpec.url,
+      mimeType: activeArtworkSpec.mime,
+      widthIn,
+      heightIn,
+    })
+      .then((info) => {
+        if (active) setDtfResolution(info)
+      })
+      .catch(() => {
+        if (active) setDtfResolution(null)
+      })
+    return () => {
+      active = false
+    }
+  }, [
+    isDtfMode,
+    isLogoTexture,
+    isFullTexture,
+    activeArtworkSpec,
+    dtfUnit,
+    dtfWidth,
+    dtfHeight,
+  ])
+
   const handleSaveDesign = async (): Promise<SavedCustomDesign[]> => {
+    if (isDtfMode) {
+      if (!placementValid || busy) return []
+      setBusy(true)
+      setStatusMessage("Validating DPI & saving custom DTF transfer…")
+      try {
+        const res = await saveCustomDtfTransferSurface({
+          productHandle: product?.handle || undefined,
+          artwork: activeArtworkSpec,
+          side: "front",
+          unit: dtfUnit,
+          width: dtfWidth,
+          height: dtfHeight,
+          quantity,
+          previewColorHex: shirtColor,
+          previewColorName: "Preview Fabric",
+          allowLowDpi: true,
+        })
+        setDtfSavedAsset(res)
+        setDtfQuote(res.quote)
+        const mapped: SavedCustomDesign = {
+          id: res.designAsset.id,
+          side: "front",
+          previewUrl: res.mockupUrl || "",
+          checkoutEnabled: true,
+        }
+        setSavedDesigns([mapped])
+        setStatusMessage(
+          `Saved DTF transfer (${res.quote.dimensions.widthIn}" x ${res.quote.dimensions.heightIn}"). ${DTF_GARMENT_DISCLAIMER}`
+        )
+        return [mapped]
+      } catch (error) {
+        setStatusMessage(
+          error instanceof Error
+            ? error.message
+            : "Could not save DTF transfer artwork."
+        )
+        return []
+      } finally {
+        setBusy(false)
+      }
+    }
+
     if (!product || !variant || !placementValid || busy) {
       if (!product || !variant) {
         setStatusMessage("Eşleşen Medusa ürünü veya varyantı bulunamadı.")
@@ -371,6 +490,64 @@ export default function Tshirt3dExperience({
   }
 
   const handleAddToCart = async () => {
+    if (isDtfMode) {
+      if (!product || !variant || !placementValid || busy) return
+      let savedRef = dtfSavedAsset
+      if (!savedRef) {
+        setBusy(true)
+        try {
+          savedRef = await saveCustomDtfTransferSurface({
+            productHandle: product.handle || undefined,
+            artwork: activeArtworkSpec,
+            side: "front",
+            unit: dtfUnit,
+            width: dtfWidth,
+            height: dtfHeight,
+            quantity,
+            previewColorHex: shirtColor,
+            previewColorName: "Preview Fabric",
+            allowLowDpi: true,
+          })
+          setDtfSavedAsset(savedRef)
+          setSavedDesigns([
+            {
+              id: savedRef.designAsset.id,
+              side: "front",
+              previewUrl: savedRef.mockupUrl || "",
+              checkoutEnabled: true,
+            },
+          ])
+        } catch (err) {
+          setBusy(false)
+          setStatusMessage(
+            err instanceof Error ? err.message : "Could not save DTF transfer."
+          )
+          return
+        }
+      }
+      setBusy(true)
+      setStatusMessage("Adding custom DTF transfer film to cart…")
+      try {
+        await addSavedDtfTransferToCart({
+          variantId: variant.id,
+          savedTransfer: savedRef,
+          previewColorName: "Preview Fabric",
+          previewColorHex: shirtColor,
+          countryCode,
+        })
+        setStatusMessage(
+          `Added custom DTF transfer to cart! ${DTF_GARMENT_DISCLAIMER}`
+        )
+      } catch (err) {
+        setStatusMessage(
+          err instanceof Error ? err.message : "Could not add DTF transfer."
+        )
+      } finally {
+        setBusy(false)
+      }
+      return
+    }
+
     if (!product || !variant || !placementValid || busy) return
     let currentSaved = savedDesigns
     if (!currentSaved.length) {
@@ -828,21 +1005,154 @@ export default function Tshirt3dExperience({
               <div className="flex items-start justify-between gap-2 border-b border-brand-stone/60 pb-2.5">
                 <div>
                   <span className="text-[10px] font-extrabold uppercase tracking-widest text-brand-brown block">
-                    MEDUSA CANLI SİPARİŞ
+                    {isDtfMode ? "CUSTOM DTF TRANSFER" : "MEDUSA CANLI SİPARİŞ"}
                   </span>
                   <h3 className="text-sm font-extrabold text-brand-anthracite leading-snug">
-                    {product?.title || "Nizamlar Premium Oversize Tişört"}
+                    {isDtfMode
+                      ? "3D DTF Transfer Preview"
+                      : product?.title || "Nizamlar Premium Oversize Tişört"}
                   </h3>
                 </div>
                 <span className="text-xs font-extrabold px-2 py-1 rounded bg-brand-anthracite text-brand-gold-hover shrink-0">
-                  {convertToLocale({
-                    amount: unitTotal,
-                    currency_code: currencyCode,
-                  })}
+                  {isDtfMode
+                    ? dtfQuote
+                      ? dtfQuote.unitPriceFormatted
+                      : "USD"
+                    : convertToLocale({
+                        amount: unitTotal,
+                        currency_code: currencyCode,
+                      })}
                 </span>
               </div>
 
-              {product ? (
+              {isDtfMode ? (
+                <>
+                  <div className="rounded-md bg-brand-anthracite px-2.5 py-1.5 text-[10px] font-bold text-brand-cream-light border border-brand-gold/60">
+                    {DTF_GARMENT_DISCLAIMER}
+                  </div>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <label className="flex flex-col gap-0.5 text-[10px] font-bold text-brand-brown-dark">
+                      <span>Unit</span>
+                      <select
+                        value={dtfUnit}
+                        onChange={(e) => {
+                          const next = e.target.value as DtfDimensionUnit
+                          if (next !== dtfUnit) {
+                            const f = next === "cm" ? 2.54 : 1 / 2.54
+                            setDtfWidth(Number((dtfWidth * f).toFixed(2)))
+                            setDtfHeight(Number((dtfHeight * f).toFixed(2)))
+                            setDtfUnit(next)
+                            setDtfSavedAsset(null)
+                          }
+                        }}
+                        className="px-1.5 py-1 rounded border border-brand-stone bg-brand-white text-xs font-bold text-brand-anthracite"
+                      >
+                        <option value="in">in</option>
+                        <option value="cm">cm</option>
+                      </select>
+                    </label>
+                    <label className="flex flex-col gap-0.5 text-[10px] font-bold text-brand-brown-dark">
+                      <span>Width</span>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min={0.5}
+                        max={55}
+                        value={dtfWidth}
+                        onChange={(e) => {
+                          setDtfWidth(Math.max(0.5, Number(e.target.value) || 0.5))
+                          setDtfSavedAsset(null)
+                        }}
+                        className="px-1.5 py-1 rounded border border-brand-stone bg-brand-white text-xs font-bold text-brand-anthracite"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-0.5 text-[10px] font-bold text-brand-brown-dark">
+                      <span>Height</span>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min={0.5}
+                        max={300}
+                        value={dtfHeight}
+                        onChange={(e) => {
+                          setDtfHeight(Math.max(0.5, Number(e.target.value) || 0.5))
+                          setDtfSavedAsset(null)
+                        }}
+                        className="px-1.5 py-1 rounded border border-brand-stone bg-brand-white text-xs font-bold text-brand-anthracite"
+                      />
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 items-end">
+                    <label className="flex flex-col gap-1 text-[10px] font-bold text-brand-brown-dark">
+                      <span>Transfer Qty</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={10000}
+                        value={quantity}
+                        onChange={(e) => {
+                          setQuantity(
+                            Math.max(1, Math.min(10000, Math.floor(Number(e.target.value) || 1)))
+                          )
+                          setDtfSavedAsset(null)
+                        }}
+                        className="px-2 py-1 rounded border border-brand-stone bg-brand-white text-xs font-bold text-brand-anthracite"
+                      />
+                    </label>
+                    {dtfResolution && (
+                      <div className="text-[10px] font-mono font-bold text-brand-brown-dark pb-1">
+                        {dtfResolution.effectiveDpi} DPI ·{" "}
+                        {dtfResolution.hasTransparency ? "RGBA" : "Opaque"}
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-brand-cream/90 border border-brand-stone/80 text-[11px] flex flex-col gap-1">
+                    <div className="flex justify-between text-brand-brown-dark">
+                      <span>Preview Shirt:</span>
+                      <span className="font-semibold">$0.00 (Preview Only)</span>
+                    </div>
+                    <div className="flex justify-between text-brand-anthracite font-extrabold text-xs pt-1 border-t border-brand-stone/60">
+                      <span>Total ({quantity} pcs):</span>
+                      <span data-testid="tshirt3d-total-price">
+                        {dtfQuote ? `${dtfQuote.subtotalFormatted} USD` : "…"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      data-testid="tshirt3d-save-btn"
+                      disabled={busy || !placementValid}
+                      onClick={() => void handleSaveDesign()}
+                      className="w-full py-2 px-3 rounded-lg text-xs font-bold border border-brand-anthracite text-brand-anthracite bg-brand-white hover:bg-brand-cream disabled:opacity-50 transition-colors"
+                    >
+                      {busy ? "Saving…" : "Save DTF Transfer"}
+                    </button>
+                    <button
+                      type="button"
+                      data-testid="tshirt3d-cart-btn"
+                      disabled={busy || !placementValid || !variant}
+                      onClick={() => void handleAddToCart()}
+                      className="w-full py-2.5 px-3 rounded-lg text-xs font-extrabold bg-brand-anthracite hover:bg-brand-brown text-brand-cream-light border border-brand-gold shadow-md disabled:opacity-50 transition-colors"
+                    >
+                      {busy
+                        ? "Processing…"
+                        : `Add DTF Transfer · ${
+                            dtfQuote ? `${dtfQuote.subtotalFormatted} USD` : "…"
+                          }`}
+                    </button>
+                  </div>
+                  {statusMessage && (
+                    <p
+                      role="status"
+                      data-testid="tshirt3d-status"
+                      className="text-[11px] font-medium text-brand-brown-dark leading-snug"
+                    >
+                      {statusMessage}
+                    </p>
+                  )}
+                </>
+              ) : product ? (
                 <>
                   {/* Varyant Seçiciler: Renk & Beden */}
                   <div className="grid grid-cols-2 gap-2">
