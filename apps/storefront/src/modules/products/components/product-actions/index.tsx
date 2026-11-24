@@ -1,6 +1,7 @@
 "use client"
 
-import { addToCart } from "@lib/data/cart"
+import { addDtfTransferToCart, addToCart } from "@lib/data/cart"
+import { resolveProductDtfType } from "@lib/data/dtf"
 import { notifyCartUpdated } from "@lib/util/cart-events"
 import { useIntersection } from "@lib/hooks/use-in-view"
 import { isVariantInStock } from "@lib/util/inventory"
@@ -9,6 +10,7 @@ import type { HttpTypes } from "@medusajs/types"
 import { useParams, useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useRef, useState } from "react"
 import dynamic from "next/dynamic"
+import DtfTransferConfigurator from "../dtf-transfer-configurator"
 import ProductPrice from "../product-price"
 
 const CustomPrintStudio = dynamic(() => import("@modules/custom-studio"), {
@@ -20,14 +22,20 @@ export default function ProductActions({
   region,
   disabled,
   onVariantChange,
+  onPreviewColorChange,
 }: {
   product: HttpTypes.StoreProduct
   region: HttpTypes.StoreRegion
   disabled?: boolean
   onVariantChange?: (variant: HttpTypes.StoreProductVariant | undefined) => void
+  onPreviewColorChange?: (hex: string) => void
 }) {
   const countryCode = useParams().countryCode as string
   const search = useSearchParams()
+  const dtfProductType =
+    search.get("dtf") === "1"
+      ? resolveProductDtfType(product, "us") || "custom_dtf"
+      : resolveProductDtfType(product, countryCode)
   const [options, setOptions] = useState(() =>
     getVariantOptions(
       product.variants?.find((v) => v.id === search.get("v_id")) ||
@@ -90,7 +98,46 @@ export default function ProductActions({
     !variant || !inStock || disabled || adding || !variant.calculated_price
   return (
     <>
-      <div ref={ref} className="aura-actions" data-testid="product-actions">
+      {dtfProductType ? (
+        <DtfTransferConfigurator
+          product={product}
+          productType={dtfProductType}
+          countryCode={countryCode}
+          onPreviewColorChange={onPreviewColorChange}
+          onOpenStudio={printEligible ? () => setStudio(true) : undefined}
+          onAddTransferToCart={async ({
+            quote,
+            quoteSignature,
+            previewColorHex,
+            previewColorName,
+          }) => {
+            const targetVariant = variant || product.variants?.[0]
+            if (!targetVariant) {
+              throw new Error("No fulfillment carrier variant available")
+            }
+            await addDtfTransferToCart({
+              variantId: targetVariant.id,
+              productType: quote.productType,
+              unit: quote.dimensions.unit,
+              width:
+                quote.dimensions.unit === "in"
+                  ? quote.dimensions.widthIn
+                  : quote.dimensions.widthCm,
+              height:
+                quote.dimensions.unit === "in"
+                  ? quote.dimensions.heightIn
+                  : quote.dimensions.heightCm,
+              quantity: quote.quantity,
+              quoteSignature,
+              previewColorHex,
+              previewColorName,
+              countryCode,
+            })
+            notifyCartUpdated()
+          }}
+        />
+      ) : (
+        <div ref={ref} className="aura-actions" data-testid="product-actions">
         <div className="aura-price" key={variant?.id}>
           <ProductPrice product={product} variant={variant} />
         </div>
@@ -205,7 +252,8 @@ export default function ProductActions({
           </p>
         </form>
       </div>
-      {!inView && !studio && (
+      )}
+      {!dtfProductType && !inView && !studio && (
         <div className="aura-sticky" data-testid="sticky-cart-bar">
           <div>
             <strong>{product.title}</strong>

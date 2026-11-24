@@ -1,4 +1,15 @@
-import { configureStoreSearch, defineMiddlewares } from '@medusajs/framework/http'
+import {
+  authenticate,
+  configureStoreSearch,
+  defineMiddlewares,
+  validateAndTransformBody,
+} from "@medusajs/framework/http"
+import {
+  DtfAddToCartSchema,
+  DtfQuoteRequestSchema,
+  UpsertDtfPricingRuleSchema,
+  UpsertDtfProductSpecSchema,
+} from "./dtf-validators"
 
 // The product index declares filterable `status` and `sales_channel_ids`, so
 // the route narrows it to published products in the key's sales channels.
@@ -10,8 +21,8 @@ export default defineMiddlewares({
       bodyParser: { sizeLimit: "40mb" },
     },
     {
-      method: ['POST'],
-      matcher: '/store/search',
+      method: ["POST"],
+      matcher: "/store/search",
       middlewares: [
         configureStoreSearch({
           allowed_indexes: {
@@ -19,6 +30,36 @@ export default defineMiddlewares({
           },
         }),
       ],
+    },
+    {
+      methods: ["POST"],
+      matcher: "/store/dtf/quote",
+      middlewares: [validateAndTransformBody(DtfQuoteRequestSchema)],
+    },
+    {
+      methods: ["POST"],
+      matcher: "/store/dtf/cart",
+      middlewares: [validateAndTransformBody(DtfAddToCartSchema)],
+    },
+    {
+      methods: ["GET", "POST"],
+      matcher: "/admin/dtf/pricing-rules",
+      middlewares: [authenticate("user", ["session", "bearer", "api-key"])],
+    },
+    {
+      methods: ["POST"],
+      matcher: "/admin/dtf/pricing-rules",
+      middlewares: [validateAndTransformBody(UpsertDtfPricingRuleSchema)],
+    },
+    {
+      methods: ["GET", "POST"],
+      matcher: "/admin/dtf/products",
+      middlewares: [authenticate("user", ["session", "bearer", "api-key"])],
+    },
+    {
+      methods: ["POST"],
+      matcher: "/admin/dtf/products",
+      middlewares: [validateAndTransformBody(UpsertDtfProductSpecSchema)],
     },
   ],
 })

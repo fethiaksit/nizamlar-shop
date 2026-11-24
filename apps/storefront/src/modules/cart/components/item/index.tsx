@@ -43,9 +43,13 @@ const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
   const maxQtyFromInventory = 10
   const maxQuantity = item.variant?.manage_inventory ? 10 : maxQtyFromInventory
 
-  // Özel Baskı Metadata Tespiti
+  // Özel Baskı ve DTF Transfer Metadata Tespiti
   const meta = (item.metadata || {})
   const isCustomPrint = !!meta.design_id || meta.print_mode === "custom"
+  const isDtfTransfer =
+    meta.dtf_transfer === true ||
+    meta.dtf_transfer === "true" ||
+    Boolean(meta.dtf_product_type)
 
   return (
     <Table.Row className="w-full" data-testid="product-row">
@@ -86,7 +90,25 @@ const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
             </div>
           )}
 
-          <LineItemOptions variant={item.variant} data-testid="product-variant" />
+          {/* DTF Transfer Zorunlu Uyarı & Ölçü Bilgisi */}
+          {isDtfTransfer && (
+            <div
+              data-testid="cart-dtf-disclaimer"
+              className="inline-flex flex-wrap items-center gap-1.5 px-2.5 py-1 rounded bg-brand-cream border border-brand-gold/60 text-brand-anthracite text-[11px] font-bold w-fit"
+            >
+              <span>DTF transfer only. Garment not included.</span>
+              {typeof meta.width_in === "number" &&
+                typeof meta.height_in === "number" && (
+                  <span className="font-mono text-brand-brown-dark">
+                    · {meta.width_in}&quot; × {meta.height_in}&quot;
+                  </span>
+                )}
+            </div>
+          )}
+
+          {!isDtfTransfer && (
+            <LineItemOptions variant={item.variant} data-testid="product-variant" />
+          )}
         </div>
       </Table.Cell>
 

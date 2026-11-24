@@ -223,11 +223,17 @@ const CartDropdown = ({
                                     {item.title}
                                   </LocalizedClientLink>
                                 </h3>
-                                <LineItemOptions
-                                  variant={item.variant}
-                                  data-testid="cart-item-variant"
-                                  data-value={item.variant}
-                                />
+                                {item.metadata?.dtf_transfer ? (
+                                  <span className="text-[11px] font-semibold text-brand-brown-dark whitespace-normal">
+                                    DTF transfer only. Garment not included.
+                                  </span>
+                                ) : (
+                                  <LineItemOptions
+                                    variant={item.variant}
+                                    data-testid="cart-item-variant"
+                                    data-value={item.variant}
+                                  />
+                                )}
                                 <span
                                   data-testid="cart-item-quantity"
                                   data-value={item.quantity}

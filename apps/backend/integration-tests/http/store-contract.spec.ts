@@ -272,5 +272,94 @@ medusaIntegrationTestRunner({
         ),
       ).rejects.toMatchObject({ response: { status: 400 } })
     })
+
+    it("seeds DTF transfer catalog and calculates verified USD quotes in inches and centimeters", async () => {
+      const catalog = await api.get("/store/dtf/catalog", { headers })
+      expect(catalog.status).toBe(200)
+      expect(catalog.data.disclaimer).toBe(
+        "DTF transfer only. Garment not included.",
+      )
+      expect(catalog.data.garmentIncluded).toBe(false)
+      expect(catalog.data.currencyCode).toBe("USD")
+      expect(
+        catalog.data.products.map((p: { product_type: string }) => p.product_type).sort(),
+      ).toEqual(["custom_dtf", "dtf_bundle", "gang_sheet", "ready_to_press"])
+
+      const quoteInch = await api.post(
+        "/store/dtf/quote",
+        {
+          productType: "custom_dtf",
+          unit: "in",
+          width: 10,
+          height: 12,
+          quantity: 10,
+        },
+        { headers },
+      )
+      expect(quoteInch.status).toBe(200)
+      expect(quoteInch.data.quote).toMatchObject({
+        currencyCode: "USD",
+        garmentIncluded: false,
+        disclaimer: "DTF transfer only. Garment not included.",
+        discountPercent: 10,
+        discountedUnitCents: 648,
+        subtotalCents: 6480,
+      })
+      expect(typeof quoteInch.data.quoteSignature).toBe("string")
+
+      const quoteCm = await api.post(
+        "/store/dtf/quote",
+        {
+          productType: "custom_dtf",
+          unit: "cm",
+          width: 25.4,
+          height: 30.48,
+          quantity: 10,
+        },
+        { headers },
+      )
+      expect(quoteCm.data.quote.subtotalCents).toBe(6480)
+
+      // Rejects invalid dimensions and unauthenticated admin DTF mutations
+      await expect(
+        api.post(
+          "/store/dtf/quote",
+          {
+            productType: "custom_dtf",
+            unit: "in",
+            width: 30,
+            height: 10,
+            quantity: 1,
+          },
+          { headers },
+        ),
+      ).rejects.toMatchObject({ response: { status: 400 } })
+
+      await expect(
+        api.post("/admin/dtf/pricing-rules", { code: "unauthorized" }),
+      ).rejects.toMatchObject({ response: { status: 401 } })
+
+      // Rejects publishing unapproved numeric iron parameters in admin
+      const login = await api.post("/auth/user/emailpass", {
+        email: "admin@integration.test",
+        password: "integration-test-only",
+      })
+      await expect(
+        api.post(
+          "/admin/dtf/products",
+          {
+            handle: "unsafe-iron-spec",
+            product_type: "ready_to_press",
+            title_en: "Unsafe Spec",
+            description_en: "DTF transfer only. Garment not included.",
+            application_approved: false,
+            application_instructions_json: {
+              verified_parameters: { temp_f: 315, seconds: 15 },
+            },
+          },
+          { headers: { Authorization: `Bearer ${login.data.token}` } },
+        ),
+      ).rejects.toMatchObject({ response: { status: 400 } })
+    })
   },
 })

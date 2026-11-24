@@ -157,6 +157,68 @@ export async function addToCart({
     .catch(medusaError)
 }
 
+export async function addDtfTransferToCart({
+  variantId,
+  productType,
+  unit,
+  width,
+  height,
+  quantity,
+  filmLengthIn,
+  designAssetId,
+  previewColorName,
+  previewColorHex,
+  quoteSignature,
+  countryCode,
+}: {
+  variantId: string
+  productType: "ready_to_press" | "custom_dtf" | "gang_sheet" | "dtf_bundle"
+  unit: "in" | "cm"
+  width: number
+  height: number
+  quantity: number
+  filmLengthIn?: number
+  designAssetId?: string
+  previewColorName?: string
+  previewColorHex?: string
+  quoteSignature?: string
+  countryCode: string
+}) {
+  const cart = await getOrSetCart(countryCode)
+  if (!cart) {
+    throw new Error("Unable to create or retrieve cart")
+  }
+  const headers = {
+    ...(await getAuthHeaders()),
+  }
+  await sdk.client
+    .fetch("/store/dtf/cart", {
+      method: "POST",
+      body: {
+        cartId: cart.id,
+        variantId,
+        productType,
+        unit,
+        width,
+        height,
+        quantity,
+        filmLengthIn,
+        designAssetId,
+        previewColorName,
+        previewColorHex,
+        quoteSignature,
+      },
+      headers,
+    })
+    .then(async () => {
+      const cartCacheTag = await getCacheTag("carts")
+      revalidateTag(cartCacheTag, { expire: 0 })
+      const fulfillmentCacheTag = await getCacheTag("fulfillment")
+      revalidateTag(fulfillmentCacheTag, { expire: 0 })
+    })
+    .catch(medusaError)
+}
+
 export async function addCustomDesignToCart({
   designIds,
   quantity,
