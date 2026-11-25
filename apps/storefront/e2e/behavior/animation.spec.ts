@@ -10,9 +10,16 @@ async function canvasImage(canvas: Locator) {
   return canvas.screenshot({ animations: "allow" })
 }
 
-async function pauseClockSafely(page: Page, minStepMs = 300) {
-  const now = await page.evaluate(() => Date.now())
-  await page.clock.pauseAt(new Date(now + minStepMs))
+async function pauseClockSafely(page: Page, minStepMs = 500) {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const now = await page.evaluate(() => Date.now())
+    try {
+      await page.clock.pauseAt(new Date(now + minStepMs * (attempt + 1)))
+      return
+    } catch (err) {
+      if (attempt === 3) throw err
+    }
+  }
 }
 
 test("hero controls preserve 440ms transitions, configured autoplay, and mobile touch swipe", async ({

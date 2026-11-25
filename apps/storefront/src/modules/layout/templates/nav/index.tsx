@@ -12,7 +12,12 @@ import CartButton from "@modules/layout/components/cart-button"
 import Search from "@modules/layout/components/search"
 import SideMenu from "@modules/layout/components/side-menu"
 
-export default async function Nav() {
+export default async function Nav({
+  countryCode,
+}: {
+  countryCode?: string
+} = {}) {
+  const isUs = (countryCode || "").toLowerCase() === "us"
   const [regions, locales, currentLocale] = await Promise.all([
     listRegions().then((regions: StoreRegion[]) => regions),
     listLocales(),
@@ -44,6 +49,47 @@ export default async function Nav() {
 
           {/* 2. ORTA: Mağaza, Koleksiyon ve Tasarım Oluştur (Desktop) */}
           <div className="hidden md:flex items-center gap-x-6 lg:gap-x-8 h-full">
+            {isUs ? (
+              <>
+                <LocalizedClientLink
+                  href="/store"
+                  className="text-[#F3EFE7]/85 hover:text-[#B29460] font-medium text-[13.5px] tracking-wide transition-colors py-2 relative group flex items-center"
+                  data-testid="nav-store-collection-link"
+                >
+                  <span>Shop Transfers</span>
+                  <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#B29460] transition-all duration-200 group-hover:w-full" />
+                </LocalizedClientLink>
+
+                <LocalizedClientLink
+                  href="/gang-sheet-builder"
+                  className="text-[#F3EFE7]/85 hover:text-[#B29460] font-medium text-[13.5px] tracking-wide transition-colors py-2 relative group flex items-center gap-1.5"
+                  data-testid="nav-gang-sheet-link"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#B29460] inline-block" />
+                  <span>Gang Sheet Builder</span>
+                  <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#B29460] transition-all duration-200 group-hover:w-full" />
+                </LocalizedClientLink>
+
+                <LocalizedClientLink
+                  href="/how-to-apply"
+                  className="text-[#F3EFE7]/85 hover:text-[#B29460] font-medium text-[13.5px] tracking-wide transition-colors py-2 relative group flex items-center"
+                  data-testid="nav-how-to-apply-link"
+                >
+                  <span>How to Apply</span>
+                  <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#B29460] transition-all duration-200 group-hover:w-full" />
+                </LocalizedClientLink>
+
+                <LocalizedClientLink
+                  href="/order-tracking"
+                  className="text-[#F3EFE7]/85 hover:text-[#B29460] font-medium text-[13.5px] tracking-wide transition-colors py-2 relative group flex items-center"
+                  data-testid="nav-order-tracking-link"
+                >
+                  <span>Track Order</span>
+                  <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#B29460] transition-all duration-200 group-hover:w-full" />
+                </LocalizedClientLink>
+              </>
+            ) : (
+              <>
             <LocalizedClientLink
               href="/store"
               className="text-[#F3EFE7]/85 hover:text-[#B29460] font-medium text-[13.5px] tracking-wide transition-colors py-2 relative group flex items-center"
@@ -71,6 +117,8 @@ export default async function Nav() {
               <span>Tasarım Oluştur</span>
               <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#B29460] transition-all duration-200 group-hover:w-full" />
             </LocalizedClientLink>
+              </>
+            )}
           </div>
 
           {/* 3. SAĞ: Kurumsal Web, Arama, Hesap, Sepet ve Menü */}
@@ -122,7 +170,12 @@ export default async function Nav() {
 
             {/* Hamburger Menü (SideMenu) */}
             <div className="flex items-center h-full shrink-0">
-              <SideMenu regions={regions} locales={locales} currentLocale={currentLocale} />
+              <SideMenu
+                regions={regions}
+                locales={locales}
+                currentLocale={currentLocale}
+                countryCode={countryCode}
+              />
             </div>
           </div>
         </nav>

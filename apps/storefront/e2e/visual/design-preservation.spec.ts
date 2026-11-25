@@ -89,6 +89,7 @@ test("home, navbar, slider, rack, cards, footer and mobile navigation", async ({
     await page.clock.resume()
     await page.evaluate(() => window.scrollTo(0, 0))
     await page.getByTestId("nav-menu-button").click()
+    await page.mouse.move(0, 0)
     await expect(page.getByTestId("nav-menu-popup")).toBeVisible()
     await settleDeterministicUi(page)
     await expect(page).toHaveScreenshot("mobile-navigation.png", {

@@ -73,9 +73,9 @@ async function getCountryCode(
 
   const urlCountryCode = request.nextUrl.pathname.split("/")[1]?.toLowerCase()
 
-  if (urlCountryCode && regionMap.has(urlCountryCode)) {
+  if (urlCountryCode && (regionMap.has(urlCountryCode) || urlCountryCode === "us")) {
     countryCode = urlCountryCode
-  } else if (regionMap.has(DEFAULT_REGION)) {
+  } else if (regionMap.has(DEFAULT_REGION) || DEFAULT_REGION === "us") {
     countryCode = DEFAULT_REGION
   } else if (regionMap.keys().next().value) {
     countryCode = regionMap.keys().next().value

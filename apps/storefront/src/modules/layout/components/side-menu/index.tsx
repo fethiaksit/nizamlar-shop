@@ -21,13 +21,32 @@ const SideMenuItems: { name: string; href: string; highlight?: boolean }[] = [
   { name: "Sepetim", href: "/cart" },
 ]
 
+const UsSideMenuItems: { name: string; href: string; highlight?: boolean }[] = [
+  { name: "Home", href: "/" },
+  { name: "Shop Transfers", href: "/store" },
+  { name: "Gang Sheet Builder", href: "/gang-sheet-builder", highlight: true },
+  { name: "How to Apply", href: "/how-to-apply" },
+  { name: "US DTF FAQ", href: "/faq" },
+  { name: "Track Order", href: "/order-tracking" },
+  { name: "My Account", href: "/account" },
+  { name: "Cart", href: "/cart" },
+]
+
 type SideMenuProps = {
   regions: HttpTypes.StoreRegion[] | null
   locales: Locale[] | null
   currentLocale: string | null
+  countryCode?: string
 }
 
-const SideMenu = ({ regions, locales, currentLocale }: SideMenuProps) => {
+const SideMenu = ({
+  regions,
+  locales,
+  currentLocale,
+  countryCode,
+}: SideMenuProps) => {
+  const isUs = String(countryCode || "").toLowerCase() === "us"
+  const activeMenuItems = isUs ? UsSideMenuItems : SideMenuItems
   const countryToggleState = useToggleState()
   const languageToggleState = useToggleState()
 
@@ -89,7 +108,7 @@ const SideMenu = ({ regions, locales, currentLocale }: SideMenuProps) => {
                     </div>
 
                     <ul className="flex flex-col gap-4 items-start justify-start py-6">
-                      {SideMenuItems.map((item) => (
+                      {activeMenuItems.map((item) => (
                         <li key={item.name} className="w-full">
                           <LocalizedClientLink
                             href={item.href}

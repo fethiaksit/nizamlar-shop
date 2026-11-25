@@ -4,6 +4,11 @@ import Checkbox from "@modules/common/components/checkbox"
 import Input from "@modules/common/components/input"
 import { mapKeys } from "lodash"
 import React, { useEffect, useMemo, useState } from "react"
+import {
+  isValidUsZipCode,
+  US_STATES_AND_TERRITORIES,
+  US_ZIP_PATTERN,
+} from "@lib/util/us-address"
 import AddressSelect from "../address-select"
 import CountrySelect from "../country-select"
 
@@ -149,9 +154,23 @@ const ShippingAddress = ({
           data-testid="shipping-company-input"
         />
         <Input
-          label="Postal code"
+          label={
+            formData["shipping_address.country_code"]?.toLowerCase() === "us"
+              ? "ZIP code (5-digit or ZIP+4)"
+              : "Postal code"
+          }
           name="shipping_address.postal_code"
           autoComplete="postal-code"
+          pattern={
+            formData["shipping_address.country_code"]?.toLowerCase() === "us"
+              ? US_ZIP_PATTERN
+              : undefined
+          }
+          title={
+            formData["shipping_address.country_code"]?.toLowerCase() === "us"
+              ? "Enter a valid 5-digit US ZIP code (e.g. 75001 or 75001-1234)"
+              : undefined
+          }
           value={formData["shipping_address.postal_code"]}
           onChange={handleChange}
           required
@@ -175,15 +194,55 @@ const ShippingAddress = ({
           required
           data-testid="shipping-country-select"
         />
-        <Input
-          label="State / Province"
-          name="shipping_address.province"
-          autoComplete="address-level1"
-          value={formData["shipping_address.province"]}
-          onChange={handleChange}
-          data-testid="shipping-province-input"
-        />
+        {formData["shipping_address.country_code"]?.toLowerCase() === "us" ? (
+          <div className="flex flex-col">
+            <select
+              name="shipping_address.province"
+              aria-label="US State"
+              autoComplete="address-level1"
+              required
+              value={formData["shipping_address.province"]}
+              onChange={handleChange}
+              data-testid="shipping-province-input"
+              className="h-11 w-full rounded-md border border-ui-border-base bg-ui-bg-field px-4 text-sm text-ui-fg-base"
+            >
+              <option value="">Select US State...</option>
+              {US_STATES_AND_TERRITORIES.map((st) => (
+                <option key={st.code} value={st.code}>
+                  {st.name} ({st.code})
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <Input
+            label="State / Province"
+            name="shipping_address.province"
+            autoComplete="address-level1"
+            value={formData["shipping_address.province"]}
+            onChange={handleChange}
+            data-testid="shipping-province-input"
+          />
+        )}
       </div>
+      {formData["shipping_address.country_code"]?.toLowerCase() === "us" && (
+        <div
+          data-testid="us-customs-shipping-notice"
+          className="mt-4 rounded-lg border border-brand-gold/50 bg-brand-cream-light p-3 text-xs text-brand-anthracite"
+        >
+          <strong>US Air Express &amp; Customs Notice:</strong> Orders manufacture
+          in Türkiye and ship via tracked international air courier to all 50 US
+          states. Any applicable US import duties, customs clearance fees, or state
+          use taxes determined by US Customs (CBP) are disclosed at checkout / carrier
+          import per shipment value.
+          {formData["shipping_address.postal_code"] &&
+            !isValidUsZipCode(formData["shipping_address.postal_code"]) && (
+              <span className="block mt-1 font-bold text-[#BE123C]">
+                Please enter a valid 5-digit US ZIP code (e.g. 90210 or 90210-1234).
+              </span>
+            )}
+        </div>
+      )}
       <div className="my-8">
         <Checkbox
           label="Billing address same as shipping address"

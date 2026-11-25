@@ -181,7 +181,7 @@ export async function assertVisibleImagesLoaded(page: Page) {
     .toBe(true)
 }
 
-export async function settleDeterministicUi(page: Page, runMs = 2560) {
+export async function settleDeterministicUi(page: Page, runMs = 4800) {
   await pauseAtAlignedFrame(page)
   await page.clock.runFor(runMs)
   await assertVisibleImagesLoaded(page)
