@@ -11,16 +11,40 @@ import {
   printPlacement,
   variantColor,
 } from "@lib/3d/product"
+import {
+  DTF_GARMENT_DISCLAIMER,
+  requestServerDtfQuote,
+  resolveProductDtfType,
+  type DtfDimensionUnit,
+  type DtfSavedDesignAssetResponse,
+  type DtfVerifiedQuote,
+} from "@lib/data/dtf"
 import { isVariantInStock } from "@lib/util/inventory"
 import { convertToLocale } from "@lib/util/money"
 import type { PrintLayer } from "@modules/garment-3d/garment-model"
 import Studio3DViewer from "./studio-3d-viewer"
 import InteractiveCanvas2D, { type Artwork } from "./interactive-canvas-2d"
 import {
+  createTransparentDtfPrintPng,
+  inspectClientArtworkForDtf,
+  type DtfClientResolutionInfo,
+} from "./preview"
+import {
   addSavedDesignsToMedusaCart,
+  addSavedDtfTransferToCart,
   calculateClientPrintPricing,
   saveCustomDesignSurface,
+  saveCustomDtfTransferSurface,
 } from "./design-order-service"
+
+const DTF_STUDIO_PREVIEW_SWATCHES = [
+  { name: "Anthracite", hex: "#222325" },
+  { name: "Off-White", hex: "#F4F1E9" },
+  { name: "Warm Gold", hex: "#B29460" },
+  { name: "Espresso Brown", hex: "#49372E" },
+  { name: "Stone Cream", hex: "#E6DFD2" },
+  { name: "Jet Black", hex: "#18191B" },
+] as const
 
 type Side = "front" | "back"
 type SavedDesign = { id: string; side: Side; previewUrl: string }
@@ -31,6 +55,7 @@ export default function CustomPrintStudio({
   countryCode,
   initialVariant,
   initialQuantity = 1,
+  dtfMode,
   onClose,
 }: {
   product: HttpTypes.StoreProduct
@@ -38,8 +63,16 @@ export default function CustomPrintStudio({
   countryCode: string
   initialVariant?: HttpTypes.StoreProductVariant
   initialQuantity?: number
+  dtfMode?: boolean
   onClose?: () => void
 }) {
+  const isDtfTransferStudio = useMemo(
+    () =>
+      Boolean(dtfMode) ||
+      (countryCode || "").toLowerCase() === "us" ||
+      Boolean(resolveProductDtfType(initialProduct, countryCode)),
+    [dtfMode, countryCode, initialProduct],
+  )
   // Product & available t-shirts state
   const [product, setProduct] = useState<HttpTypes.StoreProduct>(initialProduct)
   const [availableTshirts, setAvailableTshirts] = useState<HttpTypes.StoreProduct[]>([])
@@ -84,9 +117,25 @@ export default function CustomPrintStudio({
   const [saved, setSaved] = useState<SavedDesign[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // DTF Transfer Studio State (active when isDtfTransferStudio === true)
+  const [dtfUnit, setDtfUnit] = useState<DtfDimensionUnit>("in")
+  const [dtfWidth, setDtfWidth] = useState<number>(10)
+  const [dtfHeight, setDtfHeight] = useState<number>(11)
+  const [dtfLockAspect, setDtfLockAspect] = useState<boolean>(true)
+  const [dtfPreviewSwatch, setDtfPreviewSwatch] = useState<{
+    name: string
+    hex: string
+  }>(DTF_STUDIO_PREVIEW_SWATCHES[0])
+  const [dtfQuote, setDtfQuote] = useState<DtfVerifiedQuote | null>(null)
+  const [dtfResolution, setDtfResolution] =
+    useState<DtfClientResolutionInfo | null>(null)
+  const [dtfAllowLowDpi, setDtfAllowLowDpi] = useState<boolean>(false)
+  const [dtfSavedAsset, setDtfSavedAsset] =
+    useState<DtfSavedDesignAssetResponse | null>(null)
+
   // Undo / Redo History Stack
-  const [history, setHistory] = useState<Array<Partial<Record<Side, Artwork>>>>([])
-  const [historyIndex, setHistoryIndex] = useState(-1)
+  const [history, setHistory] = useState<Array<Partial<Record<Side, Artwork>>>>([{}])
+  const [historyIndex, setHistoryIndex] = useState(0)
 
   // Push new state to history
   const pushHistory = useCallback(
@@ -100,29 +149,73 @@ export default function CustomPrintStudio({
     [historyIndex],
   )
 
+  // Listen to 2D / 3D artwork errors and notify user
+  useEffect(() => {
+    const handleStudioError = (e: Event) => {
+      const detail = (e as CustomEvent).detail
+      if (detail?.message) {
+        setMessage(`⚠️ ${detail.message}`)
+      }
+    }
+    window.addEventListener("nizamlar:studio-error", handleStudioError)
+    return () => {
+      window.removeEventListener("nizamlar:studio-error", handleStudioError)
+    }
+  }, [])
+
   // Undo
-  const handleUndo = () => {
+  const handleUndo = useCallback(() => {
     if (historyIndex > 0) {
       const targetIndex = historyIndex - 1
-      const restored = history[targetIndex]
+      const restored = history[targetIndex] || {}
       setHistoryIndex(targetIndex)
       setArtworks(restored)
       setSaved([])
       setMessage("İşlem geri alındı.")
     }
-  }
+  }, [history, historyIndex])
 
   // Redo
-  const handleRedo = () => {
+  const handleRedo = useCallback(() => {
     if (historyIndex < history.length - 1) {
       const targetIndex = historyIndex + 1
-      const restored = history[targetIndex]
+      const restored = history[targetIndex] || {}
       setHistoryIndex(targetIndex)
       setArtworks(restored)
       setSaved([])
       setMessage("İşlem yinelendi.")
     }
-  }
+  }, [history, historyIndex])
+
+  // Keyboard Shortcuts (Ctrl+Z / Cmd+Z for Undo, Ctrl+Shift+Z / Cmd+Shift+Z / Ctrl+Y for Redo)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      ) {
+        return
+      }
+      const isMac =
+        typeof navigator !== "undefined" &&
+        navigator.platform.toUpperCase().indexOf("MAC") >= 0
+      const modifier = isMac ? e.metaKey : e.ctrlKey
+      if (modifier && e.key.toLowerCase() === "z") {
+        e.preventDefault()
+        if (e.shiftKey) {
+          handleRedo()
+        } else {
+          handleUndo()
+        }
+      } else if (modifier && e.key.toLowerCase() === "y") {
+        e.preventDefault()
+        handleRedo()
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [handleUndo, handleRedo])
 
   // Active Variant lookup
   const variant = useMemo(
@@ -140,7 +233,8 @@ export default function CustomPrintStudio({
     return isVariantInStock(variant)
   }, [variant])
 
-  const color = variantColor(product, variant)
+  const variantColorHex = variantColor(product, variant)
+  const color = isDtfTransferStudio ? dtfPreviewSwatch.hex : variantColorHex
   const activeArtwork = artworks[side]
 
   // Convert artworks to 3D print layers
@@ -187,22 +281,134 @@ export default function CustomPrintStudio({
   })
 
   // Update artwork helper
-  const updateActiveArtwork = (
-    patch: Partial<Artwork>,
-    pushToHistoryFlag = false,
-  ) => {
-    setArtworks((current) => {
-      const currSide = current[side]
-      if (!currSide) return current
+  const updateActiveArtwork = useCallback(
+    (patch: Partial<Artwork>, pushToHistoryFlag = false) => {
+      const currSide = artworks[side]
+      if (!currSide) return
       const nextArt = { ...currSide, ...patch }
-      const nextMap = { ...current, [side]: nextArt }
+      const nextMap = { ...artworks, [side]: nextArt }
+      setArtworks(nextMap)
       if (pushToHistoryFlag) {
         pushHistory(nextMap)
       }
-      return nextMap
+      setSaved([])
+      setDtfSavedAsset(null)
+      setMessage("")
+    },
+    [artworks, pushHistory, side],
+  )
+
+  const switchDtfUnit = (nextUnit: DtfDimensionUnit) => {
+    if (nextUnit === dtfUnit) return
+    const factor = nextUnit === "cm" ? 2.54 : 1 / 2.54
+    setDtfWidth(Number((dtfWidth * factor).toFixed(2)))
+    setDtfHeight(Number((dtfHeight * factor).toFixed(2)))
+    setDtfUnit(nextUnit)
+    setDtfSavedAsset(null)
+  }
+
+  const applyDtfDimensions = (nextW: number, nextH?: number) => {
+    const minVal = dtfUnit === "in" ? 0.5 : 1.27
+    const maxW = dtfUnit === "in" ? 22 : 55.88
+    const maxH = dtfUnit === "in" ? 120 : 304.8
+    const clampedW = Math.max(minVal, Math.min(maxW, Number(nextW.toFixed(2))))
+    const aspect = activeArtwork?.aspect || dtfWidth / Math.max(0.1, dtfHeight) || 1
+    const rawH =
+      typeof nextH === "number"
+        ? nextH
+        : dtfLockAspect
+          ? clampedW / Math.max(0.1, aspect)
+          : dtfHeight
+    const clampedH = Math.max(minVal, Math.min(maxH, Number(rawH.toFixed(2))))
+    setDtfWidth(clampedW)
+    setDtfHeight(clampedH)
+    setDtfSavedAsset(null)
+
+    if (activeArtwork) {
+      const widthMm = Math.round(
+        (dtfUnit === "in" ? clampedW * 25.4 : clampedW * 10)
+      )
+      updateActiveArtwork({
+        widthMm: Math.max(25, Math.min(300, widthMm)),
+      })
+    }
+  }
+
+  // Live server USD quote for DTF Transfer Studio mode
+  useEffect(() => {
+    if (!isDtfTransferStudio) return
+    let active = true
+    requestServerDtfQuote({
+      productType: "custom_dtf",
+      unit: dtfUnit,
+      width: dtfWidth,
+      height: dtfHeight,
+      quantity,
     })
-    setSaved([])
-    setMessage("")
+      .then((res) => {
+        if (!active) return
+        setDtfQuote(res.quote)
+      })
+      .catch(() => {
+        if (!active) return
+        setDtfQuote(null)
+      })
+    return () => {
+      active = false
+    }
+  }, [isDtfTransferStudio, dtfUnit, dtfWidth, dtfHeight, quantity])
+
+  // Live client resolution / DPI & alpha transparency inspection
+  useEffect(() => {
+    if (!isDtfTransferStudio || !activeArtwork) {
+      return
+    }
+    let active = true
+    const widthIn = dtfUnit === "in" ? dtfWidth : dtfWidth / 2.54
+    const heightIn = dtfUnit === "in" ? dtfHeight : dtfHeight / 2.54
+    inspectClientArtworkForDtf({
+      artworkUrl: activeArtwork.url,
+      mimeType: activeArtwork.mime,
+      widthIn,
+      heightIn,
+    })
+      .then((info) => {
+        if (active) setDtfResolution(info)
+      })
+      .catch(() => {
+        if (active) setDtfResolution(null)
+      })
+    return () => {
+      active = false
+    }
+  }, [isDtfTransferStudio, activeArtwork, dtfUnit, dtfWidth, dtfHeight])
+
+  const handleDownloadTransparentDtfPng = async () => {
+    if (!activeArtwork) return
+    try {
+      const widthIn = dtfUnit === "in" ? dtfWidth : dtfWidth / 2.54
+      const heightIn = dtfUnit === "in" ? dtfHeight : dtfHeight / 2.54
+      const pngDataUrl = await createTransparentDtfPrintPng({
+        artworkUrl: activeArtwork.url,
+        widthIn,
+        heightIn,
+        rotationDeg: activeArtwork.rotation,
+        targetDpi: 300,
+      })
+      const a = document.createElement("a")
+      a.href = pngDataUrl
+      a.download = `nizamlar-dtf-print-ready-${widthIn.toFixed(1)}x${heightIn.toFixed(1)}in.png`
+      a.click()
+      setMessage(
+        "Print-ready transparent PNG exported (artwork only, zero garment background)."
+      )
+    } catch (err) {
+      setMessage(
+        err instanceof Error
+          ? err.message
+          : "Could not export print-ready transparent PNG."
+      )
+    }
   }
 
   // Safe SVG sanitization and rasterization to PNG
@@ -365,7 +571,22 @@ export default function CustomPrintStudio({
       setArtworks(nextArtworks)
       pushHistory(nextArtworks)
       setSaved([])
-      setMessage(`${side === "front" ? "Ön" : "Arka"} yüz tasarımı başarıyla yüklendi.`)
+      setDtfSavedAsset(null)
+      if (isDtfTransferStudio) {
+        const baseWIn = Math.min(12, Math.max(3.5, Number((newArt.widthMm / 25.4).toFixed(2))))
+        const baseHIn = Math.min(16, Math.max(1, Number((baseWIn / Math.max(0.1, aspect)).toFixed(2))))
+        setDtfWidth(
+          dtfUnit === "in" ? baseWIn : Number((baseWIn * 2.54).toFixed(2))
+        )
+        setDtfHeight(
+          dtfUnit === "in" ? baseHIn : Number((baseHIn * 2.54).toFixed(2))
+        )
+        setMessage(
+          `Artwork uploaded (${file.name}). ${DTF_GARMENT_DISCLAIMER}`
+        )
+      } else {
+        setMessage(`${side === "front" ? "Ön" : "Arka"} yüz tasarımı başarıyla yüklendi.`)
+      }
     } catch (err) {
       console.error("[Logo Upload Error]:", err)
       const errMsg =
@@ -402,29 +623,50 @@ export default function CustomPrintStudio({
   }
 
   // Presets
-  const applyPreset = (preset: "left-chest" | "center-chest" | "back-full" | "center") => {
+  const applyPreset = (
+    preset:
+      | "left-chest"
+      | "right-chest"
+      | "center-chest"
+      | "back-full"
+      | "back-upper"
+      | "center",
+  ) => {
     if (!activeArtwork) return
     const asp = activeArtwork.aspect || 1
     if (preset === "left-chest") {
       updateActiveArtwork(
         {
-          widthMm: Math.min(85, Math.round(95 * asp)),
+          widthMm: Math.min(85, Math.round(90 * asp)),
           xMm: -75,
           yMm: -95,
           rotation: 0,
         },
         true,
       )
+      setMessage("Sol göğüs konumu uygulandı.")
+    } else if (preset === "right-chest") {
+      updateActiveArtwork(
+        {
+          widthMm: Math.min(85, Math.round(90 * asp)),
+          xMm: 75,
+          yMm: -95,
+          rotation: 0,
+        },
+        true,
+      )
+      setMessage("Sağ göğüs konumu uygulandı.")
     } else if (preset === "center-chest") {
       updateActiveArtwork(
         {
-          widthMm: Math.min(180, Math.round(240 * asp)),
+          widthMm: Math.min(180, Math.round(220 * asp)),
           xMm: 0,
           yMm: -60,
           rotation: 0,
         },
         true,
       )
+      setMessage("Orta göğüs konumu uygulandı.")
     } else if (preset === "back-full") {
       updateActiveArtwork(
         {
@@ -435,6 +677,18 @@ export default function CustomPrintStudio({
         },
         true,
       )
+      setMessage("Tam sırt konumu uygulandı.")
+    } else if (preset === "back-upper") {
+      updateActiveArtwork(
+        {
+          widthMm: Math.min(180, Math.round(200 * asp)),
+          xMm: 0,
+          yMm: -80,
+          rotation: 0,
+        },
+        true,
+      )
+      setMessage("Üst sırt konumu uygulandı.")
     } else if (preset === "center") {
       updateActiveArtwork(
         {
@@ -444,11 +698,63 @@ export default function CustomPrintStudio({
         },
         true,
       )
+      setMessage("Tasarım ortalandı.")
     }
   }
 
   // Save designs to backend
   const handleSave = async (): Promise<SavedDesign[]> => {
+    if (isDtfTransferStudio) {
+      if (!activeArtwork || busy) return []
+      if (
+        dtfResolution &&
+        !dtfResolution.meetsMinimum150Dpi &&
+        !dtfAllowLowDpi
+      ) {
+        setMessage(
+          `Artwork resolution (${dtfResolution.effectiveDpi} DPI) is below 150 DPI minimum. Reduce print size, upload higher-DPI file, or confirm low-DPI override.`
+        )
+        return []
+      }
+      setBusy(true)
+      setMessage("Validating artwork DPI, generating transparent print PNG & saving DTF transfer…")
+      try {
+        const res = await saveCustomDtfTransferSurface({
+          productHandle: product.handle || undefined,
+          artwork: activeArtwork,
+          side,
+          unit: dtfUnit,
+          width: dtfWidth,
+          height: dtfHeight,
+          quantity,
+          previewColorHex: dtfPreviewSwatch.hex,
+          previewColorName: dtfPreviewSwatch.name,
+          allowLowDpi: dtfAllowLowDpi,
+        })
+        setDtfSavedAsset(res)
+        setDtfQuote(res.quote)
+        const item: SavedDesign = {
+          id: res.designAsset.id,
+          side,
+          previewUrl: res.mockupUrl || "",
+        }
+        setSaved([item])
+        setMessage(
+          `DTF transfer saved (${res.quote.dimensions.widthIn}" x ${res.quote.dimensions.heightIn}", ${res.resolutionReport.effectiveDpi} DPI). ${DTF_GARMENT_DISCLAIMER}`
+        )
+        return [item]
+      } catch (error) {
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : "Could not save custom DTF transfer design."
+        )
+        return []
+      } finally {
+        setBusy(false)
+      }
+    }
+
     if (!valid || !variant || !isStock || busy) return []
     setBusy(true)
     setMessage("Tasarım ve üretim ölçüleri sunucuya kaydediliyor…")
@@ -497,6 +803,73 @@ export default function CustomPrintStudio({
 
   // Add to Medusa Cart
   const handleAddToCart = async () => {
+    if (isDtfTransferStudio) {
+      if (!activeArtwork || busy) return
+      const carrierVariant = variant || product.variants?.[0]
+      if (!carrierVariant) {
+        setMessage("No carrier variant available for cart checkout.")
+        return
+      }
+      let currentDtfSaved = dtfSavedAsset
+      if (!currentDtfSaved) {
+        setBusy(true)
+        try {
+          currentDtfSaved = await saveCustomDtfTransferSurface({
+            productHandle: product.handle || undefined,
+            artwork: activeArtwork,
+            side,
+            unit: dtfUnit,
+            width: dtfWidth,
+            height: dtfHeight,
+            quantity,
+            previewColorHex: dtfPreviewSwatch.hex,
+            previewColorName: dtfPreviewSwatch.name,
+            allowLowDpi: dtfAllowLowDpi,
+          })
+          setDtfSavedAsset(currentDtfSaved)
+          setSaved([
+            {
+              id: currentDtfSaved.designAsset.id,
+              side,
+              previewUrl: currentDtfSaved.mockupUrl || "",
+            },
+          ])
+        } catch (err) {
+          setBusy(false)
+          setMessage(
+            err instanceof Error
+              ? err.message
+              : "Failed to validate & save DTF transfer artwork."
+          )
+          return
+        }
+      }
+
+      setBusy(true)
+      setMessage("Adding custom DTF transfer film to cart…")
+      try {
+        await addSavedDtfTransferToCart({
+          variantId: carrierVariant.id,
+          savedTransfer: currentDtfSaved,
+          previewColorName: dtfPreviewSwatch.name,
+          previewColorHex: dtfPreviewSwatch.hex,
+          countryCode,
+        })
+        setMessage(
+          `Custom DTF transfer (${currentDtfSaved.quote.dimensions.widthIn}" x ${currentDtfSaved.quote.dimensions.heightIn}") added to cart! ${DTF_GARMENT_DISCLAIMER}`
+        )
+      } catch (error) {
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : "Could not add DTF transfer to cart."
+        )
+      } finally {
+        setBusy(false)
+      }
+      return
+    }
+
     if (!valid || !variant || !isStock || busy) return
     let activeSaved = saved
     if (activeSaved.length !== layers.length) {
@@ -605,36 +978,47 @@ export default function CustomPrintStudio({
 
           {/* HEADER */}
           <header className="studio-header">
-            <div>
-              <p className="studio-eyebrow">NİZAMLAR / DESIGN LAB</p>
-              <DialogTitle>{product.title} — Özel Tasarım Stüdyosu</DialogTitle>
+            <div className="min-w-0 flex-1">
+              <p className="studio-eyebrow">
+                {isDtfTransferStudio
+                  ? "NIZAMLAR / CUSTOM DTF TRANSFER STUDIO"
+                  : "NİZAMLAR / DESIGN LAB"}
+              </p>
+              <DialogTitle className="truncate">
+                {isDtfTransferStudio ? (
+                  `Custom DTF Transfer Studio — ${DTF_GARMENT_DISCLAIMER}`
+                ) : (
+                  <>{product.title} — Özel Tasarım Stüdyosu</>
+                )}
+              </DialogTitle>
             </div>
             <button
               onClick={onClose}
               disabled={busy}
-              aria-label="Stüdyoyu kapat"
+              aria-label={isDtfTransferStudio ? "Close DTF studio" : "Stüdyoyu kapat"}
+              className="shrink-0"
             >
-              Kapat ×
+              {isDtfTransferStudio ? "Close ×" : "Kapat ×"}
             </button>
           </header>
 
           {/* MOBİL TAB BUTONLARI (<= 1024px) */}
-          <div className="flex md:hidden bg-[#222325] border-b border-[rgba(201,193,181,0.2)] px-4 py-2 gap-2">
+          <div className="flex md:hidden bg-[#FFFFFF] border-b border-[#DDD9D1] px-4 py-2 gap-2">
             <button
-              className={`flex-1 py-2 text-xs font-semibold rounded ${
+              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition ${
                 mobileTab === "tools"
-                  ? "bg-[#B29460] text-[#222325]"
-                  : "bg-[#2B2C2F] text-[#F3EFE7]"
+                  ? "bg-[#222325] text-[#FFFFFF]"
+                  : "bg-[#F7F6F3] text-[#6B6863] border border-[#DDD9D1]"
               }`}
               onClick={() => setMobileTab("tools")}
             >
               01 / Tasarım Araçları
             </button>
             <button
-              className={`flex-1 py-2 text-xs font-semibold rounded ${
+              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition ${
                 mobileTab === "product"
-                  ? "bg-[#B29460] text-[#222325]"
-                  : "bg-[#2B2C2F] text-[#F3EFE7]"
+                  ? "bg-[#222325] text-[#FFFFFF]"
+                  : "bg-[#F7F6F3] text-[#6B6863] border border-[#DDD9D1]"
               }`}
               onClick={() => setMobileTab("product")}
             >
@@ -650,12 +1034,217 @@ export default function CustomPrintStudio({
                 mobileTab !== "product" ? "hidden md:block" : "block"
               }`}
             >
+              {isDtfTransferStudio ? (
+                <>
+                  <div
+                    data-testid="studio-dtf-disclaimer"
+                    className="mb-3 rounded-lg border border-[#B29460] bg-[#222325] p-3 text-xs font-bold text-[#FAF9F6]"
+                  >
+                    {DTF_GARMENT_DISCLAIMER}
+                  </div>
+
+                  {/* Preview-Only Garment Color Swatches (No Garment Size Required!) */}
+                  <div className="studio-section">
+                    <div className="flex justify-between items-center mb-1">
+                      <h3 className="studio-section-title !mb-0">
+                        Preview Fabric Color
+                      </h3>
+                      <span className="text-xs text-[#B29460] font-semibold">
+                        {dtfPreviewSwatch.name} (Preview)
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-[#6B6863] mb-2">
+                      3D shirt previews contrast only. Only unapplied DTF transfer film ships.
+                    </p>
+                    <div
+                      className="studio-swatches"
+                      role="radiogroup"
+                      aria-label="Preview Fabric Color"
+                    >
+                      {DTF_STUDIO_PREVIEW_SWATCHES.map((swatch) => {
+                        const isSelected =
+                          dtfPreviewSwatch.hex.toLowerCase() ===
+                          swatch.hex.toLowerCase()
+                        return (
+                          <button
+                            key={swatch.name}
+                            type="button"
+                            className="studio-swatch"
+                            style={{ backgroundColor: swatch.hex }}
+                            aria-label={`Preview ${swatch.name}`}
+                            aria-pressed={isSelected}
+                            disabled={busy}
+                            onClick={() => {
+                              setDtfPreviewSwatch(swatch)
+                              setDtfSavedAsset(null)
+                            }}
+                            title={`${swatch.name} (Preview only)`}
+                          />
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Unit System Toggle (in / cm) */}
+                  <div className="studio-section">
+                    <h3 className="studio-section-title">Measurement Unit</h3>
+                    <div className="studio-sizes" role="radiogroup" aria-label="Unit">
+                      {(["in", "cm"] as const).map((u) => (
+                        <button
+                          key={u}
+                          type="button"
+                          className="studio-size-pill"
+                          aria-pressed={dtfUnit === u}
+                          disabled={busy}
+                          onClick={() => switchDtfUnit(u)}
+                        >
+                          {u === "in" ? "Inches (in)" : "Centimeters (cm)"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Real Physical Print Dimensions */}
+                  <div className="studio-section">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="studio-section-title !mb-0">
+                        Transfer Print Size ({dtfUnit})
+                      </h3>
+                      <label className="flex items-center gap-1 text-[10px] font-semibold text-[#49372E] cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={dtfLockAspect}
+                          onChange={(e) => setDtfLockAspect(e.target.checked)}
+                        />
+                        Lock Ratio
+                      </label>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 mb-2">
+                      <label className="flex flex-col gap-1 text-[11px] font-semibold text-[#222325]">
+                        <span>Width ({dtfUnit})</span>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min={dtfUnit === "in" ? 0.5 : 1.27}
+                          max={dtfUnit === "in" ? 22 : 55.88}
+                          value={dtfWidth}
+                          data-testid="studio-dtf-width"
+                          disabled={busy}
+                          onChange={(e) =>
+                            applyDtfDimensions(Number(e.target.value) || 0.5)
+                          }
+                          className="w-full rounded-lg border border-[#DDD9D1] bg-[#F7F6F3] p-2 text-xs font-bold text-[#222325]"
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1 text-[11px] font-semibold text-[#222325]">
+                        <span>Height ({dtfUnit})</span>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min={dtfUnit === "in" ? 0.5 : 1.27}
+                          max={dtfUnit === "in" ? 120 : 304.8}
+                          value={dtfHeight}
+                          data-testid="studio-dtf-height"
+                          disabled={busy}
+                          onChange={(e) =>
+                            applyDtfDimensions(
+                              dtfWidth,
+                              Number(e.target.value) || 0.5
+                            )
+                          }
+                          className="w-full rounded-lg border border-[#DDD9D1] bg-[#F7F6F3] p-2 text-xs font-bold text-[#222325]"
+                        />
+                      </label>
+                    </div>
+                    <div className="studio-presets">
+                      {[
+                        { label: '3.5" × 3.5"', wIn: 3.5, hIn: 3.5 },
+                        { label: '8" × 8"', wIn: 8, hIn: 8 },
+                        { label: '10" × 11"', wIn: 10, hIn: 11 },
+                        { label: '12" × 15"', wIn: 12, hIn: 15 },
+                      ].map((p) => (
+                        <button
+                          key={p.label}
+                          type="button"
+                          disabled={busy}
+                          onClick={() => {
+                            const f = dtfUnit === "in" ? 1 : 2.54
+                            applyDtfDimensions(
+                              Number((p.wIn * f).toFixed(2)),
+                              Number((p.hIn * f).toFixed(2))
+                            )
+                          }}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Transfer Quantity */}
+                  <div className="studio-section">
+                    <h3 className="studio-section-title">Transfer Quantity</h3>
+                    <div className="studio-stepper">
+                      <button
+                        type="button"
+                        disabled={busy || quantity <= 1}
+                        onClick={() => {
+                          setQuantity((q) => Math.max(1, q - 1))
+                          setDtfSavedAsset(null)
+                        }}
+                        aria-label="Decrease transfer quantity"
+                      >
+                        −
+                      </button>
+                      <input
+                        type="number"
+                        min={1}
+                        max={10000}
+                        value={quantity}
+                        data-testid="studio-dtf-quantity"
+                        disabled={busy}
+                        onChange={(e) => {
+                          const val = Math.min(
+                            10000,
+                            Math.max(1, Math.floor(Number(e.target.value) || 1))
+                          )
+                          setQuantity(val)
+                          setDtfSavedAsset(null)
+                        }}
+                        aria-label="Transfer quantity"
+                      />
+                      <button
+                        type="button"
+                        disabled={busy || quantity >= 10000}
+                        onClick={() => {
+                          setQuantity((q) => Math.min(10000, q + 1))
+                          setDtfSavedAsset(null)
+                        }}
+                        aria-label="Increase transfer quantity"
+                      >
+                        +
+                      </button>
+                    </div>
+                    {dtfQuote && dtfQuote.discountPercent > 0 && (
+                      <p className="text-[11px] text-[#B29460] font-bold mt-1.5">
+                        -{dtfQuote.discountPercent}% Bulk Transfer Discount Applied
+                      </p>
+                    )}
+                    {dtfQuote && !dtfQuote.minimumOrderMet && (
+                      <p className="text-[10px] text-[#49372E] mt-1">
+                        Minimum US DTF order floor: ${(dtfQuote.minimumOrderCents / 100).toFixed(2)} USD
+                      </p>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
               {/* Tişört Modeli Seçimi */}
               <div className="studio-section">
                 <h3 className="studio-section-title">01 / Tişört Modeli</h3>
                 {availableTshirts.length > 1 ? (
                   <select
-                    className="w-full bg-[#2B2C2F] text-[#F3EFE7] border border-[rgba(201,193,181,0.3)] rounded-md p-2 text-xs focus:border-[#B29460] outline-none"
+                    className="w-full bg-[#F7F6F3] text-[#222325] border border-[#DDD9D1] rounded-lg p-2.5 text-xs focus:border-[#B29460] focus:bg-[#FFFFFF] outline-none transition"
                     value={product.id}
                     disabled={busy}
                     onChange={(e) => {
@@ -678,7 +1267,7 @@ export default function CustomPrintStudio({
                     ))}
                   </select>
                 ) : (
-                  <div className="text-xs text-[#F3EFE7] font-semibold bg-[#2B2C2F] p-2.5 rounded border border-[rgba(201,193,181,0.2)]">
+                  <div className="text-xs text-[#222325] font-semibold bg-[#F7F6F3] p-2.5 rounded-lg border border-[#DDD9D1]">
                     {product.title}
                   </div>
                 )}
@@ -755,7 +1344,7 @@ export default function CustomPrintStudio({
                 <div key={o.id} className="studio-section">
                   <h3 className="studio-section-title">{o.title}</h3>
                   <select
-                    className="w-full bg-[#2B2C2F] text-[#F3EFE7] border border-[rgba(201,193,181,0.3)] rounded-md p-2 text-xs focus:border-[#B29460] outline-none"
+                    className="w-full bg-[#F7F6F3] text-[#222325] border border-[#DDD9D1] rounded-lg p-2.5 text-xs focus:border-[#B29460] focus:bg-[#FFFFFF] outline-none transition"
                     value={options[o.id] || ""}
                     disabled={busy}
                     onChange={(e) => {
@@ -870,6 +1459,8 @@ export default function CustomPrintStudio({
                   </button>
                 </div>
               </div>
+                </>
+              )}
             </aside>
 
             {/* ORTA KOLON: BÜYÜK ETKİLEŞİMLİ 3D & 2D ÖNİZLEME ALANI */}
@@ -971,9 +1562,9 @@ export default function CustomPrintStudio({
                 </h3>
 
                 {activeArtwork ? (
-                  <div className="bg-[#2B2C2F] border border-[rgba(178,148,96,0.35)] rounded-lg p-3">
+                  <div className="bg-[#FAF9F6] border border-[#DDD9D1] rounded-xl p-3.5 shadow-sm">
                     <div className="flex items-center gap-3 mb-2.5">
-                      <div className="w-10 h-10 rounded bg-[#161718] border border-[rgba(201,193,181,0.2)] flex items-center justify-center overflow-hidden shrink-0">
+                      <div className="w-11 h-11 rounded-lg bg-[#EAE8E3] border border-[#DDD9D1] flex items-center justify-center overflow-hidden shrink-0">
                         <img
                           src={activeArtwork.url}
                           alt="Yüklenen logo"
@@ -981,10 +1572,10 @@ export default function CustomPrintStudio({
                         />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-semibold text-[#F3EFE7] truncate" title={activeArtwork.fileName}>
+                        <p className="text-xs font-semibold text-[#222325] truncate" title={activeArtwork.fileName}>
                           {activeArtwork.fileName}
                         </p>
-                        <p className="text-[10px] text-[#B29460]">
+                        <p className="text-[10px] text-[#B29460] font-medium">
                           {side === "front" ? "Ön Yüz Baskısı" : "Arka Yüz Baskısı"}
                         </p>
                       </div>
@@ -994,7 +1585,7 @@ export default function CustomPrintStudio({
                         type="button"
                         disabled={busy}
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex-1 py-1.5 px-2 bg-[rgba(178,148,96,0.15)] hover:bg-[rgba(178,148,96,0.3)] text-[#B29460] hover:text-[#F3EFE7] border border-[rgba(178,148,96,0.4)] rounded text-[11px] font-semibold transition"
+                        className="flex-1 py-1.5 px-2 bg-[#FFFFFF] hover:bg-[#FAF5EB] text-[#222325] hover:text-[#B29460] border border-[#DDD9D1] hover:border-[#B29460] rounded-md text-[11px] font-semibold transition"
                       >
                         🔄 Değiştir
                       </button>
@@ -1002,7 +1593,7 @@ export default function CustomPrintStudio({
                         type="button"
                         disabled={busy}
                         onClick={handleClearCurrentSide}
-                        className="py-1.5 px-3 bg-red-950/40 hover:bg-red-950/70 text-red-300 border border-red-800/40 rounded text-[11px] font-semibold transition"
+                        className="py-1.5 px-3 bg-[#FFF1F2] hover:bg-[#FFE4E6] text-[#BE123C] border border-[#FECDD3] rounded-md text-[11px] font-semibold transition"
                       >
                         ✕ Kaldır
                       </button>
@@ -1045,6 +1636,13 @@ export default function CustomPrintStudio({
                         </button>
                         <button
                           type="button"
+                          onClick={() => applyPreset("right-chest")}
+                          disabled={busy}
+                        >
+                          Sağ Göğüs
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => applyPreset("center-chest")}
                           disabled={busy}
                         >
@@ -1062,7 +1660,7 @@ export default function CustomPrintStudio({
                         </button>
                         <button
                           type="button"
-                          onClick={() => applyPreset("center-chest")}
+                          onClick={() => applyPreset("back-upper")}
                           disabled={busy}
                         >
                           Üst Sırt
@@ -1087,15 +1685,31 @@ export default function CustomPrintStudio({
                 </div>
               )}
 
-              {/* Boyutlandırma ve İnce Ayar Kaydırıcıları */}
+              {/* Boyutlandırma ve İnce Ayar Kaydırıcıları & Milimetre Girişleri */}
               {activeArtwork && (
                 <div className="studio-section">
                   <h3 className="studio-section-title">Hassas Ölçü & Konum</h3>
                   <div className="studio-transforms">
                     {/* Genişlik */}
-                    <label>
-                      Genişlik (mm)
-                      <output>{activeArtwork.widthMm} mm</output>
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] text-[#6B6863] font-medium">Genişlik (mm)</span>
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            min={25}
+                            max={300}
+                            value={activeArtwork.widthMm}
+                            disabled={busy}
+                            onChange={(e) => {
+                              const val = Math.max(25, Math.min(300, Number(e.target.value) || 25))
+                              updateActiveArtwork({ widthMm: val }, true)
+                            }}
+                            className="studio-num-input"
+                          />
+                          <span className="text-[10px] text-[#B29460] font-mono">mm</span>
+                        </div>
+                      </div>
                       <input
                         type="range"
                         min={25}
@@ -1112,12 +1726,28 @@ export default function CustomPrintStudio({
                           })
                         }
                       />
-                    </label>
+                    </div>
 
                     {/* Yatay Konum (X) */}
-                    <label>
-                      Yatay Konum X (mm)
-                      <output>{activeArtwork.xMm} mm</output>
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] text-[#6B6863] font-medium">Yatay Konum X (mm)</span>
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            min={-140}
+                            max={140}
+                            value={activeArtwork.xMm}
+                            disabled={busy}
+                            onChange={(e) => {
+                              const val = Math.max(-140, Math.min(140, Number(e.target.value) || 0))
+                              updateActiveArtwork({ xMm: val }, true)
+                            }}
+                            className="studio-num-input"
+                          />
+                          <span className="text-[10px] text-[#B29460] font-mono">mm</span>
+                        </div>
+                      </div>
                       <input
                         type="range"
                         min={-140}
@@ -1134,12 +1764,28 @@ export default function CustomPrintStudio({
                           })
                         }
                       />
-                    </label>
+                    </div>
 
                     {/* Dikey Konum (Y) */}
-                    <label>
-                      Dikey Konum Y (mm)
-                      <output>{activeArtwork.yMm} mm</output>
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] text-[#6B6863] font-medium">Dikey Konum Y (mm)</span>
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            min={-180}
+                            max={180}
+                            value={activeArtwork.yMm}
+                            disabled={busy}
+                            onChange={(e) => {
+                              const val = Math.max(-180, Math.min(180, Number(e.target.value) || 0))
+                              updateActiveArtwork({ yMm: val }, true)
+                            }}
+                            className="studio-num-input"
+                          />
+                          <span className="text-[10px] text-[#B29460] font-mono">mm</span>
+                        </div>
+                      </div>
                       <input
                         type="range"
                         min={-180}
@@ -1156,12 +1802,30 @@ export default function CustomPrintStudio({
                           })
                         }
                       />
-                    </label>
+                    </div>
 
                     {/* Döndürme */}
-                    <label>
-                      Döndürme (°)
-                      <output>{activeArtwork.rotation}°</output>
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] text-[#6B6863] font-medium">Döndürme (°)</span>
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            min={-180}
+                            max={180}
+                            value={activeArtwork.rotation}
+                            disabled={busy}
+                            onChange={(e) => {
+                              let val = Number(e.target.value) || 0
+                              if (val > 180) val -= 360
+                              if (val < -180) val += 360
+                              updateActiveArtwork({ rotation: val }, true)
+                            }}
+                            className="studio-num-input"
+                          />
+                          <span className="text-[10px] text-[#B29460] font-mono">°</span>
+                        </div>
+                      </div>
                       <input
                         type="range"
                         min={-180}
@@ -1178,7 +1842,7 @@ export default function CustomPrintStudio({
                           })
                         }
                       />
-                    </label>
+                    </div>
 
                     {/* Fiziksel Ölçü Rozeti */}
                     {activePlacement && (
@@ -1200,6 +1864,67 @@ export default function CustomPrintStudio({
               )}
 
               {/* Geçmiş (Undo / Redo) ve Sıfırlama Butonları */}
+              {isDtfTransferStudio && activeArtwork && dtfResolution && (
+                <div
+                  className="studio-section"
+                  data-testid="studio-dtf-dpi-report"
+                >
+                  <h3 className="studio-section-title">
+                    Print Resolution &amp; Alpha Check
+                  </h3>
+                  <div className="rounded-xl border border-[#DDD9D1] bg-[#FAF9F6] p-3 text-xs flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[#6B6863]">Source Pixels:</span>
+                      <span className="font-mono font-bold text-[#222325]">
+                        {dtfResolution.pixelWidth} × {dtfResolution.pixelHeight} px
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[#6B6863]">Effective Print DPI:</span>
+                      <span
+                        data-testid="studio-dtf-effective-dpi"
+                        className={`font-mono font-extrabold ${
+                          dtfResolution.meetsTarget300Dpi
+                            ? "text-[#15803d]"
+                            : dtfResolution.meetsMinimum150Dpi
+                              ? "text-[#B29460]"
+                              : "text-[#BE123C]"
+                        }`}
+                      >
+                        {dtfResolution.effectiveDpi} DPI
+                        {dtfResolution.meetsTarget300Dpi
+                          ? " · Optimal (300+)"
+                          : dtfResolution.meetsMinimum150Dpi
+                            ? " · Acceptable (150+)"
+                            : " · Low (<150 DPI)"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[#6B6863]">Background Alpha:</span>
+                      <span className="font-semibold text-[#222325]">
+                        {dtfResolution.hasTransparency
+                          ? "Transparent RGBA"
+                          : "Solid Background (Will Print)"}
+                      </span>
+                    </div>
+                    {!dtfResolution.meetsMinimum150Dpi && (
+                      <label className="mt-1 flex items-start gap-2 rounded-md border border-[#FECDD3] bg-[#FFF1F2] p-2 text-[11px] text-[#BE123C] cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={dtfAllowLowDpi}
+                          data-testid="studio-dtf-low-dpi-override"
+                          onChange={(e) => setDtfAllowLowDpi(e.target.checked)}
+                          className="mt-0.5"
+                        />
+                        <span>
+                          Approve printing below 150 DPI ({dtfResolution.effectiveDpi} DPI)
+                        </span>
+                      </label>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {activeArtwork && (
                 <div className="studio-section">
                   <h3 className="studio-section-title">İşlemler</h3>
@@ -1236,11 +1961,74 @@ export default function CustomPrintStudio({
 
           {/* ALT SABİT ÇUBUK: FİYAT, KAYDET, SEPETE EKLE */}
           <footer className="studio-bottom-bar">
+            {isDtfTransferStudio ? (
+              <>
+                <div className="studio-price-summary" data-testid="studio-dtf-price-summary">
+                  <div>
+                    <span>Unit DTF Film: </span>
+                    <span className="font-semibold text-[#222325]">
+                      {dtfQuote ? dtfQuote.unitPriceFormatted : "…"}
+                    </span>
+                  </div>
+                  <div>
+                    <span>
+                      Size ({dtfWidth} × {dtfHeight} {dtfUnit}):{" "}
+                    </span>
+                    <span className="font-semibold text-[#B29460]">
+                      Garment $0.00 (Not Included)
+                    </span>
+                  </div>
+                  <div className="border-l border-[#DDD9D1] pl-4">
+                    <span>Total ({quantity} pcs): </span>
+                    <strong data-testid="studio-dtf-total">
+                      {dtfQuote ? `${dtfQuote.subtotalFormatted} USD` : "…"}
+                    </strong>
+                  </div>
+                </div>
+
+                <div className="studio-action-buttons">
+                  <button
+                    type="button"
+                    className="studio-export-btn"
+                    data-testid="studio-export-transparent-png"
+                    disabled={!activeArtwork || busy}
+                    onClick={() => void handleDownloadTransparentDtfPng()}
+                  >
+                    Print-Ready PNG ↗
+                  </button>
+
+                  <button
+                    type="button"
+                    className="studio-save"
+                    data-testid="studio-dtf-save"
+                    disabled={!activeArtwork || busy}
+                    onClick={() => void handleSave()}
+                  >
+                    {busy ? "Saving…" : "Save DTF Transfer"}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="studio-checkout"
+                    data-testid="add-printed-to-cart"
+                    disabled={!activeArtwork || !dtfQuote || busy}
+                    onClick={() => void handleAddToCart()}
+                  >
+                    {busy
+                      ? "Processing…"
+                      : `Add DTF Transfer · ${
+                          dtfQuote ? `${dtfQuote.subtotalFormatted} USD` : "…"
+                        }`}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
             {/* Canlı Fiyatlandırma Dökümü */}
             <div className="studio-price-summary">
               <div>
                 <span>Birim Tişört: </span>
-                <span className="font-semibold text-[#F3EFE7]">
+                <span className="font-semibold text-[#222325]">
                   {convertToLocale({
                     amount: baseUnitPrice,
                     currency_code: currencyCode,
@@ -1256,7 +2044,7 @@ export default function CustomPrintStudio({
                   })}
                 </span>
               </div>
-              <div className="border-l border-[rgba(201,193,181,0.25)] pl-4">
+              <div className="border-l border-[#DDD9D1] pl-4">
                 <span>Toplam ({quantity} adet): </span>
                 <strong>
                   {convertToLocale({
@@ -1305,11 +2093,13 @@ export default function CustomPrintStudio({
                     })}`}
               </button>
             </div>
+              </>
+            )}
           </footer>
 
           {/* Durum Mesajı ve Kaydedilen Tasarım Rozetleri (Varsa) */}
           {(message || saved.length > 0) && (
-            <div className="bg-[#161718] border-t border-[rgba(201,193,181,0.15)] px-6 py-2.5 flex flex-wrap items-center justify-between gap-4">
+            <div className="bg-[#FFFFFF] border-t border-[#DDD9D1] px-6 py-2.5 flex flex-wrap items-center justify-between gap-4">
               {message && (
                 <p role="status" className="studio-status">
                   {message}
@@ -1326,7 +2116,7 @@ export default function CustomPrintStudio({
                       <span className="font-bold text-[#B29460]">
                         {d.side === "front" ? "Ön" : "Arka"}
                       </span>
-                      <span className="font-mono text-[9px] text-stone-400">
+                      <span className="font-mono text-[9px] text-[#6B6863]">
                         {d.id}
                       </span>
                     </div>

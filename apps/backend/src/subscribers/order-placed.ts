@@ -1,4 +1,5 @@
 import type { SubscriberArgs, SubscriberConfig } from "@medusajs/framework"
+import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { nizamlarErpClient } from "../lib/erp-client"
 
 /**
@@ -13,7 +14,7 @@ export default async function orderPlacedHandler({
   event: { data },
   container,
 }: SubscriberArgs<{ id: string }>) {
-  const logger = container.resolve("logger") as any
+  const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
   const orderId = data.id
 
   logger.info(`[Nizamlar ERP Subscriber] Sipariş alındı, kontrol ediliyor: ${orderId}`)

@@ -8,11 +8,15 @@
     "medusa-storefront"
   ],
   "scripts": {
+    "predev": "node ../../scripts/quarantine-appledouble.cjs",
     "dev": "next dev --webpack -p 8000",
+    "prebuild": "node ../../scripts/quarantine-appledouble.cjs",
     "build": "next build --webpack",
     "start": "next start -p 8000",
+    "prelint": "node ../../scripts/quarantine-appledouble.cjs",
     "lint": "eslint .",
     "analyze": "ANALYZE=true next build",
+    "pretest:e2e": "node ../../scripts/quarantine-appledouble.cjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {
@@ -51,7 +55,7 @@
     "@medusajs/types": "2.22.2",
     "@playwright/test": "^1.64.1",
     "@types/lodash": "^4.14.195",
-    "@types/node": "17.0.21",
+    "@types/node": "20.19.43",
     "@types/pg": "^8.11.0",
     "@types/react": "19.0.5",
     "@types/react-dom": "19.0.5",

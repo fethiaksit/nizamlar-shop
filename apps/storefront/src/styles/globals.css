@@ -1299,19 +1299,19 @@ summary:focus-visible {
 }
 
 /* ==========================================================================
-   T-DESIGNER 3D BASKI STÜDYOSU — KURUMSAL KOYU ATÖLYE TEMASI
+   T-DESIGNER 3D BASKI STÜDYOSU — AYDINLIK & PREMIUM CANVA STİLİ TEMASI
    ========================================================================== */
 .studio-dialog {
   position: relative;
   z-index: var(--z-modal);
-  color: var(--brand-cream-light);
+  color: #222325;
 }
 .studio-overlay {
   position: fixed;
   inset: 0;
   z-index: var(--z-modal-backdrop);
-  background: rgba(22, 23, 24, 0.92);
-  backdrop-filter: blur(12px);
+  background: rgba(34, 35, 37, 0.45);
+  backdrop-filter: blur(8px);
 }
 .studio-scroll {
   position: fixed;
@@ -1321,67 +1321,88 @@ summary:focus-visible {
 }
 .studio-panel {
   min-height: 100svh;
-  background: var(--brand-dark);
-  color: var(--brand-cream-light);
+  background: #F7F6F3;
+  color: #222325;
+  display: flex;
+  flex-direction: column;
 }
 .studio-header {
-  height: 92px;
-  padding: 18px 4%;
+  height: 64px;
+  padding: 0 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--brand-anthracite);
-  border-bottom: 1px solid rgba(201, 193, 181, 0.2);
+  background: #FFFFFF;
+  border-bottom: 1px solid #DDD9D1;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 .studio-header h2 {
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--brand-cream-light);
-  margin-top: 4px;
+  letter-spacing: -0.02em;
+  color: #222325;
+  margin-top: 1px;
+}
+.studio-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #B29460;
+  text-transform: uppercase;
+  margin: 0;
 }
 .studio-header > button {
   font-size: 12px;
   font-weight: 600;
-  padding: 10px 18px;
-  background: var(--brand-surface);
-  color: var(--brand-cream-light);
-  border: 1px solid rgba(201, 193, 181, 0.35);
-  border-radius: 6px;
+  padding: 8px 16px;
+  background: #F7F6F3;
+  color: #222325;
+  border: 1px solid #DDD9D1;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 .studio-header > button:hover {
-  border-color: var(--brand-gold);
-  color: var(--brand-gold-hover);
+  background: #FFFFFF;
+  border-color: #B29460;
+  color: #B29460;
 }
 .studio-workspace {
   display: grid;
-  grid-template-columns: 310px minmax(0, 1fr) 350px;
+  grid-template-columns: 320px minmax(0, 1fr) 350px;
+  gap: 24px;
   max-width: 1760px;
   width: 100%;
-  margin: auto;
+  margin: 0 auto;
+  padding: 20px 24px;
   flex: 1;
   min-height: 0;
+  align-items: start;
 }
 .studio-col-left {
-  padding: 24px 20px;
-  background: var(--brand-anthracite);
-  border-right: 1px solid rgba(201, 193, 181, 0.16);
+  padding: 20px;
+  background: #FFFFFF;
+  border: 1px solid #DDD9D1;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
   overflow-y: auto;
-  max-height: calc(100svh - 175px);
+  max-height: calc(100svh - 170px);
 }
 .studio-col-center {
-  padding: 20px 24px;
+  padding: 0;
   display: flex;
   flex-direction: column;
   position: relative;
   min-height: 0;
 }
 .studio-col-right {
-  padding: 24px 20px;
-  background: var(--brand-anthracite);
-  border-left: 1px solid rgba(201, 193, 181, 0.16);
+  padding: 20px;
+  background: #FFFFFF;
+  border: 1px solid #DDD9D1;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
   overflow-y: auto;
-  max-height: calc(100svh - 175px);
+  max-height: calc(100svh - 170px);
 }
 .studio-canvas-area {
   padding: 0;
@@ -1402,11 +1423,11 @@ summary:focus-visible {
   gap: 6px;
 }
 .studio-toolbar button {
-  padding: 9px 13px;
-  color: var(--brand-stone-light);
-  background: var(--brand-surface);
-  border: 1px solid rgba(201, 193, 181, 0.2);
-  border-radius: 6px;
+  padding: 8px 14px;
+  color: #6B6863;
+  background: #FFFFFF;
+  border: 1px solid #DDD9D1;
+  border-radius: 8px;
   font-weight: 600;
   font-size: 11px;
   cursor: pointer;
@@ -1414,25 +1435,29 @@ summary:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 .studio-toolbar button:hover {
-  border-color: var(--brand-gold);
-  color: var(--brand-gold-hover);
+  border-color: #B29460;
+  color: #222325;
+  background: #FAF9F6;
 }
 .studio-toolbar button[aria-pressed="true"] {
-  border-color: var(--brand-gold);
-  color: var(--brand-dark);
-  background: var(--brand-gold);
+  border-color: #222325;
+  color: #FFFFFF;
+  background: #222325;
   font-weight: 700;
+  box-shadow: 0 1px 3px rgba(34, 35, 37, 0.2);
 }
 .studio-canvas {
-  height: min(64svh, 620px);
-  min-height: 400px;
-  background: radial-gradient(ellipse at center, rgba(73, 55, 46, 0.42), var(--brand-anthracite) 75%);
-  border: 1px solid rgba(201, 193, 181, 0.2);
-  border-radius: 10px;
+  height: min(72svh, 680px);
+  min-height: 420px;
+  background: #EAE8E3;
+  border: 1px solid #DDD9D1;
+  border-radius: 16px;
   position: relative;
   overflow: hidden;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 .studio-canvas > img {
   height: 100%;
@@ -1442,37 +1467,37 @@ summary:focus-visible {
 }
 .studio-canvas-caption {
   text-align: center;
-  color: var(--brand-stone-light);
+  color: #6B6863;
   font-size: 11px;
-  padding: 10px 0 4px;
+  padding: 8px 0 2px;
 }
 .studio-product-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 10px 0;
-  border-top: 1px solid rgba(201, 193, 181, 0.16);
+  padding: 8px 4px 0;
+  border-top: 1px solid #DDD9D1;
   font-size: 11px;
-  color: var(--brand-stone-light);
+  color: #6B6863;
 }
 
 /* Sol & Sağ Kolon Başlıkları */
 .studio-section-title {
   font-size: 11px;
   font-weight: 700;
-  color: var(--brand-gold-hover);
-  letter-spacing: 0.12em;
+  color: #B29460;
+  letter-spacing: 0.10em;
   text-transform: uppercase;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 .studio-section {
-  padding-bottom: 20px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid rgba(201, 193, 181, 0.14);
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #DDD9D1;
 }
 .studio-section:last-child {
   border-bottom: none;
@@ -1497,13 +1522,14 @@ summary:focus-visible {
   cursor: pointer;
   transition: all 0.15s ease;
   position: relative;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
 }
 .studio-swatch:hover {
   transform: scale(1.15);
 }
 .studio-swatch[aria-pressed="true"] {
-  border-color: var(--brand-gold);
-  box-shadow: 0 0 0 2px rgba(178, 148, 96, 0.5);
+  border-color: #B29460;
+  box-shadow: 0 0 0 2px rgba(178, 148, 96, 0.5), inset 0 0 0 1px rgba(0, 0, 0, 0.1);
 }
 
 /* Beden Seçici / Pills */
@@ -1517,21 +1543,22 @@ summary:focus-visible {
   padding: 7px 12px;
   font-size: 11px;
   font-weight: 600;
-  background: var(--brand-surface);
-  color: var(--brand-cream-light);
-  border: 1px solid rgba(201, 193, 181, 0.25);
-  border-radius: 5px;
+  background: #F7F6F3;
+  color: #222325;
+  border: 1px solid #DDD9D1;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .studio-size-pill:hover:not(:disabled) {
-  border-color: var(--brand-gold);
-  color: var(--brand-gold-hover);
+  border-color: #B29460;
+  color: #B29460;
+  background: #FFFFFF;
 }
 .studio-size-pill[aria-pressed="true"] {
-  background: var(--brand-gold);
-  color: var(--brand-dark);
-  border-color: var(--brand-gold);
+  background: #222325;
+  color: #FFFFFF;
+  border-color: #222325;
   font-weight: 700;
 }
 .studio-size-pill:disabled {
@@ -1545,30 +1572,30 @@ summary:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 8px;
+  padding: 4px 10px;
   border-radius: 9999px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 .studio-stock-badge.in-stock {
-  background: rgba(37, 88, 50, 0.4);
-  color: #4ade80;
-  border: 1px solid rgba(74, 222, 128, 0.3);
+  background: #ECFDF5;
+  color: #059669;
+  border: 1px solid #A7F3D0;
 }
 .studio-stock-badge.out-of-stock {
-  background: rgba(239, 68, 68, 0.25);
-  color: #f87171;
-  border: 1px solid rgba(248, 113, 113, 0.35);
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
 }
 
 /* Adet Stepper */
 .studio-stepper {
   display: inline-flex;
   align-items: center;
-  background: var(--brand-surface);
-  border: 1px solid rgba(201, 193, 181, 0.3);
-  border-radius: 6px;
+  background: #F7F6F3;
+  border: 1px solid #DDD9D1;
+  border-radius: 8px;
   overflow: hidden;
   margin-top: 6px;
 }
@@ -1580,15 +1607,15 @@ summary:focus-visible {
   justify-content: center;
   font-size: 15px;
   font-weight: bold;
-  color: var(--brand-cream-light);
+  color: #222325;
   background: transparent;
   border: none;
   cursor: pointer;
   transition: background 0.15s;
 }
 .studio-stepper button:hover:not(:disabled) {
-  background: rgba(178, 148, 96, 0.25);
-  color: var(--brand-gold-hover);
+  background: #EAE8E3;
+  color: #B29460;
 }
 .studio-stepper button:disabled {
   opacity: 0.35;
@@ -1599,7 +1626,7 @@ summary:focus-visible {
   text-align: center;
   background: transparent;
   border: none;
-  color: var(--brand-cream-light);
+  color: #222325;
   font-weight: 700;
   font-size: 12px;
   -moz-appearance: textfield;
@@ -1619,9 +1646,9 @@ summary:focus-visible {
 }
 .studio-tech-card {
   padding: 10px 12px;
-  background: var(--brand-surface);
-  border: 1px solid rgba(201, 193, 181, 0.25);
-  border-radius: 6px;
+  background: #F7F6F3;
+  border: 1px solid #DDD9D1;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -1630,83 +1657,108 @@ summary:focus-visible {
   text-align: left;
 }
 .studio-tech-card:hover {
-  border-color: var(--brand-gold);
+  border-color: #B29460;
+  background: #FFFFFF;
 }
 .studio-tech-card[aria-pressed="true"] {
-  border-color: var(--brand-gold);
-  background: rgba(73, 55, 46, 0.45);
-  box-shadow: 0 0 0 1px var(--brand-gold);
+  border-color: #B29460;
+  background: #FFFDF9;
+  box-shadow: 0 0 0 1px #B29460;
 }
 .studio-tech-card strong {
   font-size: 11px;
-  color: var(--brand-cream-light);
+  color: #222325;
+  font-weight: 700;
 }
 .studio-tech-card span {
   font-size: 10px;
-  color: var(--brand-stone-light);
+  color: #6B6863;
 }
 
 /* Dosya Yükleme Dropzone */
 .studio-upload {
-  padding: 16px 12px;
-  border: 1.5px dashed var(--brand-gold);
-  background: var(--brand-surface);
-  color: var(--brand-cream-light);
-  border-radius: 8px;
+  padding: 18px 14px;
+  border: 1.5px dashed #B29460;
+  background: #FFFDF9;
+  color: #222325;
+  border-radius: 10px;
   width: 100%;
   font-size: 12px;
   font-weight: 600;
+  text-align: center;
   overflow-wrap: anywhere;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .studio-upload:hover {
-  border-color: var(--brand-gold-hover);
-  background: rgba(73, 55, 46, 0.35);
+  border-color: #B29460;
+  background: #FAF5EB;
+  transform: translateY(-1px);
 }
 .studio-upload > span {
   display: block;
-  font-size: 22px;
-  color: var(--brand-gold-hover);
+  font-size: 24px;
+  color: #B29460;
   margin-bottom: 4px;
 }
 .studio-upload small {
   display: block;
-  color: var(--brand-stone-light);
+  color: #6B6863;
   font-size: 10px;
   margin-top: 4px;
+  font-weight: 400;
 }
 
 /* Sürükle / Boyutlandır / Döndür Ayar Kaydırıcıları */
 .studio-transforms {
-  margin-top: 14px;
+  margin-top: 10px;
 }
 .studio-transforms label {
   display: block;
   font-size: 11px;
-  color: var(--brand-stone-light);
-  margin: 12px 0;
+  color: #6B6863;
+  margin: 10px 0;
 }
 .studio-transforms output {
   float: right;
   font-weight: 700;
-  color: var(--brand-gold-hover);
+  color: #222325;
   font-size: 11px;
 }
-.studio-transforms input {
+.studio-transforms input[type="range"] {
   width: 100%;
-  margin-top: 8px;
-  accent-color: var(--brand-gold);
+  margin-top: 6px;
+  accent-color: #B29460;
   cursor: pointer;
 }
+.studio-transforms input[type="number"],
+.studio-num-input {
+  width: 58px;
+  background: #F7F6F3;
+  border: 1px solid #DDD9D1;
+  color: #222325;
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+  padding: 3px 6px;
+  border-radius: 6px;
+  transition: border-color 0.15s;
+}
+.studio-transforms input[type="number"]:focus,
+.studio-num-input:focus {
+  border-color: #B29460;
+  background: #FFFFFF;
+  outline: none;
+}
 .studio-dimension-badge {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
-  color: var(--brand-gold-hover);
-  background: rgba(73, 55, 46, 0.35);
-  border: 1px solid rgba(178, 148, 96, 0.3);
-  padding: 6px 10px;
-  border-radius: 4px;
+  color: #49372E;
+  background: #FAF5EB;
+  border: 1px solid #DDD9D1;
+  padding: 7px 10px;
+  border-radius: 6px;
   margin-top: 10px;
   text-align: center;
 }
@@ -1716,39 +1768,40 @@ summary:focus-visible {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 6px;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 .studio-presets button {
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 600;
   padding: 8px 10px;
-  background: var(--brand-surface);
-  color: var(--brand-cream-light);
-  border: 1px solid rgba(201, 193, 181, 0.25);
-  border-radius: 4px;
+  background: #F7F6F3;
+  color: #222325;
+  border: 1px solid #DDD9D1;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .studio-presets button:hover {
-  border-color: var(--brand-gold);
-  color: var(--brand-gold-hover);
+  border-color: #B29460;
+  color: #B29460;
+  background: #FFFFFF;
 }
 
 /* Geçmiş ve Sıfırlama Butonları */
 .studio-history-bar {
   display: flex;
   gap: 6px;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 .studio-history-bar button {
   flex: 1;
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 600;
   padding: 7px 8px;
-  background: var(--brand-surface);
-  color: var(--brand-cream-light);
-  border: 1px solid rgba(201, 193, 181, 0.25);
-  border-radius: 4px;
+  background: #F7F6F3;
+  color: #222325;
+  border: 1px solid #DDD9D1;
+  border-radius: 6px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -1757,8 +1810,9 @@ summary:focus-visible {
   transition: all 0.15s ease;
 }
 .studio-history-bar button:hover:not(:disabled) {
-  border-color: var(--brand-gold);
-  color: var(--brand-gold-hover);
+  border-color: #B29460;
+  color: #B29460;
+  background: #FFFFFF;
 }
 .studio-history-bar button:disabled {
   opacity: 0.35;
@@ -1770,27 +1824,26 @@ summary:focus-visible {
   position: sticky;
   bottom: 0;
   z-index: 30;
-  background: rgba(34, 35, 37, 0.98);
-  backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(178, 148, 96, 0.3);
-  padding: 14px 24px;
+  background: #FFFFFF;
+  border-top: 1px solid #DDD9D1;
+  padding: 14px 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
 }
 .studio-price-summary {
   display: flex;
   align-items: center;
   gap: 16px;
-  font-size: 11.5px;
-  color: var(--brand-stone-light);
+  font-size: 12px;
+  color: #6B6863;
 }
 .studio-price-summary strong {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
-  color: var(--brand-gold-hover);
+  color: #222325;
 }
 .studio-action-buttons {
   display: flex;
@@ -1801,18 +1854,19 @@ summary:focus-visible {
 .studio-save {
   font-size: 12px;
   font-weight: 700;
-  padding: 12px 18px;
-  border-radius: 6px;
-  background: var(--brand-surface);
-  color: var(--brand-cream-light);
-  border: 1px solid var(--brand-gold);
+  padding: 11px 18px;
+  border-radius: 8px;
+  background: #FFFFFF;
+  color: #222325;
+  border: 1px solid #DDD9D1;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
 }
 .studio-save:hover:not(:disabled) {
-  background: rgba(178, 148, 96, 0.25);
-  color: var(--brand-gold-hover);
+  border-color: #B29460;
+  color: #B29460;
+  background: #FAF9F6;
 }
 .studio-save:disabled {
   opacity: 0.4;
@@ -1822,25 +1876,29 @@ summary:focus-visible {
 .studio-checkout {
   font-size: 12px;
   font-weight: 700;
-  padding: 12px 22px;
-  border-radius: 6px;
-  background: var(--brand-gold);
-  color: var(--brand-dark);
-  border: 1px solid var(--brand-gold);
+  padding: 11px 22px;
+  border-radius: 8px;
+  background: #222325;
+  color: #FFFFFF;
+  border: 1px solid #222325;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(34, 35, 37, 0.18);
 }
 .studio-checkout:hover:not(:disabled) {
-  background: var(--brand-gold-hover);
-  color: var(--brand-dark);
+  background: #38393C;
+  border-color: #38393C;
+  color: #FFFFFF;
+  transform: translateY(-1px);
 }
 .studio-checkout:disabled {
-  background: var(--brand-surface);
-  border-color: rgba(201, 193, 181, 0.2);
-  color: var(--brand-stone);
-  opacity: 0.45;
+  background: #F7F6F3;
+  border-color: #DDD9D1;
+  color: #A3A099;
+  opacity: 0.6;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .studio-export-btn {
@@ -1848,16 +1906,17 @@ summary:focus-visible {
   font-weight: 600;
   padding: 10px 14px;
   background: transparent;
-  color: var(--brand-gold-hover);
-  border: 1px solid rgba(178, 148, 96, 0.4);
-  border-radius: 6px;
+  color: #6B6863;
+  border: 1px solid #DDD9D1;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
 }
 .studio-export-btn:hover:not(:disabled) {
-  border-color: var(--brand-gold);
-  background: rgba(178, 148, 96, 0.15);
+  border-color: #B29460;
+  color: #222325;
+  background: #FAF9F6;
 }
 .studio-export-btn:disabled {
   opacity: 0.4;
@@ -1865,58 +1924,76 @@ summary:focus-visible {
 }
 
 .studio-warning {
-  color: #ef4444;
+  color: #DC2626;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  padding: 6px 10px;
+  border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
-  line-height: 1.6;
+  line-height: 1.5;
   margin-top: 8px;
 }
 .studio-status {
-  font-size: 11px;
-  color: var(--brand-cream);
+  font-size: 11.5px;
+  color: #222325;
+  font-weight: 500;
   line-height: 1.6;
-  margin-top: 6px;
 }
 .studio-saved {
-  font-size: 10px;
-  color: var(--brand-cream-light);
-  background: var(--brand-surface);
-  border: 1px solid rgba(178, 148, 96, 0.35);
-  padding: 8px 12px;
+  font-size: 11px;
+  color: #222325;
+  background: #FAF5EB;
+  border: 1px solid #DDD9D1;
+  padding: 6px 12px;
   border-radius: 6px;
-  margin-top: 8px;
 }
 .studio-saved small {
   display: block;
-  margin-top: 4px;
-  color: var(--brand-stone-light);
+  margin-top: 2px;
+  color: #6B6863;
 }
 
 /* Mobil / Tablet Görünümü */
 @media (max-width: 1024px) {
+  .studio-header {
+    height: auto;
+    min-height: 56px;
+    padding: 10px 16px;
+    gap: 12px;
+  }
+  .studio-header h2 {
+    font-size: 15px;
+    line-height: 1.25;
+  }
+  .studio-header > button {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
   .studio-workspace {
     grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 12px 16px;
   }
   .studio-col-left,
   .studio-col-right {
     max-height: none;
-    border-left: none;
-    border-right: none;
-    border-top: 1px solid rgba(201, 193, 181, 0.16);
-    padding: 20px 6%;
+    border-radius: 12px;
+    padding: 16px;
   }
   .studio-col-center {
-    padding: 16px 6%;
+    padding: 0;
   }
   .studio-canvas {
-    min-height: 340px;
-    height: 44svh;
+    min-height: 360px;
+    height: 48svh;
+    border-radius: 12px;
   }
   .studio-bottom-bar {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
-    padding: 14px 6%;
+    padding: 14px 16px;
   }
   .studio-action-buttons {
     flex-direction: column;

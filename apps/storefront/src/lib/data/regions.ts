@@ -51,9 +51,30 @@ export const getRegion = async (countryCode: string) => {
     })
   })
 
-  const region = countryCode
-    ? regionMap.get(countryCode)
+  const normalized = (countryCode || "").toLowerCase()
+  const region = normalized
+    ? regionMap.get(normalized)
     : regionMap.get("us")
+
+  if (!region && normalized === "us" && regions.length > 0) {
+    const carrier = regions[0]
+    return {
+      ...carrier,
+      currency_code: "usd",
+      name: "United States (USD)",
+      countries: [
+        ...(carrier.countries || []),
+        {
+          id: "us",
+          iso_2: "us",
+          iso_3: "usa",
+          num_code: "840",
+          name: "UNITED STATES",
+          display_name: "United States",
+        },
+      ],
+    } as HttpTypes.StoreRegion
+  }
 
   return region
 }

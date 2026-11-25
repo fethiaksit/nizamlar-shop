@@ -49,6 +49,7 @@ export default function AuraProductShowcase({
   const [variant, setVariant] = useState(
     product.variants?.find(isVariantInStock) || product.variants?.[0],
   )
+  const [previewColorHex, setPreviewColorHex] = useState<string | null>(null)
   const [tab, setTab] = useState<"3d" | "gallery">(hasModel ? "3d" : "gallery")
   const normalizedImages = (product.images || []).map((img) => ({
     ...img,
@@ -89,7 +90,9 @@ export default function AuraProductShowcase({
             </button>
           </div>
           {tab === "3d" ? (
-            <ProductViewer3D colorHex={variantColor(product, variant)} />
+            <ProductViewer3D
+              colorHex={previewColorHex || variantColor(product, variant)}
+            />
           ) : (
             <div className="aura-viewer aura-photo">
               {image ? (
@@ -130,6 +133,7 @@ export default function AuraProductShowcase({
             product={product}
             region={region}
             onVariantChange={setVariant}
+            onPreviewColorChange={setPreviewColorHex}
           />
           <div className="aura-features">
             {features.map((feature, i) => (

@@ -1,9 +1,17 @@
 import type { HttpTypes } from "@medusajs/types"
 import { sdk } from "@lib/config"
 import { printPlacement } from "@lib/3d/product"
-import { addCustomDesignToCart } from "@lib/data/cart"
+import { addCustomDesignToCart, addDtfTransferToCart } from "@lib/data/cart"
+import {
+  saveDtfDesignAsset,
+  type DtfDimensionUnit,
+  type DtfSavedDesignAssetResponse,
+} from "@lib/data/dtf"
 import { notifyCartUpdated } from "@lib/util/cart-events"
-import { createProductionPreview } from "./preview"
+import {
+  createProductionPreview,
+  createTransparentDtfPrintPng,
+} from "./preview"
 
 export type PrintSide = "front" | "back"
 
@@ -193,6 +201,113 @@ export async function addSavedDesignsToMedusaCart({
     designIds,
     quantity,
     technique,
+    countryCode,
+  })
+  notifyCartUpdated()
+}
+
+export async function saveCustomDtfTransferSurface({
+  productHandle,
+  artwork,
+  side,
+  unit,
+  width,
+  height,
+  quantity,
+  previewColorHex,
+  previewColorName,
+  allowLowDpi = false,
+}: {
+  productHandle?: string
+  artwork: DesignArtworkInput
+  side: PrintSide
+  unit: DtfDimensionUnit
+  width: number
+  height: number
+  quantity: number
+  previewColorHex: string
+  previewColorName?: string
+  allowLowDpi?: boolean
+}): Promise<DtfSavedDesignAssetResponse> {
+  const placement = printPlacement(artwork)
+  const { dataUrl, mime } = await ensureBase64DataUrl(artwork.url, artwork.mime)
+
+  const widthIn = unit === "in" ? width : width / 2.54
+  const heightIn = unit === "in" ? height : height / 2.54
+
+  const productionPrintPngBase64 = await createTransparentDtfPrintPng({
+    artworkUrl: dataUrl,
+    widthIn,
+    heightIn,
+    rotationDeg: artwork.rotation,
+    targetDpi: 300,
+  })
+
+  const mockupPreviewPngBase64 = await createProductionPreview(previewColorHex, {
+    ...placement,
+    side,
+    url: dataUrl,
+  })
+
+  return saveDtfDesignAsset({
+    productHandle,
+    productType: "custom_dtf",
+    unit,
+    width,
+    height,
+    quantity,
+    originalFileName: artwork.fileName,
+    originalFileMimeType: mime,
+    originalFileBase64: dataUrl,
+    productionPrintPngBase64,
+    mockupPreviewPngBase64,
+    previewGarmentColor: previewColorName
+      ? `${previewColorName} (${previewColorHex})`
+      : previewColorHex,
+    placement: {
+      ...placement,
+      side,
+      coordinateSystem: "torso-mm-preview-v1",
+      garmentIncluded: false,
+    },
+    allowLowDpi,
+  })
+}
+
+export async function addSavedDtfTransferToCart({
+  variantId,
+  savedTransfer,
+  previewColorName,
+  previewColorHex,
+  countryCode,
+}: {
+  variantId: string
+  savedTransfer: DtfSavedDesignAssetResponse
+  previewColorName?: string
+  previewColorHex?: string
+  countryCode: string
+}) {
+  const unit = savedTransfer.quote.dimensions.unit
+  const width =
+    unit === "in"
+      ? savedTransfer.quote.dimensions.widthIn
+      : savedTransfer.quote.dimensions.widthCm
+  const height =
+    unit === "in"
+      ? savedTransfer.quote.dimensions.heightIn
+      : savedTransfer.quote.dimensions.heightCm
+
+  await addDtfTransferToCart({
+    variantId,
+    productType: "custom_dtf",
+    unit,
+    width,
+    height,
+    quantity: savedTransfer.quote.quantity,
+    designAssetId: savedTransfer.designAsset.id,
+    previewColorName,
+    previewColorHex,
+    quoteSignature: savedTransfer.quoteSignature,
     countryCode,
   })
   notifyCartUpdated()

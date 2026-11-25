@@ -13,12 +13,19 @@
     "medusa"
   ],
   "scripts": {
+    "prebuild": "node ../../scripts/quarantine-appledouble.cjs",
     "build": "medusa build",
+    "prestart": "node ../../scripts/quarantine-appledouble.cjs",
     "start": "medusa start",
+    "predev": "node ../../scripts/quarantine-appledouble.cjs",
     "dev": "medusa develop",
+    "prelint": "node ../../scripts/quarantine-appledouble.cjs",
     "lint": "medusa lint",
+    "pretest:integration:http": "node ../../scripts/quarantine-appledouble.cjs",
     "test:integration:http": "TEST_TYPE=integration:http NODE_OPTIONS=--experimental-vm-modules jest --silent=false --runInBand --forceExit",
+    "pretest:integration:modules": "node ../../scripts/quarantine-appledouble.cjs",
     "test:integration:modules": "TEST_TYPE=integration:modules NODE_OPTIONS=--experimental-vm-modules jest --silent=false --runInBand --forceExit",
+    "pretest:unit": "node ../../scripts/quarantine-appledouble.cjs",
     "test:unit": "TEST_TYPE=unit NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit"
   },
   "dependencies": {

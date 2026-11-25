@@ -45,8 +45,10 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
+    "**/._*",
     "node_modules",
     ".next",
+    ".next-production",
     ".nyc_output",
     "coverage",
     "jest-coverage"
