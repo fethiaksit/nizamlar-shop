@@ -9,6 +9,8 @@ import {
   DtfAddToCartSchema,
   DtfQuoteRequestSchema,
   SaveDtfGangSheetSchema,
+  ShopifyCartActionSchema,
+  ShopifyVerifiedDtfCheckoutSchema,
   UpsertDtfPricingRuleSchema,
   UpsertDtfProductSpecSchema,
 } from "./dtf-validators"
@@ -54,6 +56,21 @@ export default defineMiddlewares({
       matcher: "/store/dtf/gang-sheets",
       bodyParser: { sizeLimit: "45mb" },
       middlewares: [validateAndTransformBody(SaveDtfGangSheetSchema)],
+    },
+    {
+      methods: ["POST"],
+      matcher: "/store/dtf/shopify/cart",
+      middlewares: [validateAndTransformBody(ShopifyCartActionSchema)],
+    },
+    {
+      methods: ["POST"],
+      matcher: "/store/dtf/shopify/checkout",
+      middlewares: [validateAndTransformBody(ShopifyVerifiedDtfCheckoutSchema)],
+    },
+    {
+      methods: ["POST"],
+      matcher: "/webhooks/shopify",
+      bodyParser: { preserveRawBody: true },
     },
     {
       methods: ["GET", "POST"],

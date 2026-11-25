@@ -641,5 +641,197 @@ medusaIntegrationTestRunner({
       })
       expect(validSheet.data.quote.subtotalCents).toBe(3580)
     })
+
+    it("enforces Shopify webhook HMAC, paid-order gate, duplicate idempotency, cancel/refund sync, and fail-closed checkout", async () => {
+      const crypto = await import("node:crypto")
+      const statusRes = await api.get("/store/dtf/shopify/status", { headers })
+      expect(statusRes.status).toBe(200)
+      expect(statusRes.data.commerceEnabled).toBe(false)
+      expect(statusRes.data.connectionMode).toBe("disabled")
+
+      const prevSecret = process.env.SHOPIFY_WEBHOOK_SECRET
+      const prevEnabled = process.env.DTF_SHOPIFY_COMMERCE_ENABLED
+      const prevAdapter = process.env.DTF_SHOPIFY_TEST_ADAPTER
+      process.env.SHOPIFY_WEBHOOK_SECRET = "shpss_integration_test_secret"
+      process.env.DTF_SHOPIFY_COMMERCE_ENABLED = "true"
+      process.env.DTF_SHOPIFY_TEST_ADAPTER = "true"
+
+      try {
+        const signBody = (bodyObj: Record<string, unknown>) => {
+          const raw = JSON.stringify(bodyObj)
+          const hmac = crypto
+            .createHmac("sha256", process.env.SHOPIFY_WEBHOOK_SECRET!)
+            .update(raw, "utf8")
+            .digest("base64")
+          return { raw, hmac }
+        }
+
+        // 1. Rejects invalid HMAC with 401
+        await expect(
+          api.post(
+            "/webhooks/shopify",
+            { id: 1001, financial_status: "paid" },
+            {
+              headers: {
+                "x-shopify-topic": "orders/paid",
+                "x-shopify-hmac-sha256": "forged-hmac",
+                "x-shopify-webhook-id": "wh_forged_1",
+              },
+            },
+          ),
+        ).rejects.toMatchObject({ response: { status: 401 } })
+
+        // 2. Ignores unpaid orders/create (zero production jobs created)
+        const unpaidPayload = {
+          id: 55001,
+          name: "#US-55001",
+          email: "unpaid@example.com",
+          financial_status: "pending",
+          currency: "USD",
+          total_price: "24.90",
+          line_items: [{ quantity: 1, properties: [] }],
+        }
+        const unpaidSigned = signBody(unpaidPayload)
+        const unpaidRes = await api.post("/webhooks/shopify", unpaidSigned.raw, {
+          headers: {
+            "Content-Type": "application/json",
+            "x-shopify-topic": "orders/create",
+            "x-shopify-shop-domain": "nizamlar-us.myshopify.com",
+            "x-shopify-webhook-id": "wh_unpaid_55001",
+            "x-shopify-hmac-sha256": unpaidSigned.hmac,
+          },
+        })
+        expect(unpaidRes.status).toBe(200)
+        expect(unpaidRes.data).toMatchObject({
+          verified: true,
+          processingStatus: "ignored_unpaid",
+          productionJobIds: [],
+        })
+
+        // 3. Paid order creates DtfProductionJob in payment_confirmed
+        const paidPayload = {
+          id: 55002,
+          name: "#US-55002",
+          email: "buyer@us-customer.com",
+          financial_status: "paid",
+          currency: "USD",
+          total_price: "35.80",
+          shipping_address: {
+            country_code: "US",
+            province_code: "TX",
+            zip: "75001",
+          },
+          line_items: [
+            {
+              quantity: 2,
+              properties: [
+                { name: "dtf_product_type", value: "gang_sheet" },
+                { name: "width_in", value: "22" },
+                { name: "height_in", value: "24" },
+              ],
+            },
+          ],
+        }
+        const paidSigned = signBody(paidPayload)
+        const paidRes = await api.post("/webhooks/shopify", paidSigned.raw, {
+          headers: {
+            "Content-Type": "application/json",
+            "x-shopify-topic": "orders/paid",
+            "x-shopify-shop-domain": "nizamlar-us.myshopify.com",
+            "x-shopify-webhook-id": "wh_paid_55002",
+            "x-shopify-hmac-sha256": paidSigned.hmac,
+          },
+        })
+        expect(paidRes.status).toBe(200)
+        expect(paidRes.data.verified).toBe(true)
+        expect(paidRes.data.processingStatus).toBe("processed")
+        expect(paidRes.data.productionJobIds).toHaveLength(1)
+
+        // 4. Duplicate webhook ID is ignored idempotently
+        const dupRes = await api.post("/webhooks/shopify", paidSigned.raw, {
+          headers: {
+            "Content-Type": "application/json",
+            "x-shopify-topic": "orders/paid",
+            "x-shopify-shop-domain": "nizamlar-us.myshopify.com",
+            "x-shopify-webhook-id": "wh_paid_55002",
+            "x-shopify-hmac-sha256": paidSigned.hmac,
+          },
+        })
+        expect(dupRes.status).toBe(200)
+        expect(dupRes.data).toMatchObject({
+          verified: true,
+          duplicate: true,
+          processingStatus: "ignored_duplicate",
+        })
+
+        // 5. Cancel & Refund webhooks update cancellation_state and refund_state
+        const cancelSigned = signBody({ id: 55002 })
+        const cancelRes = await api.post("/webhooks/shopify", cancelSigned.raw, {
+          headers: {
+            "Content-Type": "application/json",
+            "x-shopify-topic": "orders/cancelled",
+            "x-shopify-shop-domain": "nizamlar-us.myshopify.com",
+            "x-shopify-webhook-id": "wh_cancel_55002",
+            "x-shopify-hmac-sha256": cancelSigned.hmac,
+          },
+        })
+        expect(cancelRes.status).toBe(200)
+        expect(cancelRes.data.productionJobIds).toHaveLength(1)
+
+        // 6. Fail-closed checkout rejects forged signature, succeeds with valid server-signed quote
+        await expect(
+          api.post(
+            "/store/dtf/shopify/checkout",
+            {
+              productType: "ready_to_press",
+              unit: "in",
+              width: 10,
+              height: 11,
+              quantity: 2,
+              quoteSignature: "00000000000000000000000000000000",
+            },
+            { headers },
+          ),
+        ).rejects.toMatchObject({ response: { status: 400 } })
+
+        const quoteRes = await api.post(
+          "/store/dtf/quote",
+          {
+            productType: "ready_to_press",
+            unit: "in",
+            width: 10,
+            height: 11,
+            quantity: 2,
+          },
+          { headers },
+        )
+        const checkoutRes = await api.post(
+          "/store/dtf/shopify/checkout",
+          {
+            productType: "ready_to_press",
+            unit: "in",
+            width: 10,
+            height: 11,
+            quantity: 2,
+            quoteSignature: quoteRes.data.quoteSignature,
+            customerEmail: "buyer@us-customer.com",
+          },
+          { headers },
+        )
+        expect(checkoutRes.status).toBe(200)
+        expect(checkoutRes.data.checkout).toMatchObject({
+          currencyCode: "USD",
+          isServerPriceVerified: true,
+          isSimulatedTestAdapter: true,
+        })
+        expect(checkoutRes.data.checkout.invoiceUrl).toContain(
+          "https://mock-shopify.test/invoices/",
+        )
+      } finally {
+        process.env.SHOPIFY_WEBHOOK_SECRET = prevSecret
+        process.env.DTF_SHOPIFY_COMMERCE_ENABLED = prevEnabled
+        process.env.DTF_SHOPIFY_TEST_ADAPTER = prevAdapter
+      }
+    })
   },
 })

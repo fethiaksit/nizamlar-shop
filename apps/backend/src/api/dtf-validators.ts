@@ -129,9 +129,63 @@ export const SaveDtfGangSheetSchema = z.object({
   allowLowDpi: z.boolean().default(false),
 })
 
+export const ShopifyCartActionSchema = z.object({
+  action: z.enum([
+    "create",
+    "get",
+    "addLines",
+    "updateLines",
+    "removeLines",
+    "applyDiscount",
+  ]),
+  cartId: z.string().max(240).optional(),
+  lines: z
+    .array(
+      z.object({
+        merchandiseId: z.string().min(3).max(240),
+        quantity: z.number().int().min(1).max(10000),
+        attributes: z
+          .array(
+            z.object({
+              key: z.string().min(1).max(80),
+              value: z.string().max(500),
+            })
+          )
+          .optional(),
+      })
+    )
+    .optional(),
+  updateLines: z
+    .array(
+      z.object({
+        id: z.string().min(3).max(240),
+        quantity: z.number().int().min(0).max(10000),
+      })
+    )
+    .optional(),
+  lineIds: z.array(z.string().min(3).max(240)).optional(),
+  discountCodes: z.array(z.string().max(80)).optional(),
+})
+
+export const ShopifyVerifiedDtfCheckoutSchema = z.object({
+  productType: DtfProductTypeEnum,
+  unit: z.enum(["in", "cm"]).default("in"),
+  width: z.number().positive(),
+  height: z.number().positive(),
+  quantity: z.number().int().min(1).max(10000).default(1),
+  filmLengthIn: z.number().positive().optional(),
+  designAssetId: z.string().max(160).optional(),
+  quoteSignature: z.string().min(16).max(256),
+  customerEmail: z.string().email().max(200).optional(),
+})
+
 export type DtfQuoteRequestBody = z.infer<typeof DtfQuoteRequestSchema>
 export type DtfAddToCartBody = z.infer<typeof DtfAddToCartSchema>
 export type CreateDtfDesignAssetBody = z.infer<typeof CreateDtfDesignAssetSchema>
 export type SaveDtfGangSheetBody = z.infer<typeof SaveDtfGangSheetSchema>
+export type ShopifyCartActionBody = z.infer<typeof ShopifyCartActionSchema>
+export type ShopifyVerifiedDtfCheckoutBody = z.infer<
+  typeof ShopifyVerifiedDtfCheckoutSchema
+>
 export type UpsertDtfPricingRuleBody = z.infer<typeof UpsertDtfPricingRuleSchema>
 export type UpsertDtfProductSpecBody = z.infer<typeof UpsertDtfProductSpecSchema>
