@@ -11,7 +11,11 @@ const DEFAULT_SCAN_ROOTS = [
   "apps/storefront/e2e",
 ]
 
-const DEFAULT_ROOT_GLOBS = ["apps/backend", "apps/storefront"]
+const DEFAULT_ROOT_GLOBS = [
+  "apps/backend",
+  "apps/storefront",
+  ".git/objects/pack",
+]
 
 const SKIP_DIRS = new Set([
   "node_modules",
@@ -25,7 +29,7 @@ const SKIP_DIRS = new Set([
   "uploads",
 ])
 
-const CODE_CONFIG_EXT_RE = /\.(c|m)?[jt]sx?$|\.json$|\.css$|\.mdx?$/i
+const CODE_CONFIG_EXT_RE = /\.(c|m)?[jt]sx?$|\.json$|\.css$|\.mdx?$|\.(idx|pack|rev)$/i
 
 function isVerifiedAppleDoubleFile(filePath) {
   const base = path.basename(filePath)

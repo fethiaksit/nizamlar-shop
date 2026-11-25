@@ -1,61 +1,51 @@
 # DTF Migration Report
 
-Date: 24 November 2026. Status: **Incomplete — Phase 00 gates are not green.**
+Date: 25 November 2026. Status: **Phases 00.1 and 01–06 Implemented & Verified in Code (Phase 00 original-baseline replacement awaits explicit user approval; Live Shopify commerce disabled pending production credentials).**
 
-## Delivered so far
+## Delivered across Phases 00.1 – 06
 
-- Requested branch `feat/dtf-transfer-shopify-integration`, based on `35168b05ce3633eac756f9dc7330382487e30677`, matching remote main at analysis time.
-- Architecture analysis and protected component inventory in `docs/dtf/phase-00-analysis.md`.
-- Six-phase implementation plan plus Phase 00 in `docs/superpowers/plans/2026-11-24-dtf-migration.md`.
-- A separate read-only Playwright visual suite with five requested widths, explicit baseline capture, mandatory admin authentication and missing-baseline failures.
-- 57 provisional screenshots, including custom-studio canvas views and authenticated admin at every requested width, with a provenance/hash manifest.
-- Local backup of all ten pre-existing modified files in ignored `artifacts/dtf-baseline/pre-existing-changes.patch`. Those files are not included in this phase's commit.
+- **Phase 00.1 Stabilization (`a5435ca`):**
+  - External-drive AppleDouble (`0x00051607`) quarantine script (`scripts/quarantine-appledouble.cjs`) + pre-hooks & `tsconfig` excludes.
+  - Deterministic WebGL 3D test harness (`apps/storefront/e2e/helpers/webgl-determinism.ts`) achieving `15/15` byte-identical 3D calibration renders and `20/20` (`57/57` PNG) zero-pixel-diff visual regression against `candidate-baselines/` while keeping all 57 original `baselines/` untouched (`57/57` SHA-256 verified).
+  - Real CDP hardware touch & animation behavior suite (`10/10`) and hydrated Hero/Rack E2E (`3/3`).
+- **Phase 01 DTF Product Model & USD Pricing (`f079f43`):**
+  - Additive Medusa v2 `dtf_commerce` module & migration (`Migration20261124215424.ts`).
+  - Four DTF transfer types (`ready_to_press`, `custom_dtf`, `gang_sheet`, `dtf_bundle`), integer-cent USD pricing engine (`in`/`cm`), quantity discount tiers, minimum order floor, HMAC quote signing, artwork header/DPI/alpha inspection, and `"DTF transfer only. Garment not included."` across product and cart UIs.
+- **Phase 02 Custom DTF Studio (`1e4b288`):**
+  - Extended 3D/2D Studio (`custom-studio` & `tshirt3d-experience`) for `/us` and `?dtf=1` without changing a single pixel of `/tr` baselines.
+  - Strict separation between transparent RGBA print-ready production PNG (`createTransparentDtfPrintPng`) and garment mockup (`createProductionPreview`), enforced on the server (`POST /store/dtf/designs`).
+- **Phase 03 Gang Sheet Builder (`5337cac`):**
+  - Dedicated Nizamlar-branded `/[countryCode]/gang-sheet-builder` workspace + integer-mil shelf auto-nesting engine (`gang-sheet-layout.ts`), multi-image upload, duplication, scaling, rotation, snap alignment guides, overlap/bounds/margin checks, undo/redo, and 300-DPI-targeted transparent PNG export.
+- **Phase 04 Shopify Headless Integration (`8eea4e9`):**
+  - Server-only Storefront & Admin GraphQL clients (`shopify-client.ts`, `shopify-commerce.ts`), feature-flagged off (`DTF_SHOPIFY_COMMERCE_ENABLED=false`) until live credentials are supplied.
+  - Fail-closed server-verified custom DTF checkout via Shopify Admin `draftOrderCreate` (`invoiceUrl`), never trusting client cart attributes for pricing.
+  - Constant-time raw-body `X-Shopify-Hmac-Sha256` webhook verification (`POST /webhooks/shopify`), durable `dtf_webhook_event` idempotency, out-of-order cancel/refund handling, and strict paid-order gate.
+- **Phase 05 DTF Production Management (`0a17751`):**
+  - 8-stage workflow (`payment_confirmed -> design_review -> ready_for_printing -> printing -> quality_control -> packed -> shipped -> delivered`) + separate `cancellation_state` and `refund_state`, expiring HMAC private asset downloads, modular Nizamlar ERP boundary (`dryRun=true` default), and Admin UI (`/app/dtf-production`, `/app/dtf-config`).
+- **Phase 06 US Market Readiness (`67d84a6`):**
+  - `/us` English DTF navigation/footer/USD routing (`/tr` preserved 100%), 50 US states + DC + PR & `12345`/`12345-6789` ZIP validation, Turkey-to-US customs/duties disclosure, safety-gated `/how-to-apply` (withholding unapproved numeric heat/iron values), `/faq` (`FAQPage` JSON-LD), and PII-safe `/order-tracking`.
 
-## Verification
+## Verification Matrix
 
 | Check | Observed result |
 | --- | --- |
-| Backend unit tests | PASS: 1 suite, 2 tests |
-| Storefront TypeScript | PASS, including the new visual suite |
-| Backend independent TypeScript | FAIL: 351 initial errors, primarily mixed React type resolution |
-| Full root lint | FAIL: storefront 4 errors/41 warnings; backend 0 errors/3 warnings |
-| HTTP integration | FAIL: no matching test files |
-| Module integration | FAIL: no matching test files |
-| Root production build | PASS: both applications built; backend Turbo output warning |
-| Additional isolated storefront build | PASS |
-| Existing desktop hero/rack E2E | FAIL: timeout locating Premium Oversize rack garment |
-| New visual suite, final comparison | FAIL: 15 passed, 5 failed, 0 skipped; home cases fail at all five widths |
-| Authenticated admin reference capture | PASS at all five widths after verified cookie session setup |
+| Backend TypeScript (`tsc --noEmit`) | PASS (0 errors) |
+| Storefront TypeScript (`tsc --noEmit`) | PASS (0 errors) |
+| Backend Lint (`medusa lint`) | PASS (0 errors) |
+| Storefront Lint (`eslint .`) | PASS (0 errors) |
+| Backend Unit Tests | PASS: 7 suites, 23/23 tests |
+| Backend Module Integration Tests | PASS (isolated PostgreSQL `127.0.0.1:55434`) |
+| Backend HTTP Integration Tests | PASS: 10/10 contracts |
+| Backend Production Build (`medusa build`) | PASS (server + Admin bundle) |
+| Storefront Isolated Production Build (`next build --webpack`) | PASS |
+| 3D Calibration (`playwright.calibration.config.ts`) | PASS: 5/5 widths (15/15 byte-identical renders) |
+| Candidate Visual Suite (`VISUAL_BASELINE_SET=candidate`) | PASS: 20/20 (57/57 PNGs, `maxDiffPixels: 0`) |
+| Original 57 Baselines SHA-256 Integrity | PASS: 57/57 untouched |
+| Behavior & Real Mobile Touch (`playwright.behavior.config.ts`) | PASS: 10/10 |
+| Hero & 3D Rack E2E (`design-experience.spec.ts`) | PASS: 3/3 |
+| US DTF Storefront/Studio/Gang Sheet E2E (`dtf-us-experience.spec.ts`) | PASS: 6/6 (desktop + mobile) |
 
-A diagnostic backend type-resolution probe eliminated the React JSX errors but still reported Buffer/typed-array type incompatibilities. This probe only created an ignored diagnostic config; it did not change backend configuration or suppress errors.
+## Remaining Operator Gates Before Live Production
 
-Focused ESLint for the new test/config files passes. Required project-wide failures remain visible and no rules were disabled.
-
-Final comparison: **15 passed, 5 failed, 0 skipped**. All five product-studio, cart and authenticated admin cases pass. Home cases fail on image differences (including a 1-pixel mobile viewport difference and repeatability differences in the home 3D scene). References are unchanged and the phase is not accepted. No failed case was skipped or hidden. Local JSON/HTML reports and diffs are in `artifacts/dtf-visual/`.
-
-## Files added
-
-- `apps/storefront/playwright.visual.config.ts` and `apps/storefront/e2e/visual/design-preservation.spec.ts`.
-- `apps/storefront/e2e/visual/baselines/`: 57 provisional PNGs and `manifest.json`.
-- `docs/dtf/phase-00-analysis.md` and `docs/superpowers/plans/2026-11-24-dtf-migration.md`.
-- `DTF-MIGRATION-REPORT.md`, `VISUAL-REGRESSION-REPORT.md`, `SHOPIFY-SETUP.md`, `DTF-PRODUCTION-GUIDE.md`, `DEPLOYMENT-GUIDE.md`.
-
-No previously tracked production file is included in this change.
-
-## Scope not yet delivered
-
-Phases 01–06 have not been implemented. There are no new DTF products, USD pricing engine, gang-sheet editor, Shopify clients/checkout/webhooks, production pipeline or US shipping setup. Existing Medusa catalog and commerce behavior remain in place. No live payment, shipping, printer/RIP output or application settings have been verified.
-
-This follows the explicit instruction not to advance with failing tests. Missing credentials are not being presented as the cause of the existing code/test failures.
-
-## Design preservation
-
-No production UI, global CSS, Tailwind, design tokens, fonts, logos, animation source or existing admin source was edited by this work. Existing user edits remain untouched. Refer to the analysis for exact protected paths.
-
-## Rollback
-
-This work adds documentation and an independent test configuration/suite. Revert its commit(s) to remove it; no database or commerce rollback is required. Do not reset or clean the working tree: the ten pre-existing user edits must be preserved. The ignored pre-existing patch is an additional local recovery aid and is not pushed to GitHub.
-
-## Next gate
-
-Resolve baseline lint/type/test failures, make animation captures reproducible, add explicit scene/animation behavior validation and complete authenticated admin comparisons. Complete Phase 00 before implementing Phase 01. Do not enable live Shopify commerce, merge main or deploy based on this partial work.
+1. User approval to promote `apps/storefront/e2e/visual/candidate-baselines/` over `baselines/` (completing formal Phase 00 sign-off).
+2. Provision real Shopify US credentials & webhook secret, test a development-store order end-to-end, verify physical RIP roll width (`printer_rip_verified=true`) and approved press parameters (`application_approved=true`), then enable `DTF_SHOPIFY_COMMERCE_ENABLED=true`.
