@@ -833,5 +833,207 @@ medusaIntegrationTestRunner({
         process.env.DTF_SHOPIFY_TEST_ADAPTER = prevAdapter
       }
     })
+
+    it("manages 8-stage DTF production workflow, enforces expiring signed asset downloads, ERP boundary, and PII-safe order tracking", async () => {
+      const crypto = await import("node:crypto")
+      const makePngHeaderBase64 = (w: number, h: number) => {
+        const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
+        const ihdrLen = Buffer.alloc(4)
+        ihdrLen.writeUInt32BE(13, 0)
+        const ihdrType = Buffer.from("IHDR", "ascii")
+        const ihdrData = Buffer.alloc(13)
+        ihdrData.writeUInt32BE(w, 0)
+        ihdrData.writeUInt32BE(h, 4)
+        ihdrData[8] = 8
+        ihdrData[9] = 6
+        const crc = Buffer.from([0, 0, 0, 77])
+        const iend = Buffer.from([0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130])
+        return Buffer.concat([sig, ihdrLen, ihdrType, ihdrData, crc, iend]).toString(
+          "base64",
+        )
+      }
+
+      // Create custom DTF design asset first
+      const rgba300 = makePngHeaderBase64(3000, 3000)
+      const assetRes = await api.post(
+        "/store/dtf/designs",
+        {
+          productType: "custom_dtf",
+          unit: "in",
+          width: 10,
+          height: 10,
+          quantity: 4,
+          originalFileName: "us-brand-mark.png",
+          originalFileMimeType: "image/png",
+          originalFileBase64: rgba300,
+          productionPrintPngBase64: rgba300,
+        },
+        { headers },
+      )
+      const designAssetId = assetRes.data.designAsset.id
+
+      // Ingest verified paid Shopify order referencing designAssetId
+      const prevSecret = process.env.SHOPIFY_WEBHOOK_SECRET
+      process.env.SHOPIFY_WEBHOOK_SECRET = "shpss_phase05_secret"
+      let jobId = ""
+      try {
+        const body = JSON.stringify({
+          id: 77001,
+          name: "#US-77001",
+          email: "studio@texasprint.com",
+          financial_status: "paid",
+          currency: "USD",
+          total_price: "24.00",
+          shipping_address: {
+            country_code: "US",
+            province_code: "CA",
+            zip: "90210",
+          },
+          line_items: [
+            {
+              quantity: 4,
+              properties: [
+                { name: "dtf_product_type", value: "custom_dtf" },
+                { name: "dtf_design_asset_id", value: designAssetId },
+                { name: "width_in", value: "10" },
+                { name: "height_in", value: "10" },
+              ],
+            },
+          ],
+        })
+        const hmac = crypto
+          .createHmac("sha256", process.env.SHOPIFY_WEBHOOK_SECRET)
+          .update(body, "utf8")
+          .digest("base64")
+        const whRes = await api.post("/webhooks/shopify", body, {
+          headers: {
+            "Content-Type": "application/json",
+            "x-shopify-topic": "orders/paid",
+            "x-shopify-shop-domain": "nizamlar-us.myshopify.com",
+            "x-shopify-webhook-id": "wh_paid_77001",
+            "x-shopify-hmac-sha256": hmac,
+          },
+        })
+        jobId = whRes.data.productionJobIds[0]
+        expect(jobId).toBeTruthy()
+      } finally {
+        process.env.SHOPIFY_WEBHOOK_SECRET = prevSecret
+      }
+
+      // Rejects unauthenticated admin access
+      await expect(
+        api.get("/admin/dtf/production-jobs"),
+      ).rejects.toMatchObject({ response: { status: 401 } })
+
+      // Rejects unsigned / forged private asset download with 403
+      await expect(
+        api.get(
+          `/store/dtf/production-assets/${jobId}?kind=production&token=9999999999.forged`,
+          { headers },
+        ),
+      ).rejects.toMatchObject({ response: { status: 403 } })
+
+      const login = await api.post("/auth/user/emailpass", {
+        email: "admin@integration.test",
+        password: "integration-test-only",
+      })
+      const adminHeaders = { Authorization: `Bearer ${login.data.token}` }
+
+      const queueRes = await api.get("/admin/dtf/production-jobs", {
+        headers: adminHeaders,
+      })
+      expect(queueRes.status).toBe(200)
+      const targetJob = queueRes.data.jobs.find(
+        (j: { id: string }) => j.id === jobId,
+      )
+      expect(targetJob.state).toBe("payment_confirmed")
+
+      // Mint signed download link and fetch transparent production PNG
+      const tokenRes = await api.post(
+        `/admin/dtf/production-jobs/${jobId}/download-token`,
+        { ttlSeconds: 300 },
+        { headers: adminHeaders },
+      )
+      expect(tokenRes.status).toBe(200)
+      const dlRes = await api.get(tokenRes.data.downloads.productionPrintPngUrl, {
+        headers,
+        responseType: "arraybuffer",
+      })
+      expect(dlRes.status).toBe(200)
+      expect(dlRes.headers["content-type"]).toContain("image/png")
+
+      // Reject invalid state jump (payment_confirmed -> shipped)
+      await expect(
+        api.post(
+          `/admin/dtf/production-jobs/${jobId}/transition`,
+          { nextState: "shipped", trackingNumber: "1Z999" },
+          { headers: adminHeaders },
+        ),
+      ).rejects.toMatchObject({ response: { status: 400 } })
+
+      // Step cleanly through design_review -> ready_for_printing -> printing -> quality_control -> packed -> shipped -> delivered + ERP sync
+      for (const st of [
+        "design_review",
+        "ready_for_printing",
+        "printing",
+        "quality_control",
+        "packed",
+      ]) {
+        const tr = await api.post(
+          `/admin/dtf/production-jobs/${jobId}/transition`,
+          {
+            nextState: st,
+            qcNotes: "300 DPI white underbase verified",
+            triggerErpSync: st === "ready_for_printing",
+          },
+          { headers: adminHeaders },
+        )
+        expect(tr.status).toBe(200)
+        expect(tr.data.job.state).toBe(st)
+      }
+
+      // Shipped requires tracking number
+      await expect(
+        api.post(
+          `/admin/dtf/production-jobs/${jobId}/transition`,
+          { nextState: "shipped" },
+          { headers: adminHeaders },
+        ),
+      ).rejects.toMatchObject({ response: { status: 400 } })
+
+      const shipped = await api.post(
+        `/admin/dtf/production-jobs/${jobId}/transition`,
+        {
+          nextState: "shipped",
+          trackingCarrier: "UPS Worldwide Express",
+          trackingNumber: "1Z999AA10123456784",
+        },
+        { headers: adminHeaders },
+      )
+      expect(shipped.data.job.state).toBe("shipped")
+      expect(shipped.data.job.erp_sync_status).toBe("dry_run_synced")
+
+      // Public order tracking enforces email match (protects PII)
+      await expect(
+        api.get(
+          `/store/dtf/order-tracking?ref=${encodeURIComponent("#US-77001")}&email=wrong@attacker.com`,
+          { headers },
+        ),
+      ).rejects.toMatchObject({ response: { status: 404 } })
+
+      const trackingRes = await api.get(
+        `/store/dtf/order-tracking?ref=${encodeURIComponent("#US-77001")}&email=studio@texasprint.com`,
+        { headers },
+      )
+      expect(trackingRes.status).toBe(200)
+      expect(trackingRes.data.tracking).toMatchObject({
+        orderName: "#US-77001",
+        state: "shipped",
+        trackingCarrier: "UPS Worldwide Express",
+        trackingNumber: "1Z999AA10123456784",
+        shippingCountry: "US",
+        shippingState: "CA",
+      })
+    })
   },
 })

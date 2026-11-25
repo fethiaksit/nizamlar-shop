@@ -179,6 +179,34 @@ export const ShopifyVerifiedDtfCheckoutSchema = z.object({
   customerEmail: z.string().email().max(200).optional(),
 })
 
+export const DtfProductionStateEnum = z.enum([
+  "payment_confirmed",
+  "design_review",
+  "ready_for_printing",
+  "printing",
+  "quality_control",
+  "packed",
+  "shipped",
+  "delivered",
+])
+
+export const TransitionDtfProductionJobSchema = z.object({
+  nextState: DtfProductionStateEnum.optional(),
+  cancellationState: z
+    .enum(["none", "cancel_requested", "cancelled"])
+    .optional(),
+  refundState: z.enum(["none", "partial_refund", "refunded"]).optional(),
+  qcNotes: z.string().max(2000).nullable().optional(),
+  trackingNumber: z.string().max(120).nullable().optional(),
+  trackingCarrier: z.string().max(80).nullable().optional(),
+  trackingUrl: z.string().max(500).nullable().optional(),
+  triggerErpSync: z.boolean().optional(),
+})
+
+export const MintAssetDownloadTokenSchema = z.object({
+  ttlSeconds: z.number().int().min(30).max(3600).default(900),
+})
+
 export type DtfQuoteRequestBody = z.infer<typeof DtfQuoteRequestSchema>
 export type DtfAddToCartBody = z.infer<typeof DtfAddToCartSchema>
 export type CreateDtfDesignAssetBody = z.infer<typeof CreateDtfDesignAssetSchema>
@@ -186,6 +214,12 @@ export type SaveDtfGangSheetBody = z.infer<typeof SaveDtfGangSheetSchema>
 export type ShopifyCartActionBody = z.infer<typeof ShopifyCartActionSchema>
 export type ShopifyVerifiedDtfCheckoutBody = z.infer<
   typeof ShopifyVerifiedDtfCheckoutSchema
+>
+export type TransitionDtfProductionJobBody = z.infer<
+  typeof TransitionDtfProductionJobSchema
+>
+export type MintAssetDownloadTokenBody = z.infer<
+  typeof MintAssetDownloadTokenSchema
 >
 export type UpsertDtfPricingRuleBody = z.infer<typeof UpsertDtfPricingRuleSchema>
 export type UpsertDtfProductSpecBody = z.infer<typeof UpsertDtfProductSpecSchema>

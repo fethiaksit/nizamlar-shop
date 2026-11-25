@@ -8,9 +8,11 @@ import {
   CreateDtfDesignAssetSchema,
   DtfAddToCartSchema,
   DtfQuoteRequestSchema,
+  MintAssetDownloadTokenSchema,
   SaveDtfGangSheetSchema,
   ShopifyCartActionSchema,
   ShopifyVerifiedDtfCheckoutSchema,
+  TransitionDtfProductionJobSchema,
   UpsertDtfPricingRuleSchema,
   UpsertDtfProductSpecSchema,
 } from "./dtf-validators"
@@ -91,6 +93,21 @@ export default defineMiddlewares({
       methods: ["POST"],
       matcher: "/admin/dtf/products",
       middlewares: [validateAndTransformBody(UpsertDtfProductSpecSchema)],
+    },
+    {
+      methods: ["GET", "POST"],
+      matcher: "/admin/dtf/production-jobs*",
+      middlewares: [authenticate("user", ["session", "bearer", "api-key"])],
+    },
+    {
+      methods: ["POST"],
+      matcher: "/admin/dtf/production-jobs/:id/transition",
+      middlewares: [validateAndTransformBody(TransitionDtfProductionJobSchema)],
+    },
+    {
+      methods: ["POST"],
+      matcher: "/admin/dtf/production-jobs/:id/download-token",
+      middlewares: [validateAndTransformBody(MintAssetDownloadTokenSchema)],
     },
   ],
 })
